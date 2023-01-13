@@ -1,0 +1,99 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1449222d9a0864e46969f62e430f730b, type: 3}
+  m_Name: TableConfig
+  m_EditorClassIdentifier: Assembly-CSharp::TableConfigurationData
+  models:
+  - {fileID: 11400000, guid: 31d3dba34a64db64580f8726435234b4, type: 2}
+  tableSkins:
+    GUID: d44d45f02acf8de4eb2995a95a66cc65
+  cueSkins:
+    GUID: 8cb1d30b3c92aa443bcddc8949b88da1
+  _colourDefault: {r: 1, g: 1, b: 1, a: 1}
+  _colourFoul: {r: 1, g: 0, b: 0, a: 1}
+  _8ball_fabric_colour: {r: 0.44339612, g: 0.44339612, b: 0.44339612, a: 1}
+  _8ball_team_colour_0: {r: 0, g: 0.63529414, b: 1, a: 1}
+  _8ball_team_colour_1: {r: 1, g: 0.40000004, b: 0, a: 1}
+  _9ball_fabric_colour: {r: 0, g: 0.5568628, b: 1, a: 1}
+  _9ball_colours:
+  - {r: 1, g: 0.8235295, b: 0, a: 1}
+  - {r: 0, g: 0.46274513, b: 0.89019614, a: 1}
+  - {r: 0.74509805, g: 0.050980397, b: 0.07058824, a: 1}
+  - {r: 0.67058825, g: 0.32156864, b: 0.7843138, a: 1}
+  - {r: 1, g: 0.42352945, b: 0, a: 1}
+  - {r: 0.45098042, g: 0.8980393, b: 0.08627451, a: 1}
+  - {r: 0.5294118, g: 0.18823531, b: 0.2392157, a: 1}
+  - {r: 0, g: 0, b: 0, a: 1}
+  - {r: 1, g: 0.8235295, b: 0, a: 1}
+  _4ball_fabric_colour: {r: 0.4039216, g: 0.4039216, b: 0.4039216, a: 1}
+  _4ball_team_colour_0: {r: 1, g: 1, b: 1, a: 1}
+  _4ball_team_colour_1: {r: 1, g: 0.8117648, b: 0, a: 1}
+  _4ball_objective_colour: {r: 0.9725491, g: 0, b: 0, a: 1}
+  _src_ball_content: {fileID: 2800000, guid: db507d928e33d10428df362dff4c361e, type: 3}
+  _src_ball_spinmarkers: {fileID: 2800000, guid: d14bdee7753cb3b438a8a0d9533b2d5f,
+    type: 3}
+  _table_surface_mat: {fileID: 0}
+  _ball_mat: {fileID: 0}
+  quest_switch_data:
+    replacements:
+    - name: Standard Table
+      shown: 0
+      shader_default: {fileID: 4800000, guid: 4d2b9e4ef22d6924993fad8181636136, type: 3}
+      shader_quest: {fileID: 4800000, guid: 6608d08bdaa82d44c90a91637a4cebf0, type: 3}
+      materials:
+      - {fileID: 2100000, guid: 28231051462747445b616dc8ecdd10f0, type: 2}
+    - name: Standard Shader
+      shown: 0
+      shader_default: {fileID: 46, guid: 0000000000000000f000000000000000, type: 0}
+      shader_quest: {fileID: 4800000, guid: 2dcd9e0568e0a6f45b92c60ba2eb16a0, type: 3}
+      materials:
+      - {fileID: 2100000, guid: 397c2fcfe58ef54439ec7bed699754a9, type: 2}
+      - {fileID: 2100000, guid: 6be31ec5303b1a44b92374eed50d4e48, type: 2}
+      - {fileID: 2100000, guid: 652ff64e0a288604092b14a93109ef87, type: 2}
+    - name: CueCenter
+      shown: 0
+      shader_default: {fileID: 4800000, guid: 934d35199923954459b12aa46fc3af08, type: 3}
+      shader_quest: {fileID: 4800000, guid: 4e65a9b7cc2f36f47a35d23f463e6638, type: 3}
+      materials:
+      - {fileID: 2100000, guid: feb1219745a919e4f8b190c48a579b75, type: 2}
+      - {fileID: 2100000, guid: a20d4cbf460866441adc19feb467abc9, type: 2}
+    - name: TwoFrame
+      shown: 0
+      shader_default: {fileID: 4800000, guid: 7d7ba681170499649ba9dbc66b7f0f73, type: 3}
+      shader_quest: {fileID: 4800000, guid: 91bec5ec3cef3314b85cecc821399250, type: 3}
+      materials:
+      - {fileID: 2100000, guid: ee13a05fb7336594bb73ec86150f2852, type: 2}
+      - {fileID: 2100000, guid: 2ba0cc9df10229148ba45ca99764d762, type: 2}
+    - name: Cliptable
+      shown: 0
+      shader_default: {fileID: 4800000, guid: 9405571f915a34042af269c61ba56c1c, type: 3}
+      shader_quest: {fileID: 4800000, guid: ac03ce1d9977415459291435483a77d8, type: 3}
+      materials:
+      - {fileID: 2100000, guid: c124011a1754a804780db881a598a17e, type: 2}
+    - name: Grips
+      shown: 0
+      shader_default: {fileID: 4800000, guid: 362c941fef704dd46a03ef71fa790e5e, type: 3}
+      shader_quest: {fileID: 4800000, guid: abde177d175cbb347b65ed762069ab49, type: 3}
+      materials:
+      - {fileID: 2100000, guid: bf223c28f40d06c45abf56baaefaffa6, type: 2}
+      - {fileID: 2100000, guid: f1a07ab15fecaa84eab2e47b3bfaaff9, type: 2}
+      - {fileID: 2100000, guid: 08449cb337aa5154eb9776a96efd80e4, type: 2}
+      - {fileID: 2100000, guid: 61dcb852d7161f74c8a5e8dcc64de8e9, type: 2}
+      - {fileID: 2100000, guid: 50f1c71a511a0434982511f8fabfcf8b, type: 2}
+      - {fileID: 2100000, guid: 273107ac0f5f8b84abb7e868fede88de, type: 2}
+    - name: Timer
+      shown: 0
+      shader_default: {fileID: 4800000, guid: 5e7f146ac0dde5443af0513a1f1c2fa4, type: 3}
+      shader_quest: {fileID: 4800000, guid: 5ac029e4d8bca084893b5b5ebae70e4e, type: 3}
+      materials:
+      - {fileID: 2100000, guid: bc7c1f0b92565044b9e8ca08d874c949, type: 2}
+    objs: []
