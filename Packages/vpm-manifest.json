@@ -1,0 +1,71 @@
+{
+  "dependencies": {
+    "com.vrchat.worlds": {
+      "version": "3.1.7"
+    },
+    "com.vrchat.core.vpm-resolver": {
+      "version": "0.1.15"
+    },
+    "com.vrchat.udonsharp": {
+      "version": "1.1.1"
+    },
+    "com.bocud.vrbuildhelper": {
+      "version": "1.0.0"
+    },
+    "com.llealloo.audiolink": {
+      "version": "0.3.1"
+    },
+    "dev.onevr.vrworldtoolkit": {
+      "version": "2.1.2"
+    },
+    "com.miner28.avatar-image-reader": {
+      "version": "3.0.0"
+    }
+  },
+  "locked": {
+    "com.vrchat.worlds": {
+      "version": "3.1.10",
+      "dependencies": {
+        "com.vrchat.base": "3.1.x"
+      }
+    },
+    "com.vrchat.base": {
+      "version": "3.1.10"
+    },
+    "com.vrchat.core.vpm-resolver": {
+      "version": "0.1.17",
+      "dependencies": {}
+    },
+    "com.vrchat.udonsharp": {
+      "version": "1.1.6",
+      "dependencies": {
+        "com.vrchat.worlds": "3.1.x"
+      }
+    },
+    "com.bocud.vrbuildhelper": {
+      "version": "1.0.0",
+      "dependencies": {}
+    },
+    "com.llealloo.audiolink": {
+      "version": "0.3.1",
+      "dependencies": {}
+    },
+    "dev.onevr.vrworldtoolkit": {
+      "version": "2.1.2",
+      "dependencies": {
+        "com.vrchat.base": "3.1.x"
+      }
+    },
+    "com.miner28.avatar-image-reader": {
+      "version": "3.0.0",
+      "dependencies": {
+        "com.vrchat.udonsharp": "1.x.x",
+        "com.bocud.vrcapitools": "0.2.1"
+      }
+    },
+    "com.bocud.vrcapitools": {
+      "version": "0.2.1",
+      "dependencies": {}
+    }
+  }
+}
