@@ -1,12 +1,15 @@
 Pool Parlor Table
 
+
 By:
 
 Harry-T
 
 Metaphira
 
+
 Table uses a custom layer that has collisions disabled.
+
 
 Usage:
 
