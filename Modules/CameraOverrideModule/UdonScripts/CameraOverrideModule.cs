@@ -31,7 +31,7 @@ namespace Metaphira.Modules.CameraOverride
         private Camera targetCamera;
         private int renderMode;
 
-        private void Start()
+        private void OnEnable()
         {
 
             referenceCamera = this.transform.Find("ReferenceCamera").GetComponent<Camera>();
