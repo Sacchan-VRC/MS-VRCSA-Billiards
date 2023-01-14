@@ -664,10 +664,10 @@ public class BilliardsModule : UdonSharpBehaviour
             switch (physicsModeLocal)
             {
                 case 0:
-                    currentPhysicsManager = legacyPhysicsManager;
+                    currentPhysicsManager = standardPhysicsManager;
                     break;
                 case 1:
-                    currentPhysicsManager = standardPhysicsManager;
+                    currentPhysicsManager = legacyPhysicsManager;
                     break;
                 case 2:
                     currentPhysicsManager = betaPhysicsManager;
@@ -1541,12 +1541,12 @@ public class BilliardsModule : UdonSharpBehaviour
 
     public bool _IsLegacyPhysics()
     {
-        return physicsModeLocal == 0;
+        return physicsModeLocal == 1;
     }
 
     public bool _IsNewPhysics()
     {
-        return physicsModeLocal == 1;
+        return physicsModeLocal == 0;
     }
 
     public bool _IsBetaPhysics()
