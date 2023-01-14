@@ -69,9 +69,6 @@ public class BilliardsModule : UdonSharpBehaviour
     [SerializeField] public UdonBehaviour cueSkinHook;
     [SerializeField] public UdonBehaviour nameColorHook;
 
-    // camera module
-    [SerializeField] private UdonSharpBehaviour cameraModule;
-
     // globals
     [NonSerialized] public AudioSource aud_main;
     [NonSerialized] public UdonBehaviour callbacks;
@@ -100,7 +97,11 @@ public class BilliardsModule : UdonSharpBehaviour
     [SerializeField] public GraphicsManager graphicsManager;
     [SerializeField] public LegacyPhysicsManager legacyPhysicsManager;
     [SerializeField] public StandardPhysicsManager standardPhysicsManager;
+    [SerializeField] public BetaPhysicsManager betaPhysicsManager;
     [SerializeField] public MenuManager menuManager;
+
+    [Header("Camera Module")]
+    [SerializeField] public UdonSharpBehaviour cameraModule;
 
     [Space(10)]
     [Header("Sound Effects")]
@@ -227,9 +228,12 @@ public class BilliardsModule : UdonSharpBehaviour
     [NonSerialized] public CameraOverrideModule cameraOverrideModule;
     public string[] moderators = new string[0];
 
-    private void Start()
+    private void OnEnable()
     {
-        cameraOverrideModule = (CameraOverrideModule)this._GetModule(nameof(CameraOverrideModule));
+
+        _LogInfo("initializing billiards module");
+
+        cameraOverrideModule = (CameraOverrideModule)_GetModule(nameof(CameraOverrideModule));
 
         initializeRack();
 
@@ -254,9 +258,12 @@ public class BilliardsModule : UdonSharpBehaviour
         graphicsManager._Init(this);
         legacyPhysicsManager._Init(this);
         standardPhysicsManager._Init(this);
+        betaPhysicsManager._Init(this);
         menuManager._Init(this);
 
         currentPhysicsManager.SendCustomEvent("_InitConstants");
+
+        physicsModeLocal = 1;
 
 
 #if HT8B_DEBUGGER
@@ -271,7 +278,6 @@ public class BilliardsModule : UdonSharpBehaviour
         graphicsManager._OnGameStarted();
         menuManager.menuSettings.transform.localScale = Vector3.zero;
 #endif
-
     }
 
     private void FixedUpdate()
@@ -279,21 +285,9 @@ public class BilliardsModule : UdonSharpBehaviour
         currentPhysicsManager.SendCustomEvent("_FixedTick");
     }
 
-    //public VRCPlayerApi _GetPlayerByName(string name)
-    //{
-    //    VRCPlayerApi[] allPlayers = VRCPlayerApi.GetPlayers(new VRCPlayerApi[VRCPlayerApi.GetPlayerCount()]);
-    //    for (int i = 0; i < allPlayers.Length; i++)
-    //    {
-    //        if (allPlayers[i].displayName == name)
-    //        {
-    //            return allPlayers[i];
-    //        }
-    //    }
-    //    return null;
-    //}
-
     private void Update()
-    {        networkingManager._Tick();
+    {
+        networkingManager._Tick();
 
         desktopManager._Tick();
         menuManager._Tick();
@@ -310,15 +304,6 @@ public class BilliardsModule : UdonSharpBehaviour
         _EndPerf(PERF_MAIN);
 
         if (perfCounters[PERF_MAIN] % 500 == 0) _RedrawDebugger();
-    }
-    public UdonSharpBehaviour _GetModule(string type)
-    {
-        string[] parts = cameraModule.GetUdonTypeName().Split('.');
-        if (parts[parts.Length - 1] == type)
-        {
-            return cameraModule;
-        }
-        return null;
     }
 
     public override void OnPlayerLeft(VRCPlayerApi player)
@@ -360,6 +345,16 @@ public class BilliardsModule : UdonSharpBehaviour
                 networkingManager._OnKickLobby(i);
             }
         }
+    }
+
+    public UdonSharpBehaviour _GetModule(string type)
+    {
+        string[] parts = cameraModule.GetUdonTypeName().Split('.');
+        if (parts[parts.Length - 1] == type)
+        {
+            return cameraModule;
+        }
+        return null;
     }
 
     #region Triggers
@@ -586,7 +581,6 @@ public class BilliardsModule : UdonSharpBehaviour
         return (bool)tableSkinHook.GetProgramVariable("outCanUse");
     }
 
-
     public bool _CanUseCueSkin(string owner, int skin)
     {
         if (cueSkinHook == null) return false;
@@ -670,10 +664,13 @@ public class BilliardsModule : UdonSharpBehaviour
             switch (physicsModeLocal)
             {
                 case 0:
-                    currentPhysicsManager = standardPhysicsManager;
+                    currentPhysicsManager = legacyPhysicsManager;
                     break;
                 case 1:
-                    currentPhysicsManager = legacyPhysicsManager;
+                    currentPhysicsManager = standardPhysicsManager;
+                    break;
+                case 2:
+                    currentPhysicsManager = betaPhysicsManager;
                     break;
             }
             currentPhysicsManager.SendCustomEvent("_InitConstants");
