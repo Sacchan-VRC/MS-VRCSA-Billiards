@@ -46,7 +46,7 @@ MonoBehaviour:
   quest_switch_data:
     replacements:
     - name: Standard Table
-      shown: 1
+      shown: 0
       shader_default: {fileID: 4800000, guid: 4d2b9e4ef22d6924993fad8181636136, type: 3}
       shader_quest: {fileID: 4800000, guid: 6608d08bdaa82d44c90a91637a4cebf0, type: 3}
       materials:
