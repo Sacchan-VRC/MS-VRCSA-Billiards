@@ -5,8 +5,7 @@ By:
 Harry-T
 Metaphira
 
-Table uses a custom layer that has collisions disabled.
+How to import the table:
 
-Usage:
-Open the "Pool Parlor Table" scene in parallel with your world's scene.
-Drag table into your scene.
+https://user-images.githubusercontent.com/37195727/212565155-12d425ef-1047-41ae-b1e4-618a04a13b69.mp4
+
