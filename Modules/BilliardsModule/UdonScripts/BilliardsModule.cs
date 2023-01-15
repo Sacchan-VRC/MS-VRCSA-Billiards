@@ -497,18 +497,11 @@ public class BilliardsModule : UdonSharpBehaviour
         _LogInfo("joining team " + teamId);
 
         localPlayerId = networkingManager._OnJoinTeam(teamId);
-        if (localPlayerId != -1)
-        {
-            localTeamId = (uint)(localPlayerId & 0x1u);
+        if (localPlayerId != -1) localTeamId = (uint)(localPlayerId & 0x1u);
 
-            playerNamesLocal[localPlayerId] = Networking.LocalPlayer.displayName;
-            menuManager._RefreshLobbyOpen();
-            menuManager._RefreshPlayerList();
-        }
-        else
-        {
-            _LogWarn("failed to join team " + teamId + ", did someone else beat you to it?");
-        }
+        playerNamesLocal[localPlayerId] = Networking.LocalPlayer.displayName;
+        menuManager._RefreshLobbyOpen();
+        menuManager._RefreshPlayerList();
     }
 
     public void _TriggerLeaveLobby()
