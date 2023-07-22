@@ -329,7 +329,7 @@ public class GraphicsManager : UdonSharpBehaviour
         table.nameColorHook.SetProgramVariable("inOwner", name);
         table.nameColorHook.SendCustomEvent("_GetNameColor");
 
-        string color = (string) table.nameColorHook.GetProgramVariable("outColor");
+        string color = (string)table.nameColorHook.GetProgramVariable("outColor");
         if (color == "rainbow")
         {
             return rainbow(name);
@@ -353,7 +353,7 @@ public class GraphicsManager : UdonSharpBehaviour
         string[] colors = new string[numColors];
 
         float n = (float)numColors;
-        for(int i = 0; i < numColors; i++)
+        for (int i = 0; i < numColors; i++)
         {
             int red = 255;
             int green = 0;
@@ -367,23 +367,23 @@ public class GraphicsManager : UdonSharpBehaviour
             }
             else if (i <= n / 2)  //2nd quarter
             {
-                red = (int)((-255)/(n/4)*i + 255 * 2);
+                red = (int)((-255) / (n / 4) * i + 255 * 2);
                 green = 255;
                 blue = 0;
             }
-            else if (i <= (.75)*n)
+            else if (i <= (.75) * n)
             { // 3rd quarter
                 red = 0;
                 green = 255;
                 blue = (int)(255 / (n / 4) * i + (-255 * 2));
             }
-            else if(i > (.75)*n)
+            else if (i > (.75) * n)
             {
                 red = 0;
                 green = (int)(-255 * i / (n / 4) + (255 * 4));
                 blue = 255;
             }
-            
+
             colors[i] = $"{red.ToString("X2")}{green.ToString("X2")}{blue.ToString("X2")}";
         }
         return colors;
@@ -584,7 +584,7 @@ int uniform_cue_colour;
             }
         }
     }
-    
+
     public void _UpdateTeamColor(uint teamId)
     {
         updateCues(teamId);
@@ -663,6 +663,7 @@ int uniform_cue_colour;
 
     public void _OnGameStarted()
     {
+        if (table.gameModeLocal == uint.MaxValue) { return; }
         scorecard.SetInt("_GameMode", (int)table.gameModeLocal);
         scorecard.SetInt("_SolidsMode", 0);
         tableMaterial.SetFloat("_TimerPct", 0);
