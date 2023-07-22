@@ -1,4 +1,4 @@
-﻿
+﻿// #define HT8B_DRAW_REGIONS
 using System;
 using UdonSharp;
 using UnityEngine;
@@ -758,6 +758,7 @@ public class StandardPhysicsManager : UdonSharpBehaviour
     Vector3 k_vA_vD = new Vector3();
     Vector3 k_vA_vD_normal = new Vector3();
 
+    Vector3 k_vC_vZ = new Vector3();
     Vector3 k_vB_vY = new Vector3();
     Vector3 k_vB_vY_normal = new Vector3();
 
@@ -767,6 +768,8 @@ public class StandardPhysicsManager : UdonSharpBehaviour
     Vector3 k_vC_vW_normal = new Vector3(-1.0f, 0.0f, 0.0f);
 
     Vector3 _sign_pos = new Vector3(0.0f, 1.0f, 0.0f);
+    float k_FACING_ANGLE_CORNER = 135f;
+    float k_FACING_ANGLE_SIDE = 14.93142f;
 
     public void _InitConstants()
     {
@@ -774,6 +777,8 @@ public class StandardPhysicsManager : UdonSharpBehaviour
         k_TABLE_HEIGHT = table.k_TABLE_HEIGHT;
         k_POCKET_RADIUS = table.k_POCKET_RADIUS;
         k_CUSHION_RADIUS = table.k_CUSHION_RADIUS;
+        k_FACING_ANGLE_CORNER = table.k_FACING_ANGLE_CORNER;
+        k_FACING_ANGLE_SIDE = table.k_FACING_ANGLE_SIDE;
 
         for (int i = 0; i < table.pockets.Length; i++)
         {
@@ -797,8 +802,10 @@ public class StandardPhysicsManager : UdonSharpBehaviour
         k_vC.x = table.k_TABLE_WIDTH;
         k_vC.z = table.k_TABLE_HEIGHT - table.k_POCKET_RADIUS;
 
-        k_vD.x = k_vA.x - 0.016f;
-        k_vD.z = k_vA.z + 0.060f;
+        k_vD = k_vA;
+        Vector3 Rotationk_vD = new Vector3(1, 0, 0);
+        Rotationk_vD = Quaternion.AngleAxis(-k_FACING_ANGLE_SIDE, Vector3.up) * Rotationk_vD;
+        k_vD += Rotationk_vD;
 
         // Aux points
         k_vX = k_vD + Vector3.forward;
@@ -806,12 +813,14 @@ public class StandardPhysicsManager : UdonSharpBehaviour
         k_vW.z = 0.0f;
 
         k_vY = k_vB;
-        k_vY.x += 1.0f;
-        k_vY.z += 1.0f;
+        Vector3 Rotationk_vY = new Vector3(-1, 0, 0);
+        Rotationk_vY = Quaternion.AngleAxis(k_FACING_ANGLE_CORNER, Vector3.up) * Rotationk_vY;
+        k_vY += Rotationk_vY;
 
         k_vZ = k_vC;
-        k_vZ.x += 1.0f;
-        k_vZ.z += 1.0f;
+        Vector3 Rotationk_vZ = new Vector3(0, 0, -1);
+        Rotationk_vZ = Quaternion.AngleAxis(-k_FACING_ANGLE_CORNER, Vector3.up) * Rotationk_vZ;
+        k_vZ += Rotationk_vZ;
 
         // Normals
         k_vA_vD = k_vD - k_vA;
@@ -824,7 +833,11 @@ public class StandardPhysicsManager : UdonSharpBehaviour
         k_vB_vY_normal.x = -k_vB_vY.z;
         k_vB_vY_normal.z = k_vB_vY.x;
 
-        k_vC_vZ_normal = -k_vB_vY_normal;
+        //set up angle properly instead of just mirroring, required for facing angle
+        k_vC_vZ = k_vC - k_vZ;
+        k_vC_vZ = k_vC_vZ.normalized;
+        k_vC_vZ_normal.x =  k_vC_vZ.z;
+        k_vC_vZ_normal.z = -k_vC_vZ.x;
 
         // Minkowski difference
         k_pN = k_vA;
@@ -852,9 +865,6 @@ public class StandardPhysicsManager : UdonSharpBehaviour
 
         k_pU = k_vY + k_vB_vY_normal * table.k_CUSHION_RADIUS;
         k_pV = k_vZ + k_vC_vZ_normal * table.k_CUSHION_RADIUS;
-
-        k_pS = k_vW;
-        k_pS.x -= table.k_CUSHION_RADIUS;
 
         // others
         k_INNER_RADIUS = table.k_INNER_RADIUS;
@@ -938,31 +948,31 @@ public class StandardPhysicsManager : UdonSharpBehaviour
         A = Vector3.Scale(A, _sign_pos);
 
 #if HT8B_DRAW_REGIONS
-   Debug.DrawLine( k_vA, k_vB, Color.white );
-   Debug.DrawLine( k_vD, k_vA, Color.white );
-   Debug.DrawLine( k_vB, k_vY, Color.white );
-   Debug.DrawLine( k_vD, k_vX, Color.white );
-   Debug.DrawLine( k_vC, k_vW, Color.white );
-   Debug.DrawLine( k_vC, k_vZ, Color.white );
+        Debug.DrawLine(k_vA, k_vB, Color.white);
+        Debug.DrawLine(k_vD, k_vA, Color.white);
+        Debug.DrawLine(k_vB, k_vY, Color.white);
+        Debug.DrawLine(k_vD, k_vX, Color.white);
+        Debug.DrawLine(k_vC, k_vW, Color.white);
+        Debug.DrawLine(k_vC, k_vZ, Color.white);
 
-   r_k_CUSHION_RADIUS = k_CUSHION_RADIUS-k_BALL_RADIUS;
+        //    r_k_CUSHION_RADIUS = k_CUSHION_RADIUS-k_BALL_RADIUS;
 
-   _phy_table_init();
+        //    _phy_table_init();
 
-   Debug.DrawLine( k_pT, k_pK, Color.yellow );
-   Debug.DrawLine( k_pK, k_pL, Color.yellow );
-   Debug.DrawLine( k_pL, k_pM, Color.yellow );
-   Debug.DrawLine( k_pM, k_pN, Color.yellow );
-   Debug.DrawLine( k_pN, k_pO, Color.yellow );
-   Debug.DrawLine( k_pO, k_pP, Color.yellow );
-   Debug.DrawLine( k_pP, k_pU, Color.yellow );
+        Debug.DrawLine(k_pT, k_pK, Color.yellow);
+        Debug.DrawLine(k_pK, k_pL, Color.yellow);
+        Debug.DrawLine(k_pL, k_pM, Color.yellow);
+        Debug.DrawLine(k_pM, k_pN, Color.yellow);
+        Debug.DrawLine(k_pN, k_pO, Color.yellow);
+        Debug.DrawLine(k_pO, k_pP, Color.yellow);
+        Debug.DrawLine(k_pP, k_pU, Color.yellow);
 
-   Debug.DrawLine( k_pV, k_pQ, Color.yellow );
-   Debug.DrawLine( k_pQ, k_pR, Color.yellow );
-   Debug.DrawLine( k_pR, k_pS, Color.yellow );
+        Debug.DrawLine(k_pV, k_pQ, Color.yellow);
+        Debug.DrawLine(k_pQ, k_pR, Color.yellow);
+        Debug.DrawLine(k_pR, k_pS, Color.yellow);
 
-   r_k_CUSHION_RADIUS = k_CUSHION_RADIUS;
-   _phy_table_init();
+        //    r_k_CUSHION_RADIUS = k_CUSHION_RADIUS;
+        //    _phy_table_init();
 #endif
 
         if (A.x > k_vA.x) // Major Regions
@@ -973,8 +983,9 @@ public class StandardPhysicsManager : UdonSharpBehaviour
                 {
                     // Region H
 #if HT8B_DRAW_REGIONS
-            Debug.DrawLine( new Vector3( 0.0f, 0.0f, 0.0f ), new Vector3( k_TABLE_WIDTH, 0.0f, 0.0f ), Color.red );
-            Debug.DrawLine( k_vC, k_vC + k_vC_vW_normal, Color.red );
+                    Debug.DrawLine(new Vector3(0.0f, 0.0f, 0.0f), new Vector3(k_TABLE_WIDTH, 0.0f, 0.0f), Color.red);
+                    Debug.DrawLine(k_vC, k_vC + k_vC_vW_normal, Color.red);
+                    if (id == 0) Debug.Log("Region H");
 #endif
                     if (A.x > k_TABLE_WIDTH - k_CUSHION_RADIUS)
                     {
@@ -991,10 +1002,11 @@ public class StandardPhysicsManager : UdonSharpBehaviour
 
                     if (Vector3.Dot(a_to_v, k_vB_vY) > 0.0f)
                     {
-                        // Region I ( VORONI )
+                        // Region I ( VORONI ) (NEAR CORNER POCKET)
 #if HT8B_DRAW_REGIONS
-               Debug.DrawLine( k_vC, k_pR, Color.green );
-               Debug.DrawLine( k_vC, k_pQ, Color.green );
+                        Debug.DrawLine(k_vC, k_pR, Color.green);
+                        Debug.DrawLine(k_vC, k_pQ, Color.green);
+                        if (id == 0) Debug.Log("Region I ( VORONI )");
 #endif
                         if (a_to_v.magnitude < k_CUSHION_RADIUS)
                         {
@@ -1008,18 +1020,19 @@ public class StandardPhysicsManager : UdonSharpBehaviour
                     }
                     else
                     {
-                        // Region J
+                        // Region J (Inside Corner Pocket)
 #if HT8B_DRAW_REGIONS
-               Debug.DrawLine( k_vC, k_vB, Color.red );
-               Debug.DrawLine( k_pQ, k_pV, Color.blue );
+                        Debug.DrawLine(k_vC, k_vB, Color.red);
+                        Debug.DrawLine(k_pQ, k_pV, Color.blue);
+                        if (id == 0) Debug.Log("Region J");
 #endif
                         a_to_v = A - k_pQ;
 
                         if (Vector3.Dot(k_vC_vZ_normal, a_to_v) < 0.0f)
                         {
                             // Static resolution
-                            dot = Vector3.Dot(a_to_v, k_vB_vY);
-                            A = k_pQ + dot * k_vB_vY;
+                            dot = Vector3.Dot(a_to_v, k_vC_vZ);
+                            A = k_pQ + dot * k_vC_vZ;
 
                             // Dynamic
                             _phy_bounce_cushion(id, Vector3.Scale(k_vC_vZ_normal, _sign_pos));
@@ -1033,8 +1046,9 @@ public class StandardPhysicsManager : UdonSharpBehaviour
                 {
                     // Region A
 #if HT8B_DRAW_REGIONS
-            Debug.DrawLine( k_vA, k_vA + k_vA_vB_normal, Color.red );
-            Debug.DrawLine( k_vB, k_vB + k_vA_vB_normal, Color.red );
+                    Debug.DrawLine(k_vA, k_vA + k_vA_vB_normal, Color.red);
+                    Debug.DrawLine(k_vB, k_vB + k_vA_vB_normal, Color.red);
+                    if (id == 0) Debug.Log("Region A");
 #endif
                     if (A.z > k_pN.z)
                     {
@@ -1084,10 +1098,11 @@ public class StandardPhysicsManager : UdonSharpBehaviour
 
                     if (Vector3.Dot(a_to_v, k_vB_vY) > 0.0f)
                     {
-                        // Region F ( VERONI )
+                        // Region F ( VERONI ) (NEAR CORNER POCKET)
 #if HT8B_DRAW_REGIONS
-               Debug.DrawLine( k_vB, k_pO, Color.green );
-               Debug.DrawLine( k_vB, k_pP, Color.green );
+                        Debug.DrawLine(k_vB, k_pO, Color.green);
+                        Debug.DrawLine(k_vB, k_pP, Color.green);
+                        if (id == 0) Debug.Log("Region F ( VERONI )");
 #endif
                         if (a_to_v.magnitude < k_CUSHION_RADIUS)
                         {
@@ -1101,10 +1116,11 @@ public class StandardPhysicsManager : UdonSharpBehaviour
                     }
                     else
                     {
-                        // Region G
+                        // Region G (Inside Corner Pocket)
 #if HT8B_DRAW_REGIONS
-               Debug.DrawLine( k_vB, k_vC, Color.red );
-               Debug.DrawLine( k_pP, k_pU, Color.blue );
+                        Debug.DrawLine(k_vB, k_vC, Color.red);
+                        Debug.DrawLine(k_pP, k_pU, Color.blue);
+                        if (id == 0) Debug.Log("Region G");
 #endif
                         a_to_v = A - k_pP;
 
@@ -1135,7 +1151,8 @@ public class StandardPhysicsManager : UdonSharpBehaviour
                     {
                         // Region E
 #if HT8B_DRAW_REGIONS
-               Debug.DrawLine( k_vD, k_vD + k_vC_vW_normal, Color.red );
+                        Debug.DrawLine(k_vD, k_vD + k_vC_vW_normal, Color.red);
+                        if (id == 0) Debug.Log("Region E");
 #endif
                         if (A.x > k_pK.x)
                         {
@@ -1150,8 +1167,9 @@ public class StandardPhysicsManager : UdonSharpBehaviour
                     {
                         // Region D ( VORONI )
 #if HT8B_DRAW_REGIONS
-               Debug.DrawLine( k_vD, k_vD + k_vC_vW_normal, Color.green );
-               Debug.DrawLine( k_vD, k_vD + k_vA_vD_normal, Color.green );
+                        Debug.DrawLine(k_vD, k_vD + k_vC_vW_normal, Color.green);
+                        Debug.DrawLine(k_vD, k_vD + k_vA_vD_normal, Color.green);
+                        if (id == 0) Debug.Log("Region D ( VORONI )");
 #endif
                         if (a_to_v.magnitude < k_CUSHION_RADIUS)
                         {
@@ -1168,9 +1186,10 @@ public class StandardPhysicsManager : UdonSharpBehaviour
                 {
                     // Region C
 #if HT8B_DRAW_REGIONS
-            Debug.DrawLine( k_vA, k_vA + k_vA_vD_normal, Color.red );
-            Debug.DrawLine( k_vD, k_vD + k_vA_vD_normal, Color.red );
-            Debug.DrawLine( k_pL, k_pM, Color.blue );
+                    Debug.DrawLine(k_vA, k_vA + k_vA_vD_normal, Color.red);
+                    Debug.DrawLine(k_vD, k_vD + k_vA_vD_normal, Color.red);
+                    Debug.DrawLine(k_pL, k_pM, Color.blue);
+                    if (id == 0) Debug.Log("Region C");
 #endif
                     a_to_v = A - k_pL;
 
@@ -1189,8 +1208,9 @@ public class StandardPhysicsManager : UdonSharpBehaviour
             {
                 // Region B ( VORONI )
 #if HT8B_DRAW_REGIONS
-         Debug.DrawLine( k_vA, k_vA + k_vA_vB_normal, Color.green );
-         Debug.DrawLine( k_vA, k_vA + k_vA_vD_normal, Color.green );
+                Debug.DrawLine(k_vA, k_vA + k_vA_vB_normal, Color.green);
+                Debug.DrawLine(k_vA, k_vA + k_vA_vD_normal, Color.green);
+                if (id == 0) Debug.Log("Region B ( VORONI )");
 #endif
                 if (a_to_v.magnitude < k_CUSHION_RADIUS)
                 {

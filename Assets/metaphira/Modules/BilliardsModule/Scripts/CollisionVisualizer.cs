@@ -6,17 +6,7 @@ using VRC.Udon;
 [ExecuteInEditMode]
 public class CollisionVisualizer : MonoBehaviour
 {
-    [SerializeField] public Vector2 cornerPocketPosition;
-    [SerializeField] [Range(2f, 10f)] public float cornerPocketDiameter;
-    [SerializeField] [Range(2f, 6f)] public float cornerPocketMouth;
-    [SerializeField] [Range(90f, 180f)] public float cornerFacingAngle;
-    [SerializeField] [Range(0f, 0.5f)] public float cornerOffset;
-
-    [SerializeField] public float sidePocketPosition;
-    [SerializeField] [Range(2f, 6f)] public float sidePocketDiameter;
-    [SerializeField] [Range(2f, 6f)] public float sidePocketMouth;
-    [SerializeField] [Range(90f, 180f)] public float sideFacingAngle;
-
+    [SerializeField] UdonBehaviour table;
     [SerializeField] public float tableWidth;
     [SerializeField] public float tableHeight;
     [SerializeField] public float pocketRadius;
@@ -25,6 +15,17 @@ public class CollisionVisualizer : MonoBehaviour
 
     [SerializeField] public Vector3 cornerPocket; // k_vE
     [SerializeField] public Vector3 sidePocket; // k_vF
+    [SerializeField] public float facingAngleCorner;
+    [SerializeField] public float facingAngleSide;
+
+    [SerializeField] public bool DrawUnused;
+    [SerializeField] [Range(2f, 10f)] public float cornerPocketDiameter;
+    // [SerializeField] [Range(2f, 6f)] public float cornerPocketMouth;
+    [SerializeField] [Range(0f, 0.5f)] public float cornerOffset;
+
+    // [SerializeField] public float sidePocketPosition;
+    [SerializeField] [Range(2f, 6f)] public float sidePocketDiameter;
+    [SerializeField] [Range(2f, 6f)] public float sidePocketMouth;
 
     float k_MINOR_REGION_CONST;
     float r_k_CUSHION_RADIUS;
@@ -58,6 +59,7 @@ public class CollisionVisualizer : MonoBehaviour
     Vector3 k_vA_vD_normal = new Vector3();
 
     Vector3 k_vB_vY = new Vector3();
+    Vector3 k_vC_vZ = new Vector3();
     Vector3 k_vB_vY_normal = new Vector3();
 
     Vector3 k_vC_vZ_normal = new Vector3();
@@ -67,7 +69,6 @@ public class CollisionVisualizer : MonoBehaviour
 
     //public Vector3 k_vE = new Vector3(1.087f,0.0f,0.627f);
     //public Vector3 k_vF = new Vector3(0.0f,0.0f,0.665f);
-
     // Stub
     void _phy_bounce_cushion(int id, Vector3 N) { }
 
@@ -91,8 +92,10 @@ public class CollisionVisualizer : MonoBehaviour
         k_vC.x = tableWidth;
         k_vC.z = tableHeight - pocketRadius;
 
-        k_vD.x = k_vA.x - 0.016f;
-        k_vD.z = k_vA.z + 0.06f;
+        k_vD = k_vA;
+        Vector3 Rotationk_vD = new Vector3(1, 0, 0);
+        Rotationk_vD = Quaternion.AngleAxis(-facingAngleSide, Vector3.up) * Rotationk_vD;
+        k_vD += Rotationk_vD;
 
         // Aux points
         k_vX = k_vD + Vector3.forward;
@@ -100,12 +103,18 @@ public class CollisionVisualizer : MonoBehaviour
         k_vW.z = 0.0f;
 
         k_vY = k_vB;
-        k_vY.x += 1.0f;
-        k_vY.z += 1.0f;
+        Vector3 Rotationk_vY = new Vector3(-1, 0, 0);
+        Rotationk_vY = Quaternion.AngleAxis(facingAngleCorner, Vector3.up) * Rotationk_vY;
+        k_vY += Rotationk_vY;
+        // k_vY.x += 0.781f;
+        // k_vY.z += 1f;
 
         k_vZ = k_vC;
-        k_vZ.x += 1.0f;
-        k_vZ.z += 1.0f;
+        Vector3 Rotationk_vZ = new Vector3(0, 0, -1);
+        Rotationk_vZ = Quaternion.AngleAxis(-facingAngleCorner, Vector3.up) * Rotationk_vZ;
+        k_vZ += Rotationk_vZ;
+        // k_vZ.x += 1.0f;
+        // k_vZ.z += 0.781f;
 
         // Normals
         k_vA_vD = k_vD - k_vA;
@@ -118,7 +127,11 @@ public class CollisionVisualizer : MonoBehaviour
         k_vB_vY_normal.x = -k_vB_vY.z;
         k_vB_vY_normal.z = k_vB_vY.x;
 
-        k_vC_vZ_normal = -k_vB_vY_normal;
+        //set up angle properly instead of just mirroring, for if it's not just 45 degrees
+        k_vC_vZ = k_vC - k_vZ;
+        k_vC_vZ = k_vC_vZ.normalized;
+        k_vC_vZ_normal.x = k_vC_vZ.z;
+        k_vC_vZ_normal.z = -k_vC_vZ.x;
 
         // Minkowski difference
         k_pN = k_vA;
@@ -216,15 +229,19 @@ public class CollisionVisualizer : MonoBehaviour
 
         _phy_table_init();
 
+        //side pockets
         drawPlane(k_pT, k_pK, Color.yellow);
         drawPlane(k_pK, k_pL, Color.yellow);
+
         drawPlane(k_pL, k_pM, Color.yellow);
         drawPlane(k_pM, k_pN, Color.yellow);
         drawPlane(k_pN, k_pO, Color.yellow);
         drawPlane(k_pO, k_pP, Color.yellow);
-        drawPlane(k_pP, k_pU, Color.yellow);
 
+        //corner pockets
+        drawPlane(k_pP, k_pU, Color.yellow);
         drawPlane(k_pV, k_pQ, Color.yellow);
+
         drawPlane(k_pQ, k_pR, Color.yellow);
         drawPlane(k_pR, k_pS, Color.yellow);
 
@@ -491,7 +508,17 @@ public class CollisionVisualizer : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        // _phy_ball_table_new();
+        tableWidth = (float)table.GetProgramVariable("k_TABLE_WIDTH");
+        tableHeight = (float)table.GetProgramVariable("k_TABLE_HEIGHT");
+        pocketRadius = (float)table.GetProgramVariable("k_POCKET_RADIUS");
+        cushionRadius = (float)table.GetProgramVariable("k_CUSHION_RADIUS");
+        innerRadius = (float)table.GetProgramVariable("k_INNER_RADIUS");
+        cornerPocket = (Vector3)table.GetProgramVariable("k_vE"); // k_vE
+        sidePocket = (Vector3)table.GetProgramVariable("k_vF"); // k_vF
+        facingAngleCorner = (float)table.GetProgramVariable("k_FACING_ANGLE_CORNER");
+        facingAngleSide = (float)table.GetProgramVariable("k_FACING_ANGLE_SIDE");
+
+        _phy_ball_table_new();
 
         calculateConstants();
         drawPhysics();
@@ -513,38 +540,59 @@ public class CollisionVisualizer : MonoBehaviour
 
     private void calculateConstants()
     {
-        sidePocket = new Vector3(0, 0, sidePocketPosition);
-        cornerPocket = new Vector3(cornerPocketPosition.x, 0, cornerPocketPosition.y);
+        // sidePocket = new Vector3(0, 0, sidePocketPosition);
+        // cornerPocket = new Vector3(cornerPocketPosition.x, 0, cornerPocketPosition.y);
 
         sidePocketRadius = inchToM(sidePocketDiameter / 2f);
-        cornerPocketRadius = inchToM(sidePocketDiameter / 2f);
+        cornerPocketRadius = inchToM(cornerPocketDiameter / 2f);
 
         float sidePocketMouthHalf = inchToM(sidePocketMouth);
-        float cornerPocketMouthHalf = inchToM(cornerPocketMouth);
+        // float cornerPocketMouthHalf = inchToM(cornerPocketMouth);
 
         sideStart = new Vector3(sidePocketMouthHalf, 0, tableHeight);
         sideEnd = new Vector3(tableWidth - cornerOffset, 0, tableHeight);
         endStart = new Vector3(tableWidth, 0, 0);
         endEnd = new Vector3(tableWidth, 0, tableHeight - cornerOffset);
 
-        sideFacingStart = new Vector3(0, 0, -Mathf.Tan(Mathf.Deg2Rad * (180 - sideFacingAngle)) * (0 - sideStart.x) + tableHeight);
-        cornerFacingSide = new Vector3(((cornerPocket.z + cornerPocketRadius) - sideEnd.z) / Mathf.Tan(Mathf.Deg2Rad * (180 - cornerFacingAngle)) + sideEnd.x, 0, (cornerPocket.z + cornerPocketRadius));
-        cornerFacingEnd = new Vector3(cornerPocket.x + cornerPocketRadius, 0, Mathf.Tan(Mathf.Deg2Rad * (cornerFacingAngle - 90)) * (cornerPocket.x + cornerPocketRadius - endEnd.x) + endEnd.z);
+        // sideFacingStart = new Vector3(0, 0, -Mathf.Tan(Mathf.Deg2Rad * (180 - sideFacingAngle)) * (0 - sideStart.x) + tableHeight);
+        // cornerFacingSide = new Vector3(((cornerPocket.z + cornerPocketRadius) - sideEnd.z) / Mathf.Tan(Mathf.Deg2Rad * (180 - cornerFacingAngle)) + sideEnd.x, 0, (cornerPocket.z + cornerPocketRadius));
+        // cornerFacingEnd = new Vector3(cornerPocket.x + cornerPocketRadius, 0, Mathf.Tan(Mathf.Deg2Rad * (cornerFacingAngle - 90)) * (cornerPocket.x + cornerPocketRadius - endEnd.x) + endEnd.z);
     }
 
     private void drawPhysics()
     {
         // draw pockets
-        drawCylinder(sidePocket, sidePocketRadius, Color.red);
-        drawCylinder(cornerPocket, cornerPocketRadius, Color.red);
+        if (DrawUnused)
+        {
+            drawCylinder(sidePocket, sidePocketRadius, Color.red);
+            drawCylinder(cornerPocket, cornerPocketRadius, Color.red);
+        }
 
         // draw boundaries
-        drawPlane(sideFacingStart, sideStart, Color.green);
-        drawPlane(sideStart, sideEnd, Color.yellow);
+        if (DrawUnused)
+        {
+            sideFacingStart = sideStart;
+            Vector3 Rotationk_sideStart = new Vector3(1, 0, 0);
+            Rotationk_sideStart = Quaternion.AngleAxis(-facingAngleSide, Vector3.up) * Rotationk_sideStart;
+            sideFacingStart += Rotationk_sideStart;
+            drawPlane(sideFacingStart, sideStart, Color.green);
+            drawPlane(sideStart, sideEnd, Color.yellow);
+        }
+        cornerFacingSide = sideEnd;
+        Vector3 Rotationk_sideEnd = new Vector3(-1, 0, 0);
+        Rotationk_sideEnd = Quaternion.AngleAxis(facingAngleCorner, Vector3.up) * Rotationk_sideEnd;
+        cornerFacingSide += Rotationk_sideEnd;
         drawPlane(sideEnd, cornerFacingSide, Color.green);
 
-        drawPlane(endStart, endEnd, Color.yellow);
-        drawPlane(endEnd, cornerFacingEnd, Color.green);
+        if (DrawUnused)
+        {
+            drawPlane(endStart, endEnd, Color.yellow);
+            cornerFacingEnd = endEnd;
+            Vector3 Rotationk_endEnd = new Vector3(0, 0, -1);
+            Rotationk_endEnd = Quaternion.AngleAxis(-facingAngleCorner, Vector3.up) * Rotationk_endEnd;
+            cornerFacingEnd += Rotationk_endEnd;
+            drawPlane(endEnd, cornerFacingEnd, Color.green);
+        }
     }
 
     private void checkCushionCollision()
