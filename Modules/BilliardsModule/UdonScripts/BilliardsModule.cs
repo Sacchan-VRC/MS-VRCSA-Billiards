@@ -26,6 +26,8 @@ public class BilliardsModule : UdonSharpBehaviour
     [NonSerialized] public float k_CUSHION_RADIUS; // The roundess of colliders
     [NonSerialized] public float k_POCKET_RADIUS; // Full diameter of pockets
     [NonSerialized] public float k_INNER_RADIUS; // Pocket 'hitbox' cylinder
+    [NonSerialized] public float k_FACING_ANGLE_CORNER; // Pocket 'hitbox' cylinder
+    [NonSerialized] public float k_FACING_ANGLE_SIDE; // Pocket 'hitbox' cylinder
     [NonSerialized] public Vector3 k_vE; // corner pocket data
     [NonSerialized] public Vector3 k_vF; // side pocket data
     [NonSerialized] public GameObject[] pockets;
@@ -1549,6 +1551,8 @@ public class BilliardsModule : UdonSharpBehaviour
         k_CUSHION_RADIUS = data.cushionRadius;
         k_POCKET_RADIUS = data.pocketRadius;
         k_INNER_RADIUS = data.innerRadius;
+        k_FACING_ANGLE_CORNER = data.facingAngleCorner;
+        k_FACING_ANGLE_SIDE = data.facingAngleSide;
         k_vE = data.cornerPocket;
         k_vF = data.sidePocket;
         pockets = data.pockets;
