@@ -157,7 +157,7 @@ public class BilliardsModule : UdonSharpBehaviour
     private int LOG_LEN = 0;
     private int LOG_PTR = 0;
     private string[] LOG_LINES = new string[32];
-    
+
     // cached copies of networked data, may be different from local game state
     [NonSerialized] public string[] playerNamesCached = new string[4];
 
@@ -170,6 +170,8 @@ public class BilliardsModule : UdonSharpBehaviour
     [NonSerialized] public bool noGuidelineLocal;
     [NonSerialized] public bool noLockingLocal;
     [NonSerialized] public uint ballsPocketedLocal;
+    [NonSerialized] public bool ballBounced_9Ball;//tracks if any ball has touched the cushion after initial ball collision
+    [NonSerialized] public bool ballsTouched_9Ball;//true if any balls have hit each other in a turn
     [NonSerialized] public uint teamIdLocal;
     [NonSerialized] public uint fourBallCueBallLocal;
     [NonSerialized] public bool isTableOpenLocal;
@@ -487,6 +489,9 @@ public class BilliardsModule : UdonSharpBehaviour
     {
         _LogYes("starting game");
 
+        ballBounced_9Ball = false;
+        ballsTouched_9Ball = false;
+
         networkingManager._OnGameStart(initialBallsPocketed[gameModeLocal], initialPositions[gameModeLocal]);
     }
 
@@ -516,7 +521,7 @@ public class BilliardsModule : UdonSharpBehaviour
         if (localPlayerId == -1) return;
 
         _LogInfo("leaving lobby");
-        
+
         networkingManager._OnLeaveLobby(localPlayerId);
         playerNamesLocal[localPlayerId] = "";
         localPlayerId = -1;
@@ -766,7 +771,7 @@ public class BilliardsModule : UdonSharpBehaviour
             playerDetails[i] = playerNamesSynced[i] == "" ? "none" : playerNamesSynced[i];
         }
         _LogInfo($"onRemotePlayersChanged newPlayers={string.Join(",", playerDetails)}");
-        
+
         Array.Copy(playerNamesSynced, playerNamesLocal, playerNamesLocal.Length);
 
         localPlayerId = Array.IndexOf(playerNamesLocal, Networking.LocalPlayer.displayName);
@@ -1159,6 +1164,11 @@ public class BilliardsModule : UdonSharpBehaviour
     #endregion
 
     #region PhysicsEngineCallbacks
+    public void _TriggerBounceCushion(int Id, Vector3 N)
+    {
+        if (ballsTouched_9Ball)
+        { ballBounced_9Ball = true; }
+    }
     public void _TriggerCollision(int srcId, int dstId)
     {
         if (dstId < srcId)
@@ -1222,6 +1232,7 @@ public class BilliardsModule : UdonSharpBehaviour
                 }
                 break;
         }
+        ballsTouched_9Ball = true;
     }
 
     public void _TriggerPocketBall(int id)
@@ -1349,18 +1360,31 @@ public class BilliardsModule : UdonSharpBehaviour
 
                 // Rule #2: Pocketing cueball, is a foul
 
-                // Win condition: Pocket 9 ball ( at anytime )
-                winCondition = (ballsPocketedLocal & 0x200u) == 0x200u;
-
-                // this video is hard to follow so im just gonna guess this is right
+                // Win condition: Pocket 9 ball ( and do not foul )
                 isObjectiveSink = (ballsPocketedLocal & 0x3FEu) > (ballsPocketedOrig & 0x3FEu);
 
                 isOpponentSink = false;
                 deferLossCondition = false;
 
-                foulCondition = isWrongHit || isScratch;
+                foulCondition = isWrongHit || isScratch || (!ballBounced_9Ball && !isObjectiveSink);
 
-                // TODO: Implement rail contact requirement
+                winCondition = ((ballsPocketedLocal & 0x200u) == 0x200u) && !foulCondition;
+
+                bool is9Sink = (ballsPocketedLocal & 0x200u) == 0x200u;
+
+                if (is9Sink && isPracticeMode && !winCondition)
+                {
+                    is9Sink = false;
+                    ballsPocketedLocal = ballsPocketedLocal & ~(0x200u);
+                    ballsP[9] = new Vector3((k_TABLE_WIDTH * .5f)/* 2nd diamond */, 0, 0);
+                    //keep moving ball down the table until it's not touching any other balls
+                    while (CheckIfBallTouchingBall(9))
+                    {
+                        ballsP[9] += new Vector3(k_BALL_RADIUS * .05f, 0, 0);
+                    }
+                }
+                ballBounced_9Ball = false;
+                ballsTouched_9Ball = false;
             }
             else /*if (is4Ball)*/
             {
@@ -1408,6 +1432,20 @@ public class BilliardsModule : UdonSharpBehaviour
                 onLocalTurnPass();
             }
         }
+    }
+    private bool CheckIfBallTouchingBall(int Input)
+    {
+        float ballDiameter = k_BALL_RADIUS * 2f;
+        float k_BALL_DSQR = ballDiameter * ballDiameter;
+        for (int i = 1; i < 16; i++)
+        {
+            if (i == Input) { continue; }
+            if ((ballsP[Input] - ballsP[i]).sqrMagnitude < k_BALL_DSQR)
+            {
+                return true;
+            }
+        }
+        return false;
     }
     #endregion
 
