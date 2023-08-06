@@ -181,7 +181,7 @@ public class GraphicsManager : UdonSharpBehaviour
     private void tickIntroBall(Transform ball, float offset)
     {
         float localTime = Mathf.Clamp(introAnimationTime - offset, 0.0f, 1.0f);
-        float localTimeInverse = 1.0f - localTime;
+        float localTimeInverse = (1.0f - localTime) * (table.k_BALL_DIAMETRE / BilliardsModule.ballMeshDiameter);
 
         Vector3 temp = ball.localPosition;
         temp.y = Mathf.Abs(Mathf.Cos(localTime * 6.29f)) * localTime * 0.5f;
@@ -640,6 +640,13 @@ int uniform_cue_colour;
             table.balls[14].SetActive(true);
             table.balls[15].SetActive(true);
         }
+        else if (table.isSnooker6Red)
+        {
+            for (int i = 0; i < 13; i++)
+                table.balls[i].SetActive(true);
+            for (int i = 13; i < 16; i++)
+                table.balls[i].SetActive(false);
+        }
         else
         {
             for (int i = 0; i < 16; i++)
@@ -714,6 +721,17 @@ int uniform_cue_colour;
 
             ballMaterial.SetTexture("_MainTex", table.textureSets[1]);
             pClothColour = table.k_fabricColour_4ball;
+        }
+        else if (table.isSnooker6Red)//TODO this is just a copy of 8ball but with a different texture set, what else needs to change?
+        {
+            pColourErr = table.k_colour_foul;
+            pColour2 = table.k_colour_default;
+
+            pColour0 = table.k_teamColour_spots;
+            pColour1 = table.k_teamColour_stripes;
+
+            ballMaterial.SetTexture("_MainTex", table.textureSets[2]);
+            pClothColour = table.k_fabricColour_8ball;
         }
         else // Standard 8 ball derivatives
         {
