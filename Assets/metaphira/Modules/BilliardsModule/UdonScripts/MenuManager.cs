@@ -258,6 +258,10 @@ public class MenuManager : UdonSharpBehaviour
             {
                 table._TriggerGameModeChanged(3);
             }
+            else if (button.name == "Snooker6Red")
+            {
+                table._TriggerGameModeChanged(4);
+            }
             else if (button.name == "TeamsToggle")
             {
                 table._TriggerTeamsChanged(button.toggleState);

@@ -60,7 +60,7 @@ public class NetworkingManager : UdonSharpBehaviour
     // the current turn state (0 is shooting, 1 is simulating, 2 is ran out of time (auto transition to 0), 3 is selecting 4 ball mode)
     [UdonSynced] [NonSerialized] public byte turnStateSynced;
 
-    // the current gamemode (0 is 8ball, 1 is 9ball, 2 is jp4b, 3 is kr4b)
+    // the current gamemode (0 is 8ball, 1 is 9ball, 2 is jp4b, 3 is kr4b, 4 is Snooker6Red)
     [UdonSynced] [NonSerialized] public byte gameModeSynced;
 
     // the timer for the current game in seconds

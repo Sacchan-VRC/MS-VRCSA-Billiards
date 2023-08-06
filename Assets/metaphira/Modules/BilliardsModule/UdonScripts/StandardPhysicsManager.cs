@@ -14,16 +14,16 @@ public class StandardPhysicsManager : UdonSharpBehaviour
     private const float k_MAX_DELTA = 0.1f; // max time to process per frame on pc (~8)
 #endif
     private const float k_FIXED_TIME_STEP = 0.0125f; // time step in seconds per iteration
-    private const float k_BALL_DSQRPE = 0.003598f;            // ball diameter squared plus epsilon
-    private const float k_BALL_DIAMETREPE = 0.06001f;                // width of ball
-    private const float k_BALL_DIAMETREPESQ = 0.0036012001f;                // width of ball
-    private const float k_BALL_DIAMETRE = 0.06f;                // width of ball
-    private const float k_BALL_RADIUS = 0.03f;
-    private const float k_BALL_1OR = 33.3333333333f;       // 1 over ball radius
+    private float k_BALL_DSQRPE = 0.003598f;            // ball diameter squared plus epsilon // this is actually minus epsilon?
+    private float k_BALL_DIAMETREPE = 0.06001f;                // width of ball
+    private float k_BALL_DIAMETREPESQ = 0.0036012001f;                 // width of ball
+    private float k_BALL_DIAMETRE = 0.06f;                // width of ball
+    private float k_BALL_RADIUS = 0.03f;
+    private float k_BALL_1OR = 33.3333333333f;       // 1 over ball radius
     private const float k_GRAVITY = 9.80665f;             // Earths gravitational acceleration
-    private const float k_BALL_DSQR = 0.0036f;              // ball diameter squared
-    private const float k_BALL_MASS = 0.16f;                // Weight of ball in kg
-    private const float k_BALL_RSQR = 0.0009f;              // ball radius squared
+    private float k_BALL_DSQR = 0.0036f;              // ball diameter squared
+    private float k_BALL_MASS = 0.16f;                // Weight of ball in kg
+    private float k_BALL_RSQR = 0.0009f;              // ball radius squared
     const float k_F_SLIDE = 0.2f;                 // Friction coefficient of sliding
     const float k_F_ROLL = 0.01f;                // Friction coefficient of rolling
 
@@ -216,7 +216,7 @@ public class StandardPhysicsManager : UdonSharpBehaviour
                     cue_fdir = Mathf.Atan2(cue_shotdir.z, cue_shotdir.x);
 
                     // Update the prediction line direction
-                    table.guideline.transform.localPosition = balls_P[0];
+                    table.guideline.transform.localPosition = balls_P[0] - table.ballsParentHeightOffset;
                     table.guideline.transform.localEulerAngles = new Vector3(0.0f, -cue_fdir * Mathf.Rad2Deg, 0.0f);
                 }
                 else
@@ -779,6 +779,17 @@ public class StandardPhysicsManager : UdonSharpBehaviour
         k_CUSHION_RADIUS = table.k_CUSHION_RADIUS;
         k_FACING_ANGLE_CORNER = table.k_FACING_ANGLE_CORNER;
         k_FACING_ANGLE_SIDE = table.k_FACING_ANGLE_SIDE;
+        k_BALL_RADIUS = table.k_BALL_RADIUS;
+        k_BALL_DIAMETRE = k_BALL_RADIUS * 2;
+        float epsilon = 0.0000001f; // ??
+        k_BALL_DSQRPE = k_BALL_DIAMETRE * k_BALL_DIAMETRE - epsilon;
+        k_BALL_DIAMETREPE = k_BALL_DIAMETRE + epsilon;
+        k_BALL_DIAMETREPESQ = k_BALL_DIAMETREPE * k_BALL_DIAMETREPE;
+        k_BALL_1OR = 1 / k_BALL_RADIUS;
+        k_BALL_DSQR = k_BALL_DIAMETRE * k_BALL_DIAMETRE;
+        k_BALL_RSQR = k_BALL_RADIUS * k_BALL_RADIUS;
+        k_BALL_MASS = table.k_BALL_MASS;
+        k_CONTACT_POINT = new Vector3(0.0f, -k_BALL_RADIUS, 0.0f);
 
         for (int i = 0; i < table.pockets.Length; i++)
         {
@@ -836,7 +847,7 @@ public class StandardPhysicsManager : UdonSharpBehaviour
         //set up angle properly instead of just mirroring, required for facing angle
         k_vC_vZ = k_vC - k_vZ;
         k_vC_vZ = k_vC_vZ.normalized;
-        k_vC_vZ_normal.x =  k_vC_vZ.z;
+        k_vC_vZ_normal.x = k_vC_vZ.z;
         k_vC_vZ_normal.z = -k_vC_vZ.x;
 
         // Minkowski difference

@@ -28,6 +28,11 @@ public class BilliardsModule : UdonSharpBehaviour
     [NonSerialized] public float k_INNER_RADIUS; // Pocket 'hitbox' cylinder
     [NonSerialized] public float k_FACING_ANGLE_CORNER; // Pocket 'hitbox' cylinder
     [NonSerialized] public float k_FACING_ANGLE_SIDE; // Pocket 'hitbox' cylinder
+    [NonSerialized] public float K_BAULK_LINE; // Pocket 'hitbox' cylinder
+    [NonSerialized] public float k_SEMICIRCLERADIUS; // Pocket 'hitbox' cylinder
+    [NonSerialized] public float k_BALL_DIAMETRE; // Pocket 'hitbox' cylinder
+    [NonSerialized] public float k_BALL_RADIUS; // Pocket 'hitbox' cylinder
+    [NonSerialized] public float k_BALL_MASS; // Pocket 'hitbox' cylinder
     [NonSerialized] public Vector3 k_vE; // corner pocket data
     [NonSerialized] public Vector3 k_vF; // side pocket data
     [NonSerialized] public GameObject[] pockets;
@@ -74,17 +79,14 @@ public class BilliardsModule : UdonSharpBehaviour
     // globals
     [NonSerialized] public AudioSource aud_main;
     [NonSerialized] public UdonBehaviour callbacks;
-    private Vector3[][] initialPositions = new Vector3[4][];
-    private uint[] initialBallsPocketed = new uint[4];
+    private Vector3[][] initialPositions = new Vector3[5][];
+    private uint[] initialBallsPocketed = new uint[5];
 
     // constants
-    private const float k_BALL_RADIUS = 0.03f;
-    private const float k_BALL_DIAMETRE = 0.06f;
-    private const float k_BALL_PL_X = 0.03f; // break placement X
-    private const float k_BALL_PL_Y = 0.05196152422f; // sin(60) * 0.06
     private const float k_RANDOMIZE_F = 0.0001f;
-    private const float k_SPOT_POSITION_X = 0.5334f; // First X position of the racked balls
+    private float k_SPOT_POSITION_X = 0.5334f; // First X position of the racked balls
     private const float k_SPOT_CAROM_X = 0.8001f; // Spot position for carom mode
+    private readonly int[] break_order_snooker = { 4, 6, 9, 10, 11, 12, };
     private readonly int[] break_order_8ball = { 9, 2, 10, 11, 1, 3, 4, 12, 5, 13, 14, 6, 15, 7, 8 };
     private readonly int[] break_order_9ball = { 2, 3, 4, 5, 9, 6, 7, 8, 1 };
     private readonly int[] break_rows_9ball = { 0, 1, 2, 1, 0 };
@@ -228,24 +230,28 @@ public class BilliardsModule : UdonSharpBehaviour
     [NonSerialized] public bool is4Ball = false;
     [NonSerialized] public bool isJp4Ball = false;
     [NonSerialized] public bool isKr4Ball = false;
+    [NonSerialized] public bool isSnooker6Red = false;
     [NonSerialized] public bool isPracticeMode = false;
     [NonSerialized] public CameraOverrideModule cameraOverrideModule;
     public string[] moderators = new string[0];
-
+    [NonSerialized] public const float ballMeshDiameter = 0.06f;//the ball's size as modeled in the mesh file
+    private float ballsParentStartHeight;
+    [NonSerialized] public Vector3 ballsParentHeightOffset;
     private void OnEnable()
     {
+        ballsParentStartHeight = balls[0].transform.parent.localPosition.y;
 
         _LogInfo("initializing billiards module");
 
         cameraOverrideModule = (CameraOverrideModule)_GetModule(nameof(CameraOverrideModule));
-
-        initializeRack();
 
         resetCachedData();
 
         currentPhysicsManager = standardPhysicsManager;
 
         setTableModel(0, false);
+
+        initializeRack();
 
         aud_main = this.GetComponent<AudioSource>();
 
@@ -725,6 +731,7 @@ public class BilliardsModule : UdonSharpBehaviour
             is9Ball = gameModeLocal == 1u;
             isJp4Ball = gameModeLocal == 2u;
             isKr4Ball = gameModeLocal == 3u;
+            isSnooker6Red = gameModeLocal == 4u;
             is4Ball = isJp4Ball || isKr4Ball;
 
             menuManager._RefreshGameMode();
@@ -1185,6 +1192,7 @@ public class BilliardsModule : UdonSharpBehaviour
         {
             case 0:
             case 1:
+                ballsTouched_9Ball = true;
                 if (firstHit == 0) firstHit = dstId;
                 break;
             case 2:
@@ -1233,8 +1241,11 @@ public class BilliardsModule : UdonSharpBehaviour
                     break;
                 }
                 break;
+            case 4:
+                //Snooker
+                if (firstHit == 0) firstHit = dstId;
+                break;
         }
-        ballsTouched_9Ball = true;
     }
 
     public void _TriggerPocketBall(int id)
@@ -1380,7 +1391,7 @@ public class BilliardsModule : UdonSharpBehaviour
                     ballsPocketedLocal = ballsPocketedLocal & ~(0x200u);
                     ballsP[9] = new Vector3((k_TABLE_WIDTH * .5f)/* 2nd diamond */, 0, 0);
                     //keep moving ball down the table until it's not touching any other balls
-                    while (CheckIfBallTouchingBall(9))
+                    while (CheckIfBallTouchingBall(9) > 0)
                     {
                         ballsP[9] += new Vector3(k_BALL_RADIUS * .05f, 0, 0);
                     }
@@ -1388,7 +1399,7 @@ public class BilliardsModule : UdonSharpBehaviour
                 ballBounced_9Ball = false;
                 ballsTouched_9Ball = false;
             }
-            else /*if (is4Ball)*/
+            else if (is4Ball)
             {
                 isObjectiveSink = fbMadePoint;
                 isOpponentSink = fbMadeFoul;
@@ -1396,6 +1407,16 @@ public class BilliardsModule : UdonSharpBehaviour
                 deferLossCondition = false;
 
                 winCondition = fbScoresLocal[teamIdLocal] >= 10;
+            }
+            else /* if (isSnooker) */
+            {
+                bool isWrongHit = false; //hitting colored ball when you should hit red ball or vice versa
+                isOpponentSink = false;
+                isObjectiveSink = false;
+                deferLossCondition = false;
+                foulCondition = false;
+
+                winCondition = false;
             }
 
             networkingManager._OnSimulationEnded(ballsP, ballsPocketedLocal, fbScoresLocal);
@@ -1435,7 +1456,7 @@ public class BilliardsModule : UdonSharpBehaviour
             }
         }
     }
-    private bool CheckIfBallTouchingBall(int Input)
+    private int CheckIfBallTouchingBall(int Input)
     {
         float ballDiameter = k_BALL_RADIUS * 2f;
         float k_BALL_DSQR = ballDiameter * ballDiameter;
@@ -1444,17 +1465,19 @@ public class BilliardsModule : UdonSharpBehaviour
             if (i == Input) { continue; }
             if ((ballsP[Input] - ballsP[i]).sqrMagnitude < k_BALL_DSQR)
             {
-                return true;
+                return i;
             }
         }
-        return false;
+        return -1;
     }
     #endregion
 
     #region GameLogic
     private void initializeRack()
     {
-        for (int i = 0; i < 4; i++)
+        float k_BALL_PL_X = k_BALL_RADIUS; // break placement X
+        float k_BALL_PL_Y = Mathf.Sin(60 * Mathf.Deg2Rad) * k_BALL_DIAMETRE; // break placement Y
+        for (int i = 0; i < 5; i++)
         {
             initialPositions[i] = new Vector3[16];
             for (int j = 0; j < 16; j++)
@@ -1498,6 +1521,55 @@ public class BilliardsModule : UdonSharpBehaviour
                        k_SPOT_POSITION_X + i * k_BALL_PL_Y + UnityEngine.Random.Range(-k_RANDOMIZE_F, k_RANDOMIZE_F),
                        0.0f,
                        (-rown + j * 2) * k_BALL_PL_X + UnityEngine.Random.Range(-k_RANDOMIZE_F, k_RANDOMIZE_F)
+                    );
+                }
+            }
+        }
+
+        {
+            // Snooker
+            initialBallsPocketed[4] = 0xE000u;
+
+            initialPositions[4][1] = new Vector3//black (TODO: position correctly)
+                    (
+                       k_SPOT_POSITION_X * 2f * .8f,
+                       0f,
+                       0f
+                    );
+            initialPositions[4][5] = new Vector3//pink
+                    (
+                       k_SPOT_POSITION_X - k_BALL_RADIUS * 2 * 1.2f,
+                       0f,
+                       0
+                    );
+            initialPositions[4][2] = new Vector3//yellow
+                    (
+                       -k_TABLE_WIDTH + K_BAULK_LINE,
+                       0f,
+                       -k_SEMICIRCLERADIUS
+                    );
+            initialPositions[4][7] = new Vector3//green
+                    (
+                       -k_TABLE_WIDTH + K_BAULK_LINE,
+                       0f,
+                       k_SEMICIRCLERADIUS
+                    );
+            initialPositions[4][8] = new Vector3//brown
+                    (
+                       -k_TABLE_WIDTH + K_BAULK_LINE,
+                       0f,
+                       0f
+                    );
+            //triangle
+            for (int i = 0, k = 0; i < 3; i++)// change 3 to 5 for 15 balls (rows)
+            {
+                for (int j = 0; j <= i; j++)
+                {
+                    initialPositions[4][break_order_snooker[k++]] = new Vector3
+                    (
+                       k_SPOT_POSITION_X + i * k_BALL_PL_Y,
+                       0.0f,
+                       (-i + j * 2) * k_BALL_PL_X
                     );
                 }
             }
@@ -1553,9 +1625,24 @@ public class BilliardsModule : UdonSharpBehaviour
         k_INNER_RADIUS = data.innerRadius;
         k_FACING_ANGLE_CORNER = data.facingAngleCorner;
         k_FACING_ANGLE_SIDE = data.facingAngleSide;
+        K_BAULK_LINE = data.baulkLine;
+        k_SEMICIRCLERADIUS = data.semiCircleRadius;
+        k_BALL_RADIUS = data.ballRadius;
+        k_BALL_DIAMETRE = k_BALL_RADIUS * 2;
+        k_BALL_MASS = data.ballMass;
+        k_SPOT_POSITION_X = data.rackTrianglePosition;
         k_vE = data.cornerPocket;
         k_vF = data.sidePocket;
         pockets = data.pockets;
+
+        float newscale = k_BALL_DIAMETRE / ballMeshDiameter;
+        for (int i = 0; i < balls.Length; i++)
+        {
+            balls[i].transform.localScale = new Vector3(newscale, newscale, newscale);
+        }
+        ballsParentHeightOffset = new Vector3(0, -ballMeshDiameter * .5f + k_BALL_RADIUS, 0);
+        balls[0].transform.parent.localPosition = new Vector3(0, ballsParentStartHeight, 0);
+        balls[0].transform.parent.localPosition += ballsParentHeightOffset;
 
         Transform table_base = _GetTableBase().transform;
         auto_pocketblockers = table_base.Find(".4BALL_FILL").gameObject;
