@@ -23,5 +23,6 @@ public class ModelData : UdonSharpBehaviour
     [SerializeField] public GameObject[] pockets;
     [Header("Snooker:")]
     [SerializeField] public float baulkLine = 0.7367f;
+    [SerializeField] public float blackSpotFromR = 0.324f;
     [SerializeField] public float semiCircleRadius = 0.2921f;
 }
