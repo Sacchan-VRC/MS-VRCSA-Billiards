@@ -1137,6 +1137,7 @@ public class BilliardsModule : UdonSharpBehaviour
         thirdHit = 0;
         fbMadePoint = false;
         fbMadeFoul = false;
+        ballBounced_9Ball = false;
         ballsPocketedOrig = ballsPocketedLocal;
         if (Networking.LocalPlayer.displayName == simulationOwner)
         {
@@ -1186,7 +1187,7 @@ public class BilliardsModule : UdonSharpBehaviour
     #region PhysicsEngineCallbacks
     public void _TriggerBounceCushion(int Id, Vector3 N)
     {
-        if (firstHit == 0)
+        if (firstHit != 0)
         { ballBounced_9Ball = true; }
     }
     public void _TriggerCollision(int srcId, int dstId)
