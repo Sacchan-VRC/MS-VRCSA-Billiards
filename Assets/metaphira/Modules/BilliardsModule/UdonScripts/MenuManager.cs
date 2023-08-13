@@ -19,6 +19,7 @@ public class MenuManager : UdonSharpBehaviour
     [SerializeField] public UIButton button8Ball;
     [SerializeField] public UIButton button9Ball;
     [SerializeField] public UIButton button4Ball;
+    [SerializeField] public UIButton buttonSnooker;
     [SerializeField] public UIButton button4BallJP;
     [SerializeField] public UIButton button4BallKR;
     [SerializeField] public UIButton buttonTimerLeft;
@@ -41,7 +42,7 @@ public class MenuManager : UdonSharpBehaviour
     public void _Init(BilliardsModule table_)
     {
         table = table_;
-        
+
         _RefreshTimer();
         _RefreshToggleSettings();
         _RefreshGameMode();
@@ -51,7 +52,7 @@ public class MenuManager : UdonSharpBehaviour
     public void _Tick()
     {
         if (table.gameLive) return;
-        
+
         // animate team cover
         teamCover.transform.localScale = Vector3.Lerp(teamCover.transform.localScale, table.teamsLocal ? new Vector3(0, 1, 1) : new Vector3(1, 1, 1), Time.deltaTime * 5.0f);
 
@@ -70,7 +71,7 @@ public class MenuManager : UdonSharpBehaviour
             table.aud_main.PlayOneShot(table.snd_spinstop);
         }
     }
-    
+
     // View gamemode changes
     public void _RefreshGameMode()
     {
@@ -81,6 +82,7 @@ public class MenuManager : UdonSharpBehaviour
         button4Ball._ResetPushButton();
         button4BallJP._ResetPushButton();
         button4BallKR._ResetPushButton();
+        if (buttonSnooker) { buttonSnooker._ResetPushButton(); }
 
         switch (menuGameMode)
         {
@@ -105,6 +107,11 @@ public class MenuManager : UdonSharpBehaviour
                 button4BallKR._SetButtonPushed();
                 button4BallJP.gameObject.SetActive(true);
                 button4BallKR.gameObject.SetActive(true);
+                break;
+            case 4:
+                button4BallKR.gameObject.SetActive(false);
+                button4BallJP.gameObject.SetActive(false);
+                if (buttonSnooker) { buttonSnooker._SetButtonPushed(); }
                 break;
         }
     }
@@ -202,6 +209,7 @@ public class MenuManager : UdonSharpBehaviour
         buttonLockingToggle.disableInteractions = isNormalPlayer;
         buttonTimerLeft.disableInteractions = isNormalPlayer;
         buttonTimerRight.disableInteractions = isNormalPlayer;
+        if (buttonSnooker) { buttonSnooker.disableInteractions = isNormalPlayer; }
 
         refreshJoinButtons();
         _RefreshToggleSettings();
@@ -294,7 +302,7 @@ public class MenuManager : UdonSharpBehaviour
             }
         }
     }
-    
+
     private void joinTeam(int id)
     {
         // Create new lobby
