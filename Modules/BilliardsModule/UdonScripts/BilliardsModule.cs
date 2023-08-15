@@ -1336,7 +1336,7 @@ public class BilliardsModule : UdonSharpBehaviour
             ballsPocketedLocal = ballsPocketedLocal & ~(0x1U);
             if (isScratch) ballsP[0] = Vector3.zero;
             //keep moving ball down the table until it's not touching any other balls
-            moveBallUntilNotTouching(0, Vector3.right * k_BALL_RADIUS * .051f);
+            moveBallInDirUntilNotTouching(0, Vector3.right * k_BALL_RADIUS * .051f);
 
             // Append black to mask if set is done
             if (isSetComplete)
@@ -1401,7 +1401,7 @@ public class BilliardsModule : UdonSharpBehaviour
                     ballsPocketedLocal = ballsPocketedLocal & ~(0x200u);
                     ballsP[9] = new Vector3((k_TABLE_WIDTH * .5f)/* 2nd diamond */, 0, 0);
                     //keep moving ball down the table until it's not touching any other balls
-                    moveBallUntilNotTouching(9, Vector3.right * .051f);
+                    moveBallInDirUntilNotTouching(9, Vector3.right * .051f);
                 }
                 ballBounced_9Ball = false;
             }
@@ -1586,6 +1586,7 @@ public class BilliardsModule : UdonSharpBehaviour
         //replace colored ball on its own spot
         ballsP[Ball] = initialPositions[4][Ball];
         //check if it's touching another ball
+        int blockingBall = CheckIfBallTouchingBall(Ball);
         if (CheckIfBallTouchingBall(Ball) < 0)
         { return; }
         //if it's touching another ball, place it on other ball spots, starting at black, and moving down
@@ -1598,11 +1599,21 @@ public class BilliardsModule : UdonSharpBehaviour
                 return;
             }
         }
-        //if it still can't find a free spot, place at pink and move towards the center of the table until finding an empty spot
-        ballsP[Ball] = initialPositions[4][5];
-        moveBallUntilNotTouching(Ball, -Vector3.right * k_BALL_RADIUS * .051f);
+        //if it still can't find a free spot, place at it's original spot and move away from blockage until finding a spot
+        ballsP[Ball] = initialPositions[4][Ball];
+        Vector3 moveDir = ballsP[Ball] - ballsP[blockingBall];
+        moveDir.y = 0;//just to be certain
+        if (moveDir.sqrMagnitude == 0)
+        { moveDir = Vector3.left; }
+        moveDir = moveDir.normalized;
+        moveBallInDirUntilNotTouching(Ball, moveDir * k_BALL_RADIUS * .051f);
     }
-    private void moveBallUntilNotTouching(int Ball, Vector3 Dir)
+    private void moveBallToNearestFreePointBySpot(int Ball, Vector3 Spot)
+    {
+        //TODO: Make this function and use it instead of moveBallInDirUntilNotTouching() at the end of sixRedMoveBallUntilNotTouching()
+        //TODO: check positions in all directions around spot instead of just moving in one direction 
+    }
+    private void moveBallInDirUntilNotTouching(int Ball, Vector3 Dir)
     {
         //keep moving ball down the table until it's not touching any other balls
         while (CheckIfBallTouchingBall(Ball) > 0)
