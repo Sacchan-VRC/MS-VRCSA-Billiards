@@ -1379,14 +1379,10 @@ public class BilliardsModule : UdonSharpBehaviour
             }
             else if (is9Ball)
             {
-                // Rules are from: https://www.youtube.com/watch?v=U0SbHOXCtFw
-
                 // Rule #1: Cueball must strike the lowest number ball, first
                 bool isWrongHit = !(findLowestUnpocketedBall(ballsPocketedOrig) == firstHit);
 
                 // Rule #2: Pocketing cueball, is a foul
-
-                // Win condition: Pocket 9 ball ( and do not foul )
                 isObjectiveSink = (ballsPocketedLocal & 0x3FEu) > (ballsPocketedOrig & 0x3FEu);
 
                 isOpponentSink = false;
@@ -1394,6 +1390,7 @@ public class BilliardsModule : UdonSharpBehaviour
 
                 foulCondition = isWrongHit || isScratch || (!ballBounced_9Ball && !isObjectiveSink);
 
+                // Win condition: Pocket 9 ball ( and do not foul )
                 winCondition = ((ballsPocketedLocal & 0x200u) == 0x200u) && !foulCondition;
 
                 bool is9Sink = (ballsPocketedLocal & 0x200u) == 0x200u;
@@ -1560,9 +1557,26 @@ public class BilliardsModule : UdonSharpBehaviour
             }
         }
     }
-    private void sixRedMoveBallUntilNotTouching(int Ball, Vector3 Dir)
+    private void sixRedMoveBallUntilNotTouching(int Ball)
     {
-        //TODO: check each spot until finding one that isnt blocked like in real snooker
+        //replace colored ball on its own spot
+        ballsP[Ball] = initialPositions[4][Ball];
+        //check if it's touching another ball
+        if (CheckIfBallTouchingBall(Ball) < 0)
+        { return; }
+        //if it's touching another ball, place it on other ball spots, starting at black, and moving down
+        //the colors until it finds one it can sit without touching another ball
+        for (int i = break_order_sixredsnooker.Length - 1; i > 5; i--)
+        {
+            ballsP[Ball] = initialPositions[4][break_order_sixredsnooker[i]];
+            if (CheckIfBallTouchingBall(Ball) < 0)
+            {
+                return;
+            }
+        }
+        //if it still can't find a free spot, place at pink and move towards the center of the table until finding an empty spot
+        ballsP[Ball] = initialPositions[4][5];
+        moveBallUntilNotTouching(Ball, -Vector3.right * k_BALL_RADIUS * .051f);
     }
     private void moveBallUntilNotTouching(int Ball, Vector3 Dir)
     {
@@ -2091,7 +2105,8 @@ public class BilliardsModule : UdonSharpBehaviour
         {
             if ((ballsPocketedLocal & (1 << break_order_sixredsnooker[i])) > 0)
             {
-                ballsP[break_order_sixredsnooker[i]] = initialPositions[4][break_order_sixredsnooker[i]];
+                // ballsP[break_order_sixredsnooker[i]] = initialPositions[4][break_order_sixredsnooker[i]];
+                sixRedMoveBallUntilNotTouching(break_order_sixredsnooker[i]);
                 ballsPocketedLocal = ballsPocketedLocal ^ (1u << break_order_sixredsnooker[i]);
             }
         }
