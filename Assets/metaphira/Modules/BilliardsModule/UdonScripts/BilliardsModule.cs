@@ -87,7 +87,7 @@ public class BilliardsModule : UdonSharpBehaviour
     private const float k_RANDOMIZE_F = 0.0001f;
     private float k_SPOT_POSITION_X = 0.5334f; // First X position of the racked balls
     private const float k_SPOT_CAROM_X = 0.8001f; // Spot position for carom mode
-    private readonly int[] sixredsnooker_ballpoints = { 1, 1, 1, 1, 1, 1, 2, 3, 4, 5, 6, 7 };
+    private readonly int[] sixredsnooker_ballpoints = { 0, 7, 2, 5, 1, 6, 1, 3, 4, 1, 1, 1, 1 };
     private readonly int[] break_order_sixredsnooker = { 4, 6, 9, 10, 11, 12, 2, 7, 8, 3, 5, 1 };
     private readonly int[] break_order_8ball = { 9, 2, 10, 11, 1, 3, 4, 12, 5, 13, 14, 6, 15, 7, 8 };
     private readonly int[] break_order_9ball = { 2, 3, 4, 5, 9, 6, 7, 8, 1 };
@@ -1421,7 +1421,7 @@ public class BilliardsModule : UdonSharpBehaviour
                 foulCondition = false;
 
                 int nextcolor = sixRedFindLowestUnpocketedColor(ballsPocketedOrig);
-                bool redontable = sixRedCheckIfRedOnTable(ballsPocketedOrig);
+                bool redOnTable = sixRedCheckIfRedOnTable(ballsPocketedOrig);
                 uint objective = 0x1E50u;
                 if (colorTurnLocal) { _LogInfo("6RED: That was a ColorTurn"); }
                 else { _LogInfo("6RED: That was not a ColorTurn"); }
@@ -1430,7 +1430,7 @@ public class BilliardsModule : UdonSharpBehaviour
                     objective = 0x1AE;//color balls
                     _LogInfo("6RED: Objective is: Any color");
                 }
-                else if (!redontable)
+                else if (!redOnTable)
                 {
                     objective = (uint)(1 << break_order_sixredsnooker[nextcolor]);
                     _LogInfo("6RED: Objective is: " + sixRedNumberToColor(break_order_sixredsnooker[nextcolor]));
@@ -1438,14 +1438,19 @@ public class BilliardsModule : UdonSharpBehaviour
                 else { _LogInfo("6RED: Objective is: Red"); }
                 if (isScratch) { _LogInfo("6RED: White ball pocketed"); }
                 isObjectiveSink = (ballsPocketedLocal & (objective)) > (ballsPocketedOrig & (objective));
-                if (redontable || colorTurnLocal)
+                int ballScore = 0, numBallsPocketed = 0, highestPocketedBallScore = 0;
+                int foulFirstHitScore = 0;
+                sixRedScoreBallsPocketed(redOnTable, ref ballScore, ref numBallsPocketed, ref highestPocketedBallScore);
+                if (redOnTable || colorTurnLocal)
                 {
+                    int pocketedBallTypes = sixRedCheckBallTypesPocketed(ballsPocketedOrig, ballsPocketedLocal);
                     int firsthittype = sixRedCheckFirstHit(firstHit);
                     if (firsthittype == 0)
                     {
                         if (colorTurnLocal)
                         {
                             _LogInfo("6RED: Foul: Color was not first hit on color turn");
+                            foulFirstHitScore = 7;
                             foulCondition = true;
                         }
                     }
@@ -1453,6 +1458,7 @@ public class BilliardsModule : UdonSharpBehaviour
                     {
                         if (!colorTurnLocal)
                         {
+                            foulFirstHitScore = sixredsnooker_ballpoints[firstHit];
                             _LogInfo("6RED: Foul: Red was not hit first on non-color turn");
                             foulCondition = true;
                         }
@@ -1461,6 +1467,24 @@ public class BilliardsModule : UdonSharpBehaviour
                     {
                         _LogInfo("6RED: Foul: No balls hit");
                         foulCondition = true;
+                    }
+                    if (pocketedBallTypes == 0)
+                    {
+                        if (colorTurnLocal)
+                        {
+                            _LogInfo("6RED: Foul: Red was pocketed on color turn");
+                            foulCondition = true;
+                            //pocketing a red on a colorturn is a foul with a penalty of 7
+                            ballScore = 7;
+                        }
+                    }
+                    else if (pocketedBallTypes > 0)
+                    {
+                        if (!colorTurnLocal)
+                        {
+                            _LogInfo("6RED: Foul: Color was pocketed on non-color turn");
+                            foulCondition = true;
+                        }
                     }
                 }
                 else
@@ -1478,20 +1502,20 @@ public class BilliardsModule : UdonSharpBehaviour
                     }
                 }
                 if (isScratch) { foulCondition = true; }
-                int ballscore = sixRedScoreBallsPocketed();
                 if (foulCondition)//points given to other team if foul
                 {
-                    fbScoresLocal[1 - teamIdLocal] += Mathf.Max(ballscore, 4);
-                    _LogInfo("6RED: Team " + (1 - teamIdLocal) + " awarded for foul " + Mathf.Max(ballscore, 4) + " points");
+                    int foulscore = Mathf.Max(highestPocketedBallScore, foulFirstHitScore);
+                    fbScoresLocal[1 - teamIdLocal] += Mathf.Max(ballScore, 4);
+                    _LogInfo("6RED: Team " + (1 - teamIdLocal) + " awarded for foul " + Mathf.Max(foulscore, 4) + " points");
                 }
                 else
                 {
-                    fbScoresLocal[teamIdLocal] += ballscore;
-                    _LogInfo("6RED: Team " + (teamIdLocal) + " awarded " + ballscore + " points");
+                    fbScoresLocal[teamIdLocal] += ballScore;
+                    _LogInfo("6RED: Team " + (teamIdLocal) + " awarded " + ballScore + " points");
                 }
                 _LogInfo("6RED: TeamScore 0: " + fbScoresLocal[0]);
                 _LogInfo("6RED: TeamScore 1: " + fbScoresLocal[1]);
-                if (redontable || colorTurnLocal) { sixRedReturnColoredBalls(6); }
+                if (redOnTable || colorTurnLocal) { sixRedReturnColoredBalls(6); }
                 else
                 {
                     if (foulCondition)
@@ -1499,7 +1523,7 @@ public class BilliardsModule : UdonSharpBehaviour
                         sixRedReturnColoredBalls(nextcolor);
                     }
                 }
-                if (redontable)
+                if (redOnTable)
                 {
                     if (foulCondition)
                     { colorTurnLocal = false; }
@@ -2111,30 +2135,43 @@ public class BilliardsModule : UdonSharpBehaviour
             }
         }
     }
-    public int sixRedScoreBallsPocketed()
+    public void sixRedScoreBallsPocketed(bool redOnTable, ref int ballscore, ref int numBallsPocketed, ref int highestScoringBall)
     {
-        int score = 0;
-        for (int i = 0; i < break_order_sixredsnooker.Length; i++)
+        for (int i = 1; i < 13; i++)
         {
-            if ((ballsPocketedLocal & (1 << break_order_sixredsnooker[i])) > (ballsPocketedOrig & (1 << break_order_sixredsnooker[i])))
+            if ((ballsPocketedLocal & (1 << i)) > (ballsPocketedOrig & (1 << i)))
             {
-                score += sixredsnooker_ballpoints[i];
-                _LogInfo("6RED: " + sixRedNumberToColor(break_order_sixredsnooker[i]) + " ball pocketed");
-                //TODO: Check for stuff like 2 colored balls being pocketed and return appropriate foul score
+                if (highestScoringBall < sixredsnooker_ballpoints[i])
+                { highestScoringBall = sixredsnooker_ballpoints[i]; }
+                ballscore += sixredsnooker_ballpoints[i];
+                numBallsPocketed++;
+                _LogInfo("6RED: " + sixRedNumberToColor(i) + " ball pocketed");
             }
         }
-        return score;
     }
-    public void sixRedCheckRedBallPocketed(uint ballsPocketedOrig, uint ballsPocketedLocal)// unused, delete me?
+    public int sixRedCheckBallTypesPocketed(uint ballsPocketedOrig, uint ballsPocketedLocal)
     {
+        int result = -1;
         if ((ballsPocketedOrig & 0x1E50u) < (ballsPocketedLocal & 0x1E50u))
         {
-            _LogInfo("6RED: Red ball pocketed");
+            // _LogInfo("6RED: At least one red ball was pocketed");
+            result = 0;
         }
-        /*         if ((ballsPocketedOrig & 0x1AE) < (ballsPocketedLocal & 0x1AE))
-                {
-                    _LogInfo("6RED: color ball pocketed");
-                } */
+        if ((ballsPocketedOrig & 0x1AE) < (ballsPocketedLocal & 0x1AE))
+        {
+            if (result == 0)
+            {
+                result = 2;
+                _LogInfo("6RED: Both Red and color balls were pocketed");
+            }
+            else
+            {
+                result = 1;
+                // _LogInfo("6RED: At least one color ball pocketed");
+            }
+
+        }
+        return result;
     }
     public int findLowestUnpocketedBall(uint field)
     {
