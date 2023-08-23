@@ -43,6 +43,7 @@ public class BilliardsModule : UdonSharpBehaviour
     [NonSerialized] public GameObject auto_pocketblockers;
     private GameObject auto_colliderBaseVFX;
     [NonSerialized] public Transform table;
+    [NonSerialized] public MeshRenderer[] tableMRs;
 
     // table colors
     [SerializeField] [HideInInspector] public Color k_colour_foul;        // v1.6: ( 1.2, 0.0, 0.0, 1.0 )
@@ -1124,7 +1125,16 @@ public class BilliardsModule : UdonSharpBehaviour
         canPlayLocal = false;
         disablePlayComponents();
 
-        if (!_IsPlayer(Networking.LocalPlayer) && !table.GetComponent<MeshRenderer>().isVisible)
+        bool TableVisible = false;
+        for (int i = 0; i < tableMRs.Length; i++)
+        {
+            if (tableMRs[i].isVisible)
+            {
+                TableVisible = true;
+                break;
+            }
+        }
+        if (!_IsPlayer(Networking.LocalPlayer) && !TableVisible)
         {
             // don't bother simulating if the table isn't even visible
             _LogWarn("skipping simulation");
@@ -1802,6 +1812,8 @@ public class BilliardsModule : UdonSharpBehaviour
         k_vE = data.cornerPocket;
         k_vF = data.sidePocket;
         pockets = data.pockets;
+
+        tableMRs = tableModels[newTableModel].GetComponentsInChildren<MeshRenderer>();
 
         float newscale = k_BALL_DIAMETRE / ballMeshDiameter;
         for (int i = 0; i < balls.Length; i++)
