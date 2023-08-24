@@ -209,7 +209,7 @@ public class DesktopManager : UdonSharpBehaviour
 
                         if (power > 0)
                         {
-                            if (table._IsLegacyPhysics())
+                            if (((string)table.currentPhysicsManager.GetProgramVariable("PHYSICSNAME")).Contains("Legacy"))
                             {
                                 table.currentPhysicsManager.SetProgramVariable("multiplier", -25.0f);
                                 table.currentPhysicsManager.SetProgramVariable("cue_vdir", initialShotDirection.normalized);

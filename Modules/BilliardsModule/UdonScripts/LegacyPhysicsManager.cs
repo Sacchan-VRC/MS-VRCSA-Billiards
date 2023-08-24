@@ -8,6 +8,7 @@ using VRC.Udon;
 [UdonBehaviourSyncMode(BehaviourSyncMode.NoVariableSync)]
 public class LegacyPhysicsManager : UdonSharpBehaviour
 {
+    public string PHYSICSNAME = "<color=\"#4287F5\">Legacy</color>";
 #if HT_QUEST
    private const float k_MAX_DELTA = 0.05f; // max time to process per frame on quest (~4)
 #else
@@ -54,7 +55,8 @@ public class LegacyPhysicsManager : UdonSharpBehaviour
     float k_POCKET_RADIUS;
     float k_CUSHION_RADIUS;
 
-    public void _Init(BilliardsModule table_)
+    [NonSerialized] public BilliardsModule table_;
+    public void _Init()
     {
         table = table_;
 

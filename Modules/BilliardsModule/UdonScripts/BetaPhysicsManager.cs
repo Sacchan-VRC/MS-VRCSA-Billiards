@@ -8,6 +8,7 @@ using VRC.Udon;
 [UdonBehaviourSyncMode(BehaviourSyncMode.NoVariableSync)]
 public class BetaPhysicsManager : UdonSharpBehaviour
 {
+    public string PHYSICSNAME = "<color=\"#678AC2\">Beta</color>";
     private const float k_FIXED_TIME_STEP = 0.0125f; // time step in seconds per iteration
 #if HT_QUEST
    private const float k_MAX_DELTA = k_FIXED_TIME_STEP * 2; // max time to process per frame on quest
@@ -79,7 +80,8 @@ public class BetaPhysicsManager : UdonSharpBehaviour
     private Vector3 k_vF;
     private GameObject[] pockets;
 
-    public void _Init(BilliardsModule table_)
+    [NonSerialized] public BilliardsModule table_;
+    public void _Init()
     {
         table = table_;
 

@@ -8,6 +8,7 @@ using VRC.Udon;
 [UdonBehaviourSyncMode(BehaviourSyncMode.NoVariableSync)]
 public class StandardPhysicsManager : UdonSharpBehaviour
 {
+    public string PHYSICSNAME = "<color=\"#678AC2\">Standard</color>";
 #if HT_QUEST
    private const float k_MAX_DELTA = 0.05f; // max time to process per frame on quest (~4)
 #else
@@ -54,7 +55,8 @@ public class StandardPhysicsManager : UdonSharpBehaviour
     private Vector3 k_vE;
     private Vector3 k_vF;
 
-    public void _Init(BilliardsModule table_)
+    [NonSerialized] public BilliardsModule table_;
+    public void _Init()
     {
         table = table_;
 

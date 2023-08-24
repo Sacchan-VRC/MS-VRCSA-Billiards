@@ -231,19 +231,8 @@ public class GraphicsManager : UdonSharpBehaviour
     {
         if (table.gameLive || !table.lobbyOpen) return;
 
-        string settings = "";
-        switch (table.physicsModeLocal)
-        {
-            case 0:
-                settings += "Legacy Physics";
-                break;
-            case 1:
-                settings += "Standard Physics";
-                break;
-            case 2:
-                settings += "Beta Physics";
-                break;
-        }
+        string settings = (string)table.currentPhysicsManager.GetProgramVariable("PHYSICSNAME");
+        
         if (!string.IsNullOrEmpty(table.tournamentRefereeLocal))
         {
             settings += $"\nTournament Mode ({table.tournamentRefereeLocal})";

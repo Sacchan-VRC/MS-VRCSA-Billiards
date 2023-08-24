@@ -102,9 +102,7 @@ public class BilliardsModule : UdonSharpBehaviour
     [SerializeField] public DesktopManager desktopManager;
     [SerializeField] public CameraManager cameraManager;
     [SerializeField] public GraphicsManager graphicsManager;
-    [SerializeField] public LegacyPhysicsManager legacyPhysicsManager;
-    [SerializeField] public StandardPhysicsManager standardPhysicsManager;
-    [SerializeField] public BetaPhysicsManager betaPhysicsManager;
+    [SerializeField] public UdonSharpBehaviour[] PhysicsManagers;
     [SerializeField] public MenuManager menuManager;
 
     [Header("Camera Module")]
@@ -189,7 +187,6 @@ public class BilliardsModule : UdonSharpBehaviour
     [NonSerialized] public uint previewWinningTeamLocal;
     [NonSerialized] public int activeCueSkin;
     [NonSerialized] public int tableSkinLocal;
-    [NonSerialized] public int physicsModeLocal;
     private byte gameStateLocal = byte.MaxValue;
     private byte turnStateLocal = byte.MaxValue;
     private int timerStartLocal;
@@ -250,8 +247,12 @@ public class BilliardsModule : UdonSharpBehaviour
 
         resetCachedData();
 
-        currentPhysicsManager = standardPhysicsManager;
+        currentPhysicsManager = PhysicsManagers[0];
 
+        for (int i = 0; i < tableModels.Length; i++)
+        {
+            tableModels[i].gameObject.SetActive(false);
+        }
         setTableModel(0, false);
 
         initializeRack();
@@ -269,14 +270,14 @@ public class BilliardsModule : UdonSharpBehaviour
         desktopManager._Init(this);
         cameraManager._Init(this);
         graphicsManager._Init(this);
-        legacyPhysicsManager._Init(this);
-        standardPhysicsManager._Init(this);
-        betaPhysicsManager._Init(this);
+        for (int i = 0; i < PhysicsManagers.Length; i++)
+        {
+            PhysicsManagers[i].SetProgramVariable("table_", this);
+            PhysicsManagers[i].SendCustomEvent("_Init");
+        }
         menuManager._Init(this);
 
         currentPhysicsManager.SendCustomEvent("_InitConstants");
-
-        physicsModeLocal = 1;
 
 
 #if HT8B_DEBUGGER
@@ -403,14 +404,24 @@ public class BilliardsModule : UdonSharpBehaviour
         networkingManager._OnTimerChanged(timerSelected);
     }
 
+    public void _TriggerTableModelChanged(uint TableModelSelected)
+    {
+        networkingManager._OnTableModelChanged(TableModelSelected);
+    }
+
+    public void _TriggerPhysicsChanged(uint TableModelSelected)
+    {
+        networkingManager._OnPhysicsChanged(TableModelSelected);
+    }
+
     public void _TriggerGameModeChanged(uint newGameMode)
     {
         networkingManager._OnGameModeChanged(newGameMode);
     }
 
-    public void _TriggerGlobalSettingsUpdated(string newTournamentReferee, int newPhysicsMode, int newTableModel, int newTableSkin)
+    public void _TriggerGlobalSettingsUpdated(string newTournamentReferee, int newPhysicsMode, int newTableModel)
     {
-        networkingManager._OnGlobalSettingsChanged(newTournamentReferee, (byte)newPhysicsMode, (byte)newTableModel, (byte)newTableSkin);
+        networkingManager._OnGlobalSettingsChanged(newTournamentReferee, (byte)newPhysicsMode, (byte)newTableModel);
     }
 
     public void _TriggerCueBallHit()
@@ -624,10 +635,7 @@ public class BilliardsModule : UdonSharpBehaviour
 
         // propagate game settings first
         onRemoteGlobalSettingsUpdated(
-            networkingManager.tournamentRefereeSynced,
-            networkingManager.physicsModeSynced,
-            networkingManager.tableModelSynced,
-            networkingManager.tableSkinSynced
+            networkingManager.tournamentRefereeSynced, (byte)networkingManager.physicsSynced, (byte)networkingManager.tableModelSynced
         );
         onRemoteGameSettingsUpdated(
             networkingManager.gameModeSynced,
@@ -661,53 +669,23 @@ public class BilliardsModule : UdonSharpBehaviour
         redrawDebugger();
     }
 
-    private void onRemoteGlobalSettingsUpdated(string tournamentRefereeSynced, byte physicsModeSynced, byte tableModelSynced, byte tableSkinSynced)
+    private void onRemoteGlobalSettingsUpdated(string tournamentRefereeSynced, byte physicsSynced, byte tableModelSynced)
     {
-        if (gameLive) return;
+        // if (gameLive) return;
 
-        if (
-            tournamentRefereeLocal == tournamentRefereeSynced &&
-            physicsModeLocal == physicsModeSynced &&
-            tableModelLocal == tableModelSynced &&
-            tableSkinLocal == tableSkinSynced
-        )
-        {
-            return;
-        }
-        _LogInfo($"onRemoteGlobalSettingsUpdated tournamentReferee={tournamentRefereeSynced} physicsMode={physicsModeSynced} tableModel={tableModelSynced} tableSkin={tableSkinSynced}");
+        _LogInfo($"onRemoteGlobalSettingsUpdated tournamentReferee={tournamentRefereeSynced} physicsMode={physicsSynced} tableModel={tableModelSynced}");
 
-        if (tournamentRefereeLocal != tournamentRefereeSynced)
-        {
-            tournamentRefereeLocal = tournamentRefereeSynced;
-        }
+        tournamentRefereeLocal = tournamentRefereeSynced;
 
-        if (physicsModeLocal != physicsModeSynced)
+        if (currentPhysicsManager != PhysicsManagers[physicsSynced])
         {
-            physicsModeLocal = physicsModeSynced;
-            switch (physicsModeLocal)
-            {
-                case 0:
-                    currentPhysicsManager = standardPhysicsManager;
-                    break;
-                case 1:
-                    currentPhysicsManager = legacyPhysicsManager;
-                    break;
-                case 2:
-                    currentPhysicsManager = betaPhysicsManager;
-                    break;
-            }
+            currentPhysicsManager = PhysicsManagers[physicsSynced];
             currentPhysicsManager.SendCustomEvent("_InitConstants");
         }
-
+        Debug.Log("onRemoteGlobalSettingsUpdated");
         if (tableModelLocal != tableModelSynced)
         {
             setTableModel(tableModelSynced, true);
-        }
-
-        if (tableSkinLocal != tableSkinSynced && _CanUseTableSkin(networkingManager.playerNamesSynced[0], tableSkinSynced))
-        {
-            tableSkinLocal = tableSkinSynced;
-            graphicsManager._UpdateTableColorScheme();
         }
     }
 
@@ -1855,21 +1833,6 @@ public class BilliardsModule : UdonSharpBehaviour
         // todo: reposition cues
     }
 
-    public bool _IsLegacyPhysics()
-    {
-        return physicsModeLocal == 1;
-    }
-
-    public bool _IsNewPhysics()
-    {
-        return physicsModeLocal == 0;
-    }
-
-    public bool _IsBetaPhysics()
-    {
-        return physicsModeLocal == 2;
-    }
-
     public GameObject _GetTableBase()
     {
         return tableModels[tableModelLocal].transform.Find("table_artwork").gameObject;
@@ -2534,12 +2497,10 @@ public void _RedrawDebugger() { }
         VRCPlayerApi currentOwner = Networking.GetOwner(networkingManager.gameObject);
         output += "<color=\"#95a2b8\">owner(</color> <color=\"#4287F5\">" + (currentOwner != null ? currentOwner.displayName + ":" + currentOwner.playerId : "[null]") + "/" + teamIdLocal + "</color> <color=\"#95a2b8\">)</color> ";
 
-        output += physicsModeLocal == 0 ?
-           "<color=\"#95a2b8\">phys(</color> <color=\"#4287F5\">LEGACY</color> <color=\"#95a2b8\">)</color> " :
-           (physicsModeLocal == 1 ?
-           "<color=\"#95a2b8\">phys(</color> <color=\"#678AC2\"> STND </color> <color=\"#95a2b8\">)</color> " :
-           "<color=\"#95a2b8\">phys(</color> <color=\"#678AC2\"> BETA </color> <color=\"#95a2b8\">)</color> "
-           );
+        if (currentPhysicsManager)
+        {
+            output += "Physics: " + (string)currentPhysicsManager.GetProgramVariable("PHYSICSNAME");
+        }
 
         output += "\n---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------\n";
 

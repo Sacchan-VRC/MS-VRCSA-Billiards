@@ -38,6 +38,8 @@ public class MenuManager : UdonSharpBehaviour
     private uint selectedTimer;
     private uint selectedTimerPrev;
     private bool timerSpinPlaying;
+    private uint selectedTable;
+    private uint selectedPhysics;
 
     public void _Init(BilliardsModule table_)
     {
@@ -298,6 +300,38 @@ public class MenuManager : UdonSharpBehaviour
                     selectedTimer++;
 
                     table._TriggerTimerChanged(TIMER_VALUES[selectedTimer]);
+                }
+            }
+            else if (button.name == "TableRight")
+            {
+                if (selectedTable == table.tableModels.Length - 1) { return; }
+                selectedTable++;
+
+                table._TriggerTableModelChanged(selectedTable);
+            }
+            else if (button.name == "TableLeft")
+            {
+                if (selectedTable == 0) { return; }
+                selectedTable--;
+
+                table._TriggerTableModelChanged(selectedTable);
+            }
+            else if (button.name == "PhysicsRight")
+            {
+                if (selectedPhysics == table.PhysicsManagers.Length - 1) { return; }
+                {
+                    selectedPhysics++;
+
+                    table._TriggerPhysicsChanged(selectedPhysics);
+                }
+            }
+            else if (button.name == "PhysicsLeft")
+            {
+                if (selectedPhysics == 0) { return; }
+                {
+                    selectedPhysics--;
+
+                    table._TriggerPhysicsChanged(selectedPhysics);
                 }
             }
         }

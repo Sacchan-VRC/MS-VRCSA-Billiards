@@ -66,6 +66,12 @@ public class NetworkingManager : UdonSharpBehaviour
     // the timer for the current game in seconds
     [UdonSynced] [NonSerialized] public uint timerSynced;
 
+    // table being used
+    [UdonSynced] [NonSerialized] public uint tableModelSynced;
+
+    // physics being used
+    [UdonSynced] [NonSerialized] public uint physicsSynced;
+
     // whether or not the current game is played with teams
     [UdonSynced] [NonSerialized] public bool teamsSynced;
 
@@ -87,19 +93,10 @@ public class NetworkingManager : UdonSharpBehaviour
     // the current tournament referee
     [UdonSynced] [NonSerialized] public string tournamentRefereeSynced;
 
-    // the physics engine the table uses
-    [UdonSynced] [NonSerialized] public byte physicsModeSynced;
-
-    // the current table model
-    [UdonSynced] [NonSerialized] public byte tableModelSynced;
-
-    // the current table skin
-    [UdonSynced] [NonSerialized] public byte tableSkinSynced;
     // 6RedSnooker: currently a turn where a color should be pocketed
     [UdonSynced] [NonSerialized] public bool colorTurnSynced;
 
     [SerializeField] private PlayerSlot[] playerSlots;
-    
     private BilliardsModule table;
     private OwnershipManager ownershipManager;
 
@@ -215,7 +212,7 @@ public class NetworkingManager : UdonSharpBehaviour
         }
 
         table._OnRemoteDeserialization();
-        
+
         // processRemoteState();
     }
 
@@ -254,7 +251,7 @@ public class NetworkingManager : UdonSharpBehaviour
         Array.Copy(fbScores, fourBallScoresSynced, 2);
         ballsPocketedSynced = ballsPocketed;
         colorTurnSynced = colorTurnLocal;
-        
+
         bufferMessages(false);
     }
 
@@ -297,7 +294,7 @@ public class NetworkingManager : UdonSharpBehaviour
     {
         isTableOpenSynced = false;
         teamColorSynced = (byte)teamColor;
-        
+
         bufferMessages(false);
     }
 
@@ -438,6 +435,22 @@ public class NetworkingManager : UdonSharpBehaviour
         bufferMessages(false);
     }
 
+    public void _OnTableModelChanged(uint newTableModel)
+    {
+        tableModelSynced = newTableModel;
+        table._OnRemoteDeserialization();
+
+        bufferMessages(true);
+    }
+
+    public void _OnPhysicsChanged(uint newPhysics)
+    {
+        physicsSynced = newPhysics;
+        table._OnRemoteDeserialization();
+
+        bufferMessages(true);
+    }
+
     public void _OnGameModeChanged(uint newGameMode)
     {
         gameModeSynced = (byte)newGameMode;
@@ -475,14 +488,13 @@ public class NetworkingManager : UdonSharpBehaviour
         // OnDeserialization(); // jank! force deserialization so the practice manager knows to ignore it
     }
 
-    public void _OnGlobalSettingsChanged(string newTournamentReferee, byte newPhysicsMode, byte newTableModel, byte newTableSkin)
+    public void _OnGlobalSettingsChanged(string newTournamentReferee, byte newPhysics, byte newTableModel)
     {
         if (Networking.LocalPlayer.displayName != playerNamesSynced[0]) return;
         
         tournamentRefereeSynced = newTournamentReferee;
-        physicsModeSynced = newPhysicsMode;
+        physicsSynced = newPhysics;
         tableModelSynced = newTableModel;
-        tableSkinSynced = newTableSkin;
 
         bufferMessages(false);
     }
@@ -492,7 +504,7 @@ public class NetworkingManager : UdonSharpBehaviour
         if (gameModeSynced != 2 && gameModeSynced != 3) return;
 
         fourBallCueBallSynced ^= 0x01;
-        
+
         Vector3 temp = ballsPSynced[0];
         ballsPSynced[0] = ballsPSynced[13];
         ballsPSynced[13] = temp;
@@ -531,7 +543,7 @@ public class NetworkingManager : UdonSharpBehaviour
     {
         table._OnPlayerPrepareShoot();
     }
-    
+
     private const float I16_MAXf = 32767.0f;
 
     private void encodeU16(byte[] data, int pos, ushort v)
@@ -629,7 +641,7 @@ public class NetworkingManager : UdonSharpBehaviour
 
         byte[] gameState = Convert.FromBase64String(gameStateStr);
         if (gameState.Length != 0x54) return;
-        
+
         stateIdSynced++;
 
         for (int i = 0; i < 16; i++)
