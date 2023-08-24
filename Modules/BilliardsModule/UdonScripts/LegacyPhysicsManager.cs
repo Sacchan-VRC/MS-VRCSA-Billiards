@@ -810,32 +810,24 @@ public class LegacyPhysicsManager : UdonSharpBehaviour
 
         if ((absA - k_vE).sqrMagnitude < k_INNER_RADIUS_SQ)
         {
-            balls_V[id] = Vector3.zero;
-            balls_W[id] = Vector3.zero;
             table._TriggerPocketBall(id);
             return;
         }
 
         if ((absA - k_vF).sqrMagnitude < k_INNER_RADIUS_SQ)
         {
-            balls_V[id] = Vector3.zero;
-            balls_W[id] = Vector3.zero;
             table._TriggerPocketBall(id);
             return;
         }
 
         if (absA.z > k_vF.z)
         {
-            balls_V[id] = Vector3.zero;
-            balls_W[id] = Vector3.zero;
             table._TriggerPocketBall(id);
             return;
         }
 
         if (absA.z > -absA.x + k_vE.x + k_vE.z)
         {
-            balls_V[id] = Vector3.zero;
-            balls_W[id] = Vector3.zero;
             table._TriggerPocketBall(id);
             return;
         }

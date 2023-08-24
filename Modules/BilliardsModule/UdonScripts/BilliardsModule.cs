@@ -262,6 +262,9 @@ public class BilliardsModule : UdonSharpBehaviour
         for (int i = 0; i < balls.Length; i++)
         {
             balls[i].GetComponentInChildren<Repositioner>(true)._Init(this, i);
+
+            Rigidbody ballRB = balls[i].GetComponent<Rigidbody>();
+            ballRB.maxAngularVelocity = 999;
         }
 
         networkingManager._Init(this);
@@ -1282,15 +1285,14 @@ public class BilliardsModule : UdonSharpBehaviour
         // VFX ( make ball move )
         Rigidbody body = balls[id].GetComponent<Rigidbody>();
         body.isKinematic = false;
-        body.velocity = this.transform.TransformVector(new Vector3(
-           ballsV[id].x,
-           0.0f,
-           ballsV[id].z
-        ));
+        body.velocity = transform.TransformDirection(ballsV[id]);
+        body.angularVelocity = transform.TransformDirection(ballsW[id].normalized) * -ballsW[id].magnitude;
 
 #else
         balls[id].transform.localPosition = ballsP[id];
 #endif
+        ballsV[id] = Vector3.zero;
+        ballsW[id] = Vector3.zero;
     }
 
     public void _TriggerSimulationEnded(bool forceScratch)
