@@ -1825,10 +1825,6 @@ public class BilliardsModule : UdonSharpBehaviour
             graphicsManager._InitializeTable();
         }
 
-        Transform menu_transform = this.transform.Find("intl.menu");
-        setTransform(table_base.Find(".MENU"), menu_transform, 1.0f);
-        menu_transform.transform.position += menu_transform.right * 0.4f;
-
         Transform score_info_root = this.transform.Find("intl.scorecardinfo");
         setTransform(table_base.Find(".NAME_0"), score_info_root.Find("player0-name").gameObject.GetComponent<RectTransform>(), 1F / 200F);
         setTransform(table_base.Find(".NAME_1"), score_info_root.Find("player1-name").gameObject.GetComponent<RectTransform>(), 1F / 200F);
