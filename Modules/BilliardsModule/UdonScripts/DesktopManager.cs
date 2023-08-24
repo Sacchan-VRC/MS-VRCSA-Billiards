@@ -351,6 +351,9 @@ public class DesktopManager : UdonSharpBehaviour
         {
             table._TriggerOnPlayerPrepareShoot();
         }
+        
+        cursorClampX = table.k_TABLE_WIDTH;
+        cursorClampZ = table.k_TABLE_HEIGHT;
     }
 
     private void exitUI()
@@ -369,8 +372,6 @@ public class DesktopManager : UdonSharpBehaviour
         isShooting = false;
         cursor = initialCursorPosition;
         cursorIndicator.SetActive(true);
-        cursorClampX = table.k_TABLE_WIDTH;
-        cursorClampZ = table.k_TABLE_HEIGHT;
     }
 
     private void resetShootState()
