@@ -270,6 +270,7 @@ public class BilliardsModule : UdonSharpBehaviour
         desktopManager._Init(this);
         cameraManager._Init(this);
         graphicsManager._Init(this);
+        cameraOverrideModule._Init();
         for (int i = 0; i < PhysicsManagers.Length; i++)
         {
             PhysicsManagers[i].SetProgramVariable("table_", this);

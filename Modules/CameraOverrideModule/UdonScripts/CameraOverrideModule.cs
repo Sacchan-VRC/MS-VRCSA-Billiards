@@ -31,9 +31,14 @@ namespace Metaphira.Modules.CameraOverride
         private Camera targetCamera;
         private int renderMode;
 
-        private void OnEnable()
+        bool initialized = false;
+        void Start()
         {
-
+            _Init();
+        }
+        public void _Init()
+        {
+            initialized = true;
             referenceCamera = this.transform.Find("ReferenceCamera").GetComponent<Camera>();
 
             foreach (GameObject bound in bounds)
@@ -127,10 +132,10 @@ namespace Metaphira.Modules.CameraOverride
 
                 if (shouldMaintainAspectRatio)
                 {
-                    internalTexture.width = (int) aspectRatio.x;
-                    internalTexture.height = (int) aspectRatio.y;
+                    internalTexture.width = (int)aspectRatio.x;
+                    internalTexture.height = (int)aspectRatio.y;
                 }
-                
+
                 foreach (GameObject bound in bounds)
                 {
                     GameObject overlay = bound.transform.GetChild(0).gameObject;
@@ -161,7 +166,7 @@ namespace Metaphira.Modules.CameraOverride
 
         private void HandleMaintainAspectRatio()
         {
-            float targetAspect = aspectRatio.x / (float) aspectRatio.y;
+            float targetAspect = aspectRatio.x / (float)aspectRatio.y;
             float windowAspect = referenceCamera.pixelWidth / (float)referenceCamera.pixelHeight;
             float scaleHeight = windowAspect / targetAspect;
 
