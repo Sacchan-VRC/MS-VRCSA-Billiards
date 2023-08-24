@@ -42,7 +42,6 @@ public class GraphicsManager : UdonSharpBehaviour
 
     private BilliardsModule table;
 
-    private Material tableMaterial;
     private Material ballMaterial;
     private Material shadowMaterial;
 
@@ -112,11 +111,6 @@ public class GraphicsManager : UdonSharpBehaviour
     public void _InitializeTable()
     {
         scorecard = table._GetTableBase().transform.Find("scorecard").GetComponent<MeshRenderer>().material;
-
-        // renderer
-        tableMaterial = table.table.GetComponent<MeshRenderer>().material; // create a new instance for this table
-        tableMaterial.name = " for " + table.gameObject.name;
-        table.table.GetComponent<MeshRenderer>().material = tableMaterial;
     }
 
     public void _Tick()
@@ -224,7 +218,6 @@ public class GraphicsManager : UdonSharpBehaviour
 #endif
 
         tableCurrentColour = Color.Lerp(tableCurrentColour, tableSrcColour, Time.deltaTime * multiplier);
-        tableMaterial.SetColor("_EmissionColor", tableCurrentColour);
     }
 
     private void tickLobbyStatus()
@@ -232,7 +225,7 @@ public class GraphicsManager : UdonSharpBehaviour
         if (table.gameLive || !table.lobbyOpen) return;
 
         string settings = (string)table.currentPhysicsManager.GetProgramVariable("PHYSICSNAME");
-        
+
         if (!string.IsNullOrEmpty(table.tournamentRefereeLocal))
         {
             settings += $"\nTournament Mode ({table.tournamentRefereeLocal})";
@@ -247,9 +240,6 @@ public class GraphicsManager : UdonSharpBehaviour
     {
         if (table.gameLive || table.lobbyOpen) return;
 
-#if !HT_QUEST
-        _FlashTableColor(tableSrcColour * (Mathf.Sin(Time.timeSinceLevelLoad * 3.0f) * 0.5f + 1.0f));
-#endif
 
         winnerTextHolder.transform.localPosition = new Vector3(0.0f, Mathf.Sin(Time.timeSinceLevelLoad) * 0.1f, 0.0f);
         winnerTextHolder.transform.Rotate(Vector3.up, 90.0f * Time.deltaTime);
@@ -399,21 +389,6 @@ public class GraphicsManager : UdonSharpBehaviour
         fourBallPoint.transform.localPosition = pos;
         fourBallPoint.transform.localScale = Vector3.zero;
         fourBallPoint.transform.LookAt(Networking.LocalPlayer.GetPosition());
-    }
-
-    public void _FlashTableLight()
-    {
-        tableCurrentColour *= 1.9f;
-    }
-
-    public void _FlashTableError()
-    {
-        tableCurrentColour = pColourErr;
-    }
-
-    public void _FlashTableColor(Color color)
-    {
-        tableCurrentColour = color;
     }
 
     // Shader uniforms
@@ -584,7 +559,6 @@ int uniform_cue_colour;
     {
         timers[0].SetActive(false);
         timers[1].SetActive(false);
-        tableMaterial.SetFloat("_TimerPct", 0);
     }
 
     public void _ShowTimers()
@@ -602,10 +576,6 @@ int uniform_cue_colour;
             {
                 timers[i].GetComponent<MeshRenderer>().material.SetFloat("_TimeFrac", pct);
             }
-        }
-        else
-        {
-            tableMaterial.SetFloat("_TimerPct", pct);
         }
     }
 
@@ -662,7 +632,6 @@ int uniform_cue_colour;
         if (table.gameModeLocal == uint.MaxValue) { return; }
         scorecard.SetInt("_GameMode", (int)table.gameModeLocal);
         scorecard.SetInt("_SolidsMode", 0);
-        tableMaterial.SetFloat("_TimerPct", 0);
 
         _UpdateTableColorScheme();
         _UpdateTeamColor(0);
@@ -732,16 +701,6 @@ int uniform_cue_colour;
 
             ballMaterial.SetTexture("_MainTex", usColors ? usColorTexture : table.textureSets[0]);
             pClothColour = table.k_fabricColour_8ball;
-        }
-
-        if (table.table.name == "glass")
-        {
-            tableMaterial.SetColor(uniform_clothcolour, new Color(pClothColour.r, pClothColour.g, pClothColour.g, 117.0f / 255.0f));
-        }
-        else
-        {
-            tableMaterial.SetTexture("_MainTex", table.tableSkins[table.tableSkinLocal]);
-            // tableMaterial.SetColor(uniform_clothcolour, pClothColour);
         }
     }
 

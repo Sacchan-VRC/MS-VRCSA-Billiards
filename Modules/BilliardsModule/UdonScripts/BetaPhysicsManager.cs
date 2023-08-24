@@ -996,11 +996,12 @@ public class BetaPhysicsManager : UdonSharpBehaviour
         {
             pockets[i].SetActive(true);
         }
-        MeshCollider collider = table.table.GetComponent<MeshCollider>();
-        if (collider != null) collider.enabled = true;
-        collider = table.auto_pocketblockers.GetComponent<MeshCollider>();
-        if (collider != null) collider.enabled = true;
-
+        Collider[] collider = table.GetComponentsInChildren<Collider>();
+        for (int i = 0; i < collider.Length; i++)
+        {
+            collider[i].enabled = true;
+        }
+        
         // Handy values
         k_MINOR_REGION_CONST = table.k_TABLE_WIDTH - table.k_TABLE_HEIGHT;
         k_TABLE_WIDTH = table.k_TABLE_WIDTH;

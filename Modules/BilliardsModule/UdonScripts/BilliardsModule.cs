@@ -42,7 +42,6 @@ public class BilliardsModule : UdonSharpBehaviour
     private GameObject auto_rackPosition;
     [NonSerialized] public GameObject auto_pocketblockers;
     private GameObject auto_colliderBaseVFX;
-    [NonSerialized] public Transform table;
     [NonSerialized] public MeshRenderer[] tableMRs;
 
     // table colors
@@ -191,7 +190,7 @@ public class BilliardsModule : UdonSharpBehaviour
     private byte turnStateLocal = byte.MaxValue;
     private int timerStartLocal;
     private uint repositionStateLocal;
-    private int tableModelLocal;
+    [NonSerialized] public int tableModelLocal;
 
     // physics simulation data, must be reset before every simulation
     [NonSerialized] public bool isLocalSimulationRunning;
@@ -252,6 +251,7 @@ public class BilliardsModule : UdonSharpBehaviour
         for (int i = 0; i < tableModels.Length; i++)
         {
             tableModels[i].gameObject.SetActive(false);
+            tableModels[i]._Init();
         }
         setTableModel(0, false);
 
@@ -720,6 +720,8 @@ public class BilliardsModule : UdonSharpBehaviour
             is4Ball = isJp4Ball || isKr4Ball;
 
             menuManager._RefreshGameMode();
+
+            tableModels[tableModelLocal]._setGameMode(gameModeLocal);
         }
 
         if (timerLocal != timerSynced)
@@ -876,6 +878,8 @@ public class BilliardsModule : UdonSharpBehaviour
         reflection_main.RenderProbe();
 
         activeCue = cueControllers[0];
+
+        tableModels[tableModelLocal]._OnGameStarted();
     }
 
     private void onRemoteBallPositionsChanged(Vector3[] ballsPSynced)
@@ -967,6 +971,8 @@ public class BilliardsModule : UdonSharpBehaviour
         menuManager._EnableMenu();
 
         infReset.text = "Reset";
+
+        tableModels[tableModelLocal]._OnGameEnded();
     }
 
     private void onRemoteBallsPocketedChanged(uint ballsPocketedSynced)
@@ -1270,15 +1276,18 @@ public class BilliardsModule : UdonSharpBehaviour
         uint bmask = 0x1FCU << ((int)(teamIdLocal ^ teamColorLocal) * 7);
 
         // Good pocket
+        //TODO: Check if it's actually a foul based on ruleset
         if (((0x1U << id) & ((bmask) | (isTableOpenLocal ? 0xFFFCU : 0x0000U) | ((bmask & ballsPocketedLocal) == bmask ? 0x2U : 0x0U))) > 0)
         {
-            graphicsManager._FlashTableLight();
+            tableModels[tableModelLocal]._flashTableLight();
         }
         else
         {
-            graphicsManager._FlashTableError();
+            tableModels[tableModelLocal]._flashTableError();
         }
         aud_main.PlayOneShot(snd_Sink, 1.0f);
+
+        tableModels[tableModelLocal].onBallPocketed();
 
 #if !HT_QUEST
 
@@ -1814,11 +1823,6 @@ public class BilliardsModule : UdonSharpBehaviour
         k_rack_position = transformSurface.InverseTransformPoint(auto_rackPosition.transform.position);
         k_rack_direction = transformSurface.InverseTransformDirection(auto_rackPosition.transform.up);
 
-        table = table_base.Find("table");
-        if (table == null)
-        {
-            table = table_base.Find("glass");
-        }
         if (update)
         {
             currentPhysicsManager.SendCustomEvent("_InitConstants");
@@ -1830,6 +1834,8 @@ public class BilliardsModule : UdonSharpBehaviour
         setTransform(table_base.Find(".NAME_1"), score_info_root.Find("player1-name").gameObject.GetComponent<RectTransform>(), 1F / 200F);
 
         // todo: reposition cues
+
+        tableModels[tableModelLocal]._setTable();
     }
 
     public GameObject _GetTableBase()
@@ -2273,12 +2279,12 @@ public class BilliardsModule : UdonSharpBehaviour
 
     public void _IndicateError()
     {
-        graphicsManager._FlashTableColor(k_colour_foul);
+        tableModels[tableModelLocal]._flashTableColor(k_colour_foul);
     }
 
     public void _IndicateSuccess()
     {
-        // nothing, for now
+        tableModels[tableModelLocal]._indicateSuccess();
     }
 
     public string _SerializeGameState()

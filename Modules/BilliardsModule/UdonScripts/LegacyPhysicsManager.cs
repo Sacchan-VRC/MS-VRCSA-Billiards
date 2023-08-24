@@ -718,10 +718,11 @@ public class LegacyPhysicsManager : UdonSharpBehaviour
         {
             table.pockets[i].SetActive(false);
         }
-        MeshCollider collider = table.table.GetComponent<MeshCollider>();
-        if (collider != null) collider.enabled = false;
-        collider = table.auto_pocketblockers.GetComponent<MeshCollider>();
-        if (collider != null) collider.enabled = false;
+        Collider[] collider = table.GetComponentsInChildren<Collider>();
+        for (int i = 0; i < collider.Length; i++)
+        {
+            collider[i].enabled = true;
+        }
 
         // Handy values
         k_MINOR_REGION_CONST = table.k_TABLE_WIDTH - table.k_TABLE_HEIGHT;

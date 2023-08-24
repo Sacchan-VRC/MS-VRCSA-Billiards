@@ -10,23 +10,25 @@ public class StandardPhysicsManager : UdonSharpBehaviour
 {
     public string PHYSICSNAME = "<color=\"#678AC2\">Standard</color>";
 #if HT_QUEST
-   private const float k_MAX_DELTA = 0.05f; // max time to process per frame on quest (~4)
+   private  float k_MAX_DELTA =  k_FIXED_TIME_STEP * 2; // Private Const Float 0.05f max time to process per frame on quest (~4)
 #else
-    private const float k_MAX_DELTA = 0.1f; // max time to process per frame on pc (~8)
+    private float k_MAX_DELTA = k_FIXED_TIME_STEP * 6; // Private Cont Float 0.1f max time to process per frame on pc (~8)
 #endif
-    private const float k_FIXED_TIME_STEP = 0.0125f; // time step in seconds per iteration
+    private const float k_FIXED_TIME_STEP = 1 / 80f;      // time step in seconds per iteration
     private float k_BALL_DSQRPE = 0.003598f;            // ball diameter squared plus epsilon // this is actually minus epsilon?
-    private float k_BALL_DIAMETREPE = 0.06001f;                // width of ball
-    private float k_BALL_DIAMETREPESQ = 0.0036012001f;                 // width of ball
-    private float k_BALL_DIAMETRE = 0.06f;                // width of ball
+    private float k_BALL_DIAMETREPE = 0.06001f;         // width of ball
+    private float k_BALL_DIAMETREPESQ = 0.0036012001f;  // width of ball
+    private float k_BALL_DIAMETRE = 0.06f;              // width of ball
     private float k_BALL_RADIUS = 0.03f;
-    private float k_BALL_1OR = 33.3333333333f;       // 1 over ball radius
-    private const float k_GRAVITY = 9.80665f;             // Earths gravitational acceleration
-    private float k_BALL_DSQR = 0.0036f;              // ball diameter squared
-    private float k_BALL_MASS = 0.16f;                // Weight of ball in kg
-    private float k_BALL_RSQR = 0.0009f;              // ball radius squared
-    const float k_F_SLIDE = 0.2f;                 // Friction coefficient of sliding
-    const float k_F_ROLL = 0.01f;                // Friction coefficient of rolling
+    private float k_BALL_1OR = 33.3333333333f;          // 1 over ball radius
+    private const float k_GRAVITY = 9.80665f;           // Earths gravitational acceleration
+    private float k_BALL_DSQR = 0.0036f;                // ball diameter squared
+    private float k_BALL_MASS = 0.16f;                  // Weight of ball in kg
+    private float k_BALL_RSQR = 0.0009f;                // ball radius squared
+    const float k_F_SLIDE = 0.2f;                       // Friction coefficient of sliding (Ball-Table).
+    const float k_F_ROLL = 0.01f;                       // Friction coefficient of rolling (Ball-table)
+    const float k_F_SLIDE_C = 0.14f;                    //Friction coefficient of sliding Cushion (Ball-Cushion)
+    const float K_BOUNCE_FACTOR = 0.5f;                 // COR Ball-Slate
 
     private Color markerColorYes = new Color(0.0f, 1.0f, 0.0f, 1.0f);
     private Color markerColorNo = new Color(1.0f, 0.0f, 0.0f, 1.0f);
@@ -36,15 +38,19 @@ public class StandardPhysicsManager : UdonSharpBehaviour
     [SerializeField] AudioClip[] hitSounds;
     [SerializeField] public Transform transform_Surface;
 
+    private AudioSource audioSource;
+    private float initialVolume;    // Ball-Slate
+    private float initialPitch;
+
     private BilliardsModule table;
 
     private float accumulatedTime;
     private float lastTimestamp;
 
     private GameObject[] balls;
-    private Vector3[] balls_P;
-    private Vector3[] balls_V;
-    private Vector3[] balls_W;
+    private Vector3[] balls_P; // Displacement Vector
+    private Vector3[] balls_V; // Velocity Vector
+    private Vector3[] balls_W; // Angular Velocity Vector
     private float k_INNER_RADIUS;
     private float k_INNER_RADIUS_SQ;
 
@@ -55,6 +61,32 @@ public class StandardPhysicsManager : UdonSharpBehaviour
     private Vector3 k_vE;
     private Vector3 k_vF;
 
+    private void Start()
+    {
+        //Temporary Organization variables that will need to be stored and saved ONCE down to Cushion Physics, using Han 2005 Model.
+        //here just for reference
+
+        /*
+       float rvw                            // the ball state, "r" is Ball Displacement (ball_P) / "v" is velocity (ball_V) / "w" is angular velocity (ball_W)
+       float R = k_BALL_RADIUS;
+       float m = k_BALL_MASS;
+       float h = 7f * k_BALL_RADIUS / 5f;   // the height of the cushion
+       float s =                            // the motion state of the ball.
+       float mu =                           // The coefficient of friction, If ball motion state is sliding, assume coefficient of sliding friction. If rolling, assume coefficient of rolling friction. If spinning, assume coefficient of spinning friction
+       float u_s = k_F_SLIDE;
+       float u_sp                           // Spiining Coefficient of Friction
+       float u_r = k_F_ROLL;                // rolling coefficicient of firction.
+       float e_c = (1 + e);                 // Cushion Coefficient of restitution.
+       float f_c = k_F_SLIDE_C;             // cushion coefficient of friction
+       float g = k_GRAVITY;                 // Acceleration due to gravity felt by a ball.
+       */
+
+
+        //audioSource = GetComponent<AudioSource>();
+        //audioSource.volume = initialVolume;
+
+
+    }
     [NonSerialized] public BilliardsModule table_;
     public void _Init()
     {
@@ -179,9 +211,9 @@ public class StandardPhysicsManager : UdonSharpBehaviour
                     float cosTheta = Mathf.Cos(theta);
                     float sinTheta = Mathf.Sin(theta);
 
-                    float V0 = 5; // probably fine, right?
+                    float V0 = 1f; // probably fine, right?
                     float k_CUE_MASS = 0.5f; // kg
-                    float F = 2 * k_BALL_MASS * V0 / (1 + k_BALL_MASS / k_CUE_MASS + 5 / (2 * k_BALL_RADIUS) * (Mathf.Pow(a, 2) + Mathf.Pow(b, 2) * Mathf.Pow(cosTheta, 2) + Mathf.Pow(c, 2) * Mathf.Pow(sinTheta, 2) - 2 * b * c * cosTheta * sinTheta));
+                    float F = 2 * k_BALL_MASS * V0 / (1 + k_BALL_MASS / k_CUE_MASS + 5 / (2 * k_BALL_RADIUS) * (Mathf.Pow(a, 2) + Mathf.Pow(b, 2) * Mathf.Pow(cosTheta, 2) + Mathf.Pow(c, 2) * Mathf.Pow(sinTheta, 2) - 2 * b * c * cosTheta * sinTheta)); // F = Magnitude
 
 
                     float I = 2f / 5f * k_BALL_MASS * Mathf.Pow(k_BALL_RADIUS, 2);
@@ -192,7 +224,7 @@ public class StandardPhysicsManager : UdonSharpBehaviour
                     // for my sanity I'm going to assume the former
                     w.x = -w.x;
 
-                    float m_e = 0.02f;
+                    float m_e = 0.02f; // float m_e = Mathf.Sqrt(k_CUE_MASS) <- Consider this change when playing with Cue Mass to fix Guideline prediction of Squirt, needs a small revision.
 
                     // https://billiards.colostate.edu/physics_articles/Alciatore_pool_physics_article.pdf
                     float alpha = -Mathf.Atan(
@@ -245,12 +277,6 @@ public class StandardPhysicsManager : UdonSharpBehaviour
 
         if ((sn_pocketed & 0x1U) == 0)
         {
-            if (balls_P[0].y < 0)
-            {
-                balls_P[0].y = 0;
-                balls_P[0].y = -balls_P[0].y * 0.5f; // bounce with restitution
-            }
-
             // Apply movement
             Vector3 deltaPos = calculateDeltaPosition(sn_pocketed);
             balls_P[0] += deltaPos;
@@ -268,9 +294,6 @@ public class StandardPhysicsManager : UdonSharpBehaviour
 
             if ((ball_bit & sn_pocketed) == 0U)
             {
-                balls_V[i].y = 0;
-                balls_P[i].y = 0;
-
                 Vector3 deltaPos = balls_V[i] * k_FIXED_TIME_STEP;
                 balls_P[i] += deltaPos;
                 moved[i] = deltaPos != Vector3.zero;
@@ -467,10 +490,12 @@ public class StandardPhysicsManager : UdonSharpBehaviour
     private bool updateVelocity(int id, GameObject ball)
     {
         bool ballMoving = false;
+        float stepGravity = k_GRAVITY * k_FIXED_TIME_STEP;
 
         // Since v1.5.0
+        Vector3 P = balls_P[id];
         Vector3 V = balls_V[id];
-        Vector3 VwithoutY = new Vector3(V.x, 0, V.z);
+        Vector3 VwithoutY = new Vector3(V.x, 0, V.z); // Originally (X.v, 0, V.z)
         Vector3 W = balls_W[id];
         Vector3 cv;
 
@@ -500,36 +525,39 @@ public class StandardPhysicsManager : UdonSharpBehaviour
         //   Δω = ((-5∙µₛ∙g)/(2/R))∙Δt∙i✕(c/|c|)
         //   Δv = -µₛ∙g∙Δt(c/|c|)
 
-        if (balls_P[id].y < 0.001)
+
+
+        if (balls_P[id].y < 0.001 && V.y < 0)
         {
             // Relative contact velocity of ball and table
-            cv = VwithoutY + Vector3.Cross(k_CONTACT_POINT, W);
+
+            cv = V + Vector3.Cross(k_CONTACT_POINT, W);
             float cvMagnitude = cv.magnitude;
 
             // Rolling is achieved when cv's length is approaching 0
             // The epsilon is quite high here because of the fairly large timestep we are working with
-            if (cvMagnitude <= 0.1f)
+            if (cvMagnitude <= (k_BALL_RADIUS * 10)) //0.1f Default
             {
-                //V += -k_F_ROLL * k_GRAVITY * k_FIXED_TIME_STEP * V.normalized;
+                V += -k_F_ROLL * -V.y * VwithoutY.normalized;
                 // (baked):
-                V += -0.00122583125f * VwithoutY.normalized;
+                //V += -0.00122583125f * VwithoutY.normalized;
 
                 // Calculate rolling angular velocity
                 W.x = -V.z * k_BALL_1OR;
 
-                if (0.3f > Mathf.Abs(W.y))
+                if ((k_BALL_RADIUS * 10) > Mathf.Abs(W.y))
                 {
                     W.y = 0.0f;
                 }
                 else
                 {
-                    W.y -= Mathf.Sign(W.y) * 0.3f;
+                    W.y -= Mathf.Sign(W.y) * (k_BALL_RADIUS * 10);
                 }
 
                 W.z = V.x * k_BALL_1OR;
 
                 // Stopping scenario
-                if (V.sqrMagnitude < 0.0001f && W.magnitude < 0.04f)
+                if (VwithoutY.sqrMagnitude < 0.008f * k_FIXED_TIME_STEP && Mathf.Abs(V.y) < stepGravity * 2 && W.magnitude < 0.044f)
                 {
                     W = Vector3.zero;
                     V = Vector3.zero;
@@ -542,15 +570,13 @@ public class StandardPhysicsManager : UdonSharpBehaviour
             else // Slipping
             {
                 Vector3 nv = cv / cvMagnitude;
-
                 // Angular slipping friction
-                //W += ((-5.0f * k_F_SLIDE * k_GRAVITY)/(2.0f * 0.03f)) * k_FIXED_TIME_STEP * Vector3.Cross( Vector3.up, nv );
+                W += ((-5.0f * k_F_SLIDE * -V.y) / (2.0f * k_BALL_RADIUS) * Vector3.Cross(Vector3.up, nv));
                 // (baked):
-                W += -2.04305208f * Vector3.Cross(Vector3.up, nv);
-
-                //V += -k_F_SLIDE * k_GRAVITY * k_FIXED_TIME_STEP * nv;
+                //W += -2.04305208f * Vector3.Cross(Vector3.up, nv);
+                V += -k_F_SLIDE * -V.y * nv;
                 // (baked):
-                V += -0.024516625f * nv;
+                //V += -0.024516625f * nv;
 
                 ballMoving = true;
             }
@@ -560,10 +586,25 @@ public class StandardPhysicsManager : UdonSharpBehaviour
             ballMoving = true;
         }
 
-        if (balls_P[id].y > 0) // small epsilon to apply gravity
-            V.y -= k_GRAVITY * k_FIXED_TIME_STEP;
-        else
-            V.y = 0;
+        if (balls_P[id].y < 0)
+        {
+            V.y = -V.y * K_BOUNCE_FACTOR;  // Once the ball reaches the table, it will bounce. off the slate, //Slate Bounce Integration Attempt, Mabel. if there are issues = Make Ball Displacement (Y) to be 0 for the time being.
+            if (V.y < stepGravity)
+            {
+                V.y = 0f;
+                //ResetAudioProperties();   //once it is at a rest, reset. (2)
+            }
+            balls_P[id].y = 0f;
+            //audioSource.PlayOneShot(bounceSound);
+            //ModifyAudioProperties();     // We could play a sound of slate for Imersion (1)
+        }
+
+        V.y -= stepGravity; // Apply Gravity * Time so the airbone balls gets pushed back to the table.
+        /*
+        // Update position based on velocity
+        balls_P[id].y += V.y * k_FIXED_TIME_STEP;
+        */
+
 
         balls_W[id] = W;
         balls_V[id] = V;
@@ -572,6 +613,22 @@ public class StandardPhysicsManager : UdonSharpBehaviour
 
         return ballMoving;
     }
+
+    private void ModifyAudioProperties(int id, GameObject Ball)
+    {
+        Vector3 V = balls_V[id];
+
+        // Decrease volume and pitch with each bounce
+        audioSource.volume = initialVolume * Mathf.Pow(K_BOUNCE_FACTOR, V.y);
+        audioSource.pitch = initialPitch * Mathf.Pow(K_BOUNCE_FACTOR, V.y);
+    } // We could play a sound of slate for Imersion. (1-1)
+
+    private void ResetAudioProperties()
+    {
+        // Reset volume and pitch when ball comes to rest
+        audioSource.volume = initialVolume;
+        audioSource.pitch = initialPitch;
+    } // We could play a sound of slate for Imersion. (2-2)
 
     // Cue input tracking
 
@@ -637,14 +694,17 @@ public class StandardPhysicsManager : UdonSharpBehaviour
         return false;
     }
 
-    const float k_SINA = 0.28078832987f;
-    const float k_SINA2 = 0.07884208619f;
-    const float k_COSA = 0.95976971915f;
-    const float k_COSA2 = 0.92115791379f;
+    //h = 7 * k_BALL_RADIUS / 5; h is Height of the contact point at the rail.
+
+    //private float k_SINA = 0f;                  //0.28078832987  SIN(A)
+    //private float k_SINA2 = k_SINA * k_SINA;    //0.07884208619  SIN(A)² <- value of SIN(A) Squared
+    //private float k_COSA = 0f;                  //0.95976971915  COS(A)
+    //private float k_COSA2 = 0f;                 //0.92115791379  COS(A)² <- Value of COS(A) Squared
     const float k_EP1 = 1.79f;
-    const float k_A = 21.875f;
-    const float k_B = 6.25f;
+    //private float k_A = 21.875f;  //21.875f;      A = (7/(2*m)) 
+    //private float k_B = 6.25f;    //6.25f;        B = (1/m)
     const float k_F = 1.72909790282f;
+    private float e = 0.85f;
 
     // Apply cushion bounce
     void _phy_bounce_cushion(int id, Vector3 N)
@@ -685,6 +745,10 @@ public class StandardPhysicsManager : UdonSharpBehaviour
         {
             return;
         }
+        else
+        {
+            N = -N; // Invert the normal vector
+        }
 
         // Rotate V, W to be in the reference frame of cushion
         Quaternion rq = Quaternion.AngleAxis(Mathf.Atan2(-N.z, -N.x) * Mathf.Rad2Deg, Vector3.up);
@@ -692,41 +756,142 @@ public class StandardPhysicsManager : UdonSharpBehaviour
         Vector3 V = rq * source_v;
         Vector3 W = rq * balls_W[id];
 
-        Vector3 V1;
-        Vector3 W1;
-        float k, c, s_x, s_z;
+        Vector3 V1 = Vector3.zero; //Vector3 V1;
+        Vector3 W1 = Vector3.zero; //Vector3 W1;
+        //Vector3 rvw_R = balls_P[id];
 
-        //V1.x = -V.x * ((2.0f/7.0f) * k_SINA2 + k_EP1 * k_COSA2) - (2.0f/7.0f) * k_BALL_PL_X * W.z * k_SINA;
-        //V1.z = (5.0f/7.0f)*V.z + (2.0f/7.0f) * k_BALL_PL_X * (W.x * k_SINA - W.y * k_COSA) - V.z;
+        float θ, phi, psi, h, k, k_A, k_B, k_SINA, k_SINA2, k_COSA, k_COSA2, c, s, s_x, s_z, mu, I, PY, PX, PZ, P_yE, P_yS; //Y is Up in Unity
+
+        // Before i turn some of these to CONST FLOAT, i need to evaluate their FLOAT, i.e you are going see all of them inside here.
+
+
+        //"h" defines the Height of a cushion, sometimes defined as ϵ in other research Papers.. (we are doing "h" because better stands fo "H"eight)
+        h = 7f * k_BALL_RADIUS / 5f;
+
+        //THETA θ = The Angle Torque the ball has to the slate from the height of the cushion Depends on height of cushion relative to the ball
+        θ = Mathf.Asin(h / k_BALL_RADIUS - 1f); //-1
+        float cosθ = Mathf.Cos(θ); // in use
+        float sinθ = Mathf.Sin(θ); // in use
+
+        //psi = Mathf.Atan2(N.z, N.x) * Mathf.Rad2Deg;
+        //psi = Mathf.PI / 0f;
+
+        // Construct the rotation matrix
+        //Matrix4x4 rotationMatrix = Matrix4x4.Rotate(Quaternion.Euler(0, 0, psi));
+
+        phi = Mathf.Atan2(V1.z, V1.x) % (2 * Mathf.PI);  //It was just V instead of V1
+        float cosPhi = Mathf.Cos(phi);
+
+        mu = k_F_SLIDE_C;
+
+        //Below are Cadidates to remain CONST FLOATS later (we are working with baked values here to help hint us with perfomance loss and calculate of % cost.)
+
+        //SINE is associated the Y value (But in Unity Y is UP, so we use Z instead)
+        //k_SINA = 0.28078832987f;
+        //k_SINA2 = k_SINA * k_SINA;
+
+        //COSINE is associated with the X value
+        //k_COSA = 0.95976971915f;     
+        //k_COSA2 = k_COSA * k_COSA;
+
+        // (Legacy)
+        //V1.x = -V.x * ((2.0f / 7.0f) * k_SINA2 + (1 + e) * k_COSA2) - ((2.0f / 7.0f) * k_BALL_RADIUS * W.z * k_SINA);
+        //V1.z = ((5.0f / 7.0f) * V.z + (2.0f / 7.0f) * k_BALL_RADIUS * (W.x * k_SINA - W.y * k_COSA)); //- V.z;
         //V1.y = 0.0f; 
-        // (baked):
-        V1.x = -V.x * k_F - 0.00240675711f * W.z;
-        V1.z = 0.71428571428f * V.z + 0.00857142857f * (W.x * k_SINA - W.y * k_COSA) - V.z;
-        V1.y = 0.0f;
 
-        // s_x = V.x * k_SINA - V.y * k_COSA + W.z;
+        // (baked Leagcy):
+        //V1.x = -V.x * k_F - 0.00240675711f * W.z;
+        //V1.z = 0.71428571428f * V.z + 0.00857142857f * (W.x * k_SINA - W.y * k_COSA) - V.z;
+        //V1.y = 0.0f;
+
+        // (Han 2005 Model PDF, "Neko Mabel" C# Transcribed from "ekiefl" Numpy (Python)
+
+        /* Numpy Matrix 3x3 Reference, The first Number [] is P,V or W and the Second Number [] is Axis.
+        Ball_P  [0,0] P.X [0.1] = P.y [0.2] = P.z
+        Balls_V [1,0] V.x [1.1] = V.y [1.2] = V.z  Remeber, this is straight from Source, so everything you see in Z-axis needs to be put in Y-Axis and Vice Versa, for the sake of Unity.
+        Balls.W [2,0] W.x [2.1] = W.y [2.2] = W.z
+
+        rvw_R[1] = Equivalent to Vector3 V1.
+
+        */
+
+        //*is correct* = revised values to match with its necessary Rotation Axis.
+
+        //s_x = V.x * k_SINA - V.y * k_COSA + W.z;
         // (baked): y component not used:
-        s_x = V.x * k_SINA + W.z;
-        s_z = -V.z - W.y * k_COSA + W.x * k_SINA;
+        s_x = V.x * sinθ - V.y * cosθ + k_BALL_RADIUS * W.z; // s_x is correct
+        s_z = (
+            -V.z
+            - k_BALL_RADIUS * W.y * cosθ
+            + k_BALL_RADIUS * W.x * sinθ); //s_z is correct
 
-        // k = (5.0f * s_z) / ( 2 * k_BALL_MASS * k_A ); 
+        c = V.x * cosθ; // "c" 2D Assumption, is Correct
+
+        //Eqs 16
+        //I = 2 * k_BALL_MASS * Mathf.Pow(k_BALL_RADIUS, 2) / 5;    // C# INT
+        I = 2f / 5f * k_BALL_MASS * Mathf.Pow(k_BALL_RADIUS, 2);    // Unity Sintax C# FLOAT <- to avoid confusion, A and B are using the same order.
+        k_A = (7f / (2f * k_BALL_MASS));    // A is Correct 
+        k_B = (1f / k_BALL_MASS);           // B is Correct
+
+
+        //Eqs 17 & 20
+        //P_zE and P_zS (Remember, Z is up, so we write to Unity's "Y" here.
+        P_yE = ((1f + e) * c) / k_B;                                       // P_yE is Correct
+        P_yS = (Mathf.Sqrt(Mathf.Pow(s_x, 2) + Mathf.Pow(s_z, 2)) / k_A);   // P_yS is Correct (In case of Anomaly, do: Mathf.Sqrt(s_x * s_x + s_z * s_z) instead;
+
+        if (P_yS <= P_yE)
+        {
+            // Sliding and sticking case 1-1                                       1-1
+            PX = -s_x / k_A * sinθ - (1 + e) * c / k_B * cosθ;       // PX is Correct
+            PZ = s_z / k_A;                                             // PZ is correct
+            PY = s_x / k_A * cosθ - (1 + e) * c / k_B * sinθ;       // PY is correct
+        }
+        else
+        {
+            // Forward Sliding Case 1-2                                            1-2
+            PX = -mu * (1 + e) * c / k_B * cosPhi * sinθ - (              // PX is Correct
+                1 + e
+            ) * c / k_B * cosθ;
+            PZ = mu * (1 + e) * c / k_B * sinθ;                           // PZ is Correct
+            PY = mu * (1 + e) * c / k_B * cosPhi * cosθ - (               // PY is Correct
+                1 + e
+            ) * c / k_B * sinθ;
+        }
+        k = (s_z) / (2 * k_BALL_MASS * k_A);
+
+        // Update Velocity                                  // Update Velocity is Corret
+        V1.x = V.x += PX / k_BALL_MASS;
+        V1.z = V.z += PZ / k_BALL_MASS;
+        V1.y = V.y += PY / k_BALL_MASS;
+        //Currently, we dont have a Ball-Table (Slate) Interaction, the torque applied to the Table wont make the ball hop into the air, Lets not look at it for now.
+
+        // Update Angular Velocity
+        W1.x = W.x += -k_BALL_RADIUS / I * PZ * sinθ;
+        W1.z = W.z += k_BALL_RADIUS / I * (PX * sinθ - PY * cosθ);
+        W1.y = W.y += k_BALL_RADIUS / I * PZ * cosθ;
+
+        /*
         // (baked):
-        k = s_z * 0.71428571428f;
+        //k = s_z * 0.71428571428f;
 
-        // c = V.x * k_COSA - V.y * k_COSA;
+        //c = V.x * k_COSA - V.y * k_COSA;
         // (baked): y component not used
-        c = V.x * k_COSA;
 
         W1.x = k * k_SINA;
 
-        //W1.z = (5.0f / (2.0f * k_BALL_MASS)) * (-s_x / k_A + ((k_SINA * c * k_EP1) / k_B) * (k_COSA - k_SINA));
+        //W1.z = (5.0f / (2.0f * k_BALL_MASS)) * PX; //(-s_x / k_A + ((k_SINA * c * k_EP1) / k_B) * (k_COSA - k_SINA)); //5/2
         // (baked):
-        W1.z = 15.625f * (-s_x * 0.04571428571f + c * 0.0546021744f);
+        W1.z = (5.0f / (2.0f * k_BALL_MASS)) * (-s_x * 0.04571428571f + c * 0.0546021744f);
+        
         W1.y = k * k_COSA;
+        */
 
-        // Unrotate result
-        balls_V[id] += rb * V1;
-        balls_W[id] += rb * W1;
+        // Apply the rotation to the vector
+        //Vector3 rvw = rotationMatrix.MultiplyPoint3x4(rvw_R);
+
+        // Change back to Table Reference Frame (Unrotate result)
+        balls_V[id] = rb * V1;
+        balls_W[id] = rb * W1;
 
         table._TriggerBounceCushion(id, N);
     }
@@ -797,16 +962,17 @@ public class StandardPhysicsManager : UdonSharpBehaviour
         {
             table.pockets[i].SetActive(false);
         }
-        MeshCollider collider = table.table.GetComponent<MeshCollider>();
-        if (collider != null) collider.enabled = false;
-        collider = table.auto_pocketblockers.GetComponent<MeshCollider>();
-        if (collider != null) collider.enabled = false;
+        Collider[] collider = table.GetComponentsInChildren<Collider>();
+        for (int i = 0; i < collider.Length; i++)
+        {
+            collider[i].enabled = true;
+        }
 
         // Handy values
         k_MINOR_REGION_CONST = table.k_TABLE_WIDTH - table.k_TABLE_HEIGHT;
 
         // Major source vertices
-        k_vA.x = table.k_POCKET_RADIUS * 0.92f;
+        k_vA.x = table.k_POCKET_RADIUS * 0.75f;
         k_vA.z = table.k_TABLE_HEIGHT;
 
         k_vB.x = table.k_TABLE_WIDTH - table.k_POCKET_RADIUS;
@@ -1318,14 +1484,14 @@ public class StandardPhysicsManager : UdonSharpBehaviour
         w = new Vector3(w.x, -w.z, w.y);
 
         Vector3 preJumpV = v;
-        if (v.y > 0)
+        if (v.y > 0) //0f
         {
             // no scooping
             v.y = 0;
             table._Log("prevented scooping");
         }
         else if (v.y < 0)
-        {
+        {   /*
             // the ball must not be under the cue after one time step
             float k_MIN_HORIZONTAL_VEL = (k_BALL_RADIUS - c) / k_FIXED_TIME_STEP;
             if (v.z < k_MIN_HORIZONTAL_VEL)
@@ -1334,10 +1500,11 @@ public class StandardPhysicsManager : UdonSharpBehaviour
                 v.y = 0;
                 table._Log("not enough strength for jump shot (" + k_MIN_HORIZONTAL_VEL + " vs " + v.z + ")");
             }
-            else
+            */
+
             {
                 // dampen y velocity because the table will eat a lot of energy (we're driving the ball straight into it)
-                v.y = -v.y * 0.35f;
+                v.y = -v.y * K_BOUNCE_FACTOR; //0.35f
                 table._Log("dampening to " + v.y);
             }
         }
