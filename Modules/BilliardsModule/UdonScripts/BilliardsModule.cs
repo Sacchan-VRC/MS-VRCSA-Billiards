@@ -1836,6 +1836,8 @@ public class BilliardsModule : UdonSharpBehaviour
         // todo: reposition cues
 
         tableModels[tableModelLocal]._setTable();
+
+        guideline.gameObject.transform.Find("guide_display").GetComponent<MeshRenderer>().material.SetVector("_Dims", new Vector4(tableModels[tableModelLocal].tableWidth, tableModels[tableModelLocal].tableHeight, 0, 0));
     }
 
     public GameObject _GetTableBase()
