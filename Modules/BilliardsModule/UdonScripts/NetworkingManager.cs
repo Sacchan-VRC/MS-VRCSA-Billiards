@@ -67,10 +67,10 @@ public class NetworkingManager : UdonSharpBehaviour
     [UdonSynced] [NonSerialized] public uint timerSynced;
 
     // table being used
-    [UdonSynced] [NonSerialized] public uint tableModelSynced;
+    [UdonSynced] [NonSerialized] public byte tableModelSynced;
 
     // physics being used
-    [UdonSynced] [NonSerialized] public uint physicsSynced;
+    [UdonSynced] [NonSerialized] public byte physicsSynced;
 
     // whether or not the current game is played with teams
     [UdonSynced] [NonSerialized] public bool teamsSynced;
@@ -437,7 +437,7 @@ public class NetworkingManager : UdonSharpBehaviour
 
     public void _OnTableModelChanged(uint newTableModel)
     {
-        tableModelSynced = newTableModel;
+        tableModelSynced = (byte)newTableModel;
         table._OnRemoteDeserialization();
 
         bufferMessages(true);
@@ -445,7 +445,7 @@ public class NetworkingManager : UdonSharpBehaviour
 
     public void _OnPhysicsChanged(uint newPhysics)
     {
-        physicsSynced = newPhysics;
+        physicsSynced = (byte)newPhysics;
         table._OnRemoteDeserialization();
 
         bufferMessages(true);
@@ -472,13 +472,13 @@ public class NetworkingManager : UdonSharpBehaviour
         Array.Copy(newScores, fourBallScoresSynced, 2);
         gameModeSynced = (byte)gameMode;
         teamIdSynced = (byte)teamId;
-        repositionStateSynced = (byte) repositionState;
+        repositionStateSynced = (byte)repositionState;
         isTableOpenSynced = isTableOpen;
         teamColorSynced = (byte)teamColor;
         turnStateSynced = turnStateLocal;
         cueBallVSynced = cueBallV;
         cueBallWSynced = cueBallW;
-        fourBallCueBallSynced = (byte) fourBallCueBall;
+        fourBallCueBallSynced = (byte)fourBallCueBall;
         timerStartSynced = Networking.GetServerTimeInMilliseconds();
         simulationOwnerSynced = Networking.LocalPlayer.displayName;
         previewWinningTeamSynced = previewWinningTeam;
@@ -491,7 +491,7 @@ public class NetworkingManager : UdonSharpBehaviour
     public void _OnGlobalSettingsChanged(string newTournamentReferee, byte newPhysics, byte newTableModel)
     {
         if (Networking.LocalPlayer.displayName != playerNamesSynced[0]) return;
-        
+
         tournamentRefereeSynced = newTournamentReferee;
         physicsSynced = newPhysics;
         tableModelSynced = newTableModel;
@@ -518,7 +518,7 @@ public class NetworkingManager : UdonSharpBehaviour
             return;
         }
 
-        isUrgentSynced = (byte) (urgent ? 2 : 0);
+        isUrgentSynced = (byte)(urgent ? 2 : 0);
 
         hasBufferedMessages = true;
     }
@@ -653,11 +653,11 @@ public class NetworkingManager : UdonSharpBehaviour
 
         uint spec = decodeU16(gameState, 0x4C);
         uint state = decodeU16(gameState, 0x4E);
-        turnStateSynced = (byte) ((state & 0x1u) == 0x1u ? 1 : 0);
-        teamIdSynced = (byte) ((state & 0x2u) >> 1);
+        turnStateSynced = (byte)((state & 0x1u) == 0x1u ? 1 : 0);
+        teamIdSynced = (byte)((state & 0x2u) >> 1);
         repositionStateSynced = (byte)((state & 0x4u) == 0x4u ? 1 : 0);
         isTableOpenSynced = (state & 0x8u) == 0x8u;
-        teamColorSynced = (byte) ((state & 0x10u) >> 4);
+        teamColorSynced = (byte)((state & 0x10u) >> 4);
         gameModeSynced = (byte)((state & 0x700u) >> 8);
         uint timerSetting = (state & 0x6000u) >> 13;
         switch (timerSetting)
@@ -735,10 +735,10 @@ public class NetworkingManager : UdonSharpBehaviour
         encodeVec3Full(gameState, 0x60, cueBallVSynced, 50.0f);
         encodeVec3Full(gameState, 0x66, cueBallWSynced, 500.0f);
 
-        encodeU16(gameState, 0x6C, (ushort) (ballsPocketedSynced & 0xFFFFu));
+        encodeU16(gameState, 0x6C, (ushort)(ballsPocketedSynced & 0xFFFFu));
         gameState[0x6E] = teamIdSynced;
         gameState[0x6F] = repositionStateSynced;
-        gameState[0x70] = (byte) (isTableOpenSynced ? 1 : 0);
+        gameState[0x70] = (byte)(isTableOpenSynced ? 1 : 0);
         gameState[0x71] = teamColorSynced;
         gameState[0x72] = turnStateSynced;
         gameState[0x73] = gameModeSynced;
@@ -747,7 +747,7 @@ public class NetworkingManager : UdonSharpBehaviour
         gameState[0x77] = (byte)fourBallScoresSynced[0];
         gameState[0x78] = (byte)fourBallScoresSynced[1];
         gameState[0x79] = fourBallCueBallSynced;
-        gameState[0x7a] = (byte) (colorTurnSynced ? 1 : 0);
+        gameState[0x7a] = (byte)(colorTurnSynced ? 1 : 0);
 
         return "v2:" + Convert.ToBase64String(gameState, Base64FormattingOptions.None);
     }
