@@ -1533,7 +1533,7 @@ public class BilliardsModule : UdonSharpBehaviour
                 if (foulCondition)//points given to other team if foul
                 {
                     int foulscore = Mathf.Max(highestPocketedBallScore, foulFirstHitScore);
-                    fbScoresLocal[1 - teamIdLocal] += Mathf.Max(ballScore, 4);
+                    fbScoresLocal[1 - teamIdLocal] += Mathf.Max(foulscore, 4);
                     _LogInfo("6RED: Team " + (1 - teamIdLocal) + " awarded for foul " + Mathf.Max(foulscore, 4) + " points");
                 }
                 else
@@ -1573,7 +1573,7 @@ public class BilliardsModule : UdonSharpBehaviour
             }
 
             jumpShot = false;
-            
+
             networkingManager._OnSimulationEnded(ballsP, ballsPocketedLocal, fbScoresLocal, colorTurnLocal);
 
             if (winCondition)
