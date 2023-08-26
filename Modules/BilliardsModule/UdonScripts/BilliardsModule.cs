@@ -201,6 +201,7 @@ public class BilliardsModule : UdonSharpBehaviour
     private int firstHit = 0;
     private int secondHit = 0;
     private int thirdHit = 0;
+    private bool jumpShot;
 
     private bool fbMadePoint = false;
     private bool fbMadeFoul = false;
@@ -793,7 +794,7 @@ public class BilliardsModule : UdonSharpBehaviour
 
         menuManager._RefreshLobbyOpen();
         menuManager._RefreshPlayerList();
-        
+
         applyCueAccess(false);
     }
 
@@ -1321,6 +1322,11 @@ public class BilliardsModule : UdonSharpBehaviour
         ballsW[id] = Vector3.zero;
     }
 
+    public void _TriggerJumpShot()
+    {
+        jumpShot = true;
+    }
+
     public void _TriggerSimulationEnded(bool forceScratch)
     {
         if (!isLocalSimulationRunning) return;
@@ -1436,6 +1442,11 @@ public class BilliardsModule : UdonSharpBehaviour
                 isOpponentSink = false;
                 deferLossCondition = false;
                 foulCondition = false;
+                if (jumpShot)
+                {
+                    foulCondition = jumpShot;
+                    _LogInfo("6RED: Foul: Jumpshot");
+                }
 
                 int nextcolor = sixRedFindLowestUnpocketedColor(ballsPocketedOrig);
                 bool redOnTable = sixRedCheckIfRedOnTable(ballsPocketedOrig);
@@ -1561,6 +1572,8 @@ public class BilliardsModule : UdonSharpBehaviour
                                 _LogInfo("6RED: " + Convert.ToString(0x1FFEu, 2)); */
             }
 
+            jumpShot = false;
+            
             networkingManager._OnSimulationEnded(ballsP, ballsPocketedLocal, fbScoresLocal, colorTurnLocal);
 
             if (winCondition)

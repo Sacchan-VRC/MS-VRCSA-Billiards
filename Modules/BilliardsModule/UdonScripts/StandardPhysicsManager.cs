@@ -1505,6 +1505,14 @@ public class StandardPhysicsManager : UdonSharpBehaviour
             {
                 // dampen y velocity because the table will eat a lot of energy (we're driving the ball straight into it)
                 v.y = -v.y * K_BOUNCE_FACTOR; //0.35f
+                if (v.y < k_GRAVITY * k_FIXED_TIME_STEP)
+                {
+                    v.y = 0f;
+                }
+                else
+                {
+                    table._TriggerJumpShot();
+                }
                 table._Log("dampening to " + v.y);
             }
         }
