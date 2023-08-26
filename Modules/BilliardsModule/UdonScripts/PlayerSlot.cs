@@ -8,7 +8,7 @@ using VRC.Udon;
 [UdonBehaviourSyncMode(BehaviourSyncMode.Manual)]
 public class PlayerSlot : UdonSharpBehaviour
 {
-    [UdonSynced] [NonSerialized] public string owner = "";
+    [UdonSynced] [NonSerialized] public int owner = -1;
 
     private NetworkingManager networkingManager;
 
@@ -21,9 +21,9 @@ public class PlayerSlot : UdonSharpBehaviour
     {
         VRCPlayerApi player = Networking.LocalPlayer;
 
-        if (owner != "" && owner != player.displayName) return false;
+        if (owner != -1 && owner != player.playerId) return false;
 
-        owner = player.displayName;
+        owner = player.playerId;
         
         Networking.SetOwner(Networking.LocalPlayer, this.gameObject);
         this.RequestSerialization();
@@ -33,9 +33,9 @@ public class PlayerSlot : UdonSharpBehaviour
 
     public void _Reset()
     {
-        if (owner == "") return;
+        if (owner == -1) return;
 
-        owner = "";
+        owner = -1;
         
         Networking.SetOwner(Networking.LocalPlayer, this.gameObject);
         this.RequestSerialization();

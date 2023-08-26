@@ -45,7 +45,7 @@ public class CueController : UdonSharpBehaviour
     private float gripSize;
     private float cuetipDistance;
 
-    private string[] authorizedOwners;
+    private int[] authorizedOwners;
 
     private void Start()
     {
@@ -71,7 +71,7 @@ public class CueController : UdonSharpBehaviour
 
     public override void OnDeserialization()
     {
-        string owner = Networking.GetOwner(this.gameObject).displayName;
+        int owner = Networking.GetOwner(this.gameObject).playerId;
 
         activeCueSkin = table._CanUseCueSkin(owner, syncedCueSkin) ? syncedCueSkin : 0;
 
@@ -89,14 +89,14 @@ public class CueController : UdonSharpBehaviour
         return _IsOwnershipTransferAllowed(this.gameObject, requester, newOwner);
     }
 
-    public void _SetAuthorizedOwners(string[] newOwners)
+    public void _SetAuthorizedOwners(int[] newOwners)
     {
         authorizedOwners = newOwners;
     }
 
     public void _Enable(bool shouldReset)
     {
-        if (shouldReset && Array.IndexOf(authorizedOwners, Networking.LocalPlayer.displayName) != -1) resetPosition();
+        if (shouldReset && Array.IndexOf(authorizedOwners, Networking.LocalPlayer.playerId) != -1) resetPosition();
 
         primaryController._Show();
     }
@@ -109,7 +109,7 @@ public class CueController : UdonSharpBehaviour
         lagPrimaryPosition = origPrimaryPosition;
         lagSecondaryPosition = origSecondaryPosition;
         
-        if (shouldReset && Array.IndexOf(authorizedOwners, Networking.LocalPlayer.displayName) != -1) resetPosition();
+        if (shouldReset && Array.IndexOf(authorizedOwners, Networking.LocalPlayer.playerId) != -1) resetPosition();
     }
 
     private void FixedUpdate()
@@ -256,7 +256,7 @@ public class CueController : UdonSharpBehaviour
     {
         if (requester.playerId != newOwner.playerId) return false;
 
-        if (Array.IndexOf(authorizedOwners, newOwner.displayName) == -1) return false;
+        if (Array.IndexOf(authorizedOwners, newOwner.playerId) == -1) return false;
 
         return true;
     }

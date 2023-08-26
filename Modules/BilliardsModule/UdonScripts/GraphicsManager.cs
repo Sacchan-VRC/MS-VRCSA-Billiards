@@ -226,7 +226,7 @@ public class GraphicsManager : UdonSharpBehaviour
 
         string settings = (string)table.currentPhysicsManager.GetProgramVariable("PHYSICSNAME");
 
-        if (!string.IsNullOrEmpty(table.tournamentRefereeLocal))
+        if (table.tournamentRefereeLocal != -1)
         {
             settings += $"\nTournament Mode ({table.tournamentRefereeLocal})";
         }
@@ -245,30 +245,30 @@ public class GraphicsManager : UdonSharpBehaviour
         winnerTextHolder.transform.Rotate(Vector3.up, 90.0f * Time.deltaTime);
     }
 
-    public void _SetScorecardPlayers(string[] players)
+    public void _SetScorecardPlayers(int[] players)
     {
         scorecardHolder.SetActive(true);
 
-        if (players[2] == "" || !table.teamsLocal)
+        if (players[2] == -1 || !table.teamsLocal)
         {
             playerNames[0].fontSize = 13;
-            playerNames[0].text = _FormatName(players[0]);
+            playerNames[0].text = _FormatName(VRCPlayerApi.GetPlayerById(players[0]));
         }
         else
         {
             playerNames[0].fontSize = 7;
-            playerNames[0].text = _FormatName(players[0]) + "\n" + _FormatName(players[2]);
+            playerNames[0].text = _FormatName(VRCPlayerApi.GetPlayerById(players[0])) + "\n" + _FormatName(VRCPlayerApi.GetPlayerById(players[2]));
         }
 
-        if (players[3] == "" || !table.teamsLocal)
+        if (players[3] == -1 || !table.teamsLocal)
         {
             playerNames[1].fontSize = 13;
-            playerNames[1].text = _FormatName(players[1]);
+            playerNames[1].text = _FormatName(VRCPlayerApi.GetPlayerById(players[1]));
         }
         else
         {
             playerNames[1].fontSize = 7;
-            playerNames[1].text = _FormatName(players[1]) + "\n" + _FormatName(players[3]);
+            playerNames[1].text = _FormatName(VRCPlayerApi.GetPlayerById(players[1])) + "\n" + _FormatName(VRCPlayerApi.GetPlayerById(players[3]));
         }
     }
 
@@ -283,14 +283,14 @@ public class GraphicsManager : UdonSharpBehaviour
         winnerTextHolder.SetActive(false);
     }
 
-    public void _SetWinners(uint winnerId, string[] players)
+    public void _SetWinners(uint winnerId, int[] players)
     {
-        string player1 = winnerId == 0 ? players[0] : players[1];
-        string player2 = winnerId == 0 ? players[2] : players[3];
+        VRCPlayerApi player1 = winnerId == 0 ? VRCPlayerApi.GetPlayerById(players[0]) : VRCPlayerApi.GetPlayerById(players[1]);
+        VRCPlayerApi player2 = winnerId == 0 ? VRCPlayerApi.GetPlayerById(players[2]) : VRCPlayerApi.GetPlayerById(players[3]);
 
         winnerTextHolder.SetActive(true);
         winnerTextHolder.transform.localRotation = Quaternion.identity;
-        if (player2 == "" || !table.teamsLocal)
+        if (player2 == null || !table.teamsLocal)
         {
             winnerText.text = _FormatName(player1) + " wins!";
         }
@@ -300,21 +300,22 @@ public class GraphicsManager : UdonSharpBehaviour
         }
     }
 
-    public string _FormatName(string name)
+    public string _FormatName(VRCPlayerApi player)
     {
-        if (table.nameColorHook == null) return $"<color=#ffffff>{name}</color>";
-        if (name == null) return $"<color=#ffffff></color>";
+        if (player == null) { return "No one"; }
+        if (table.nameColorHook == null) return $"<color=#ffffff>{player.displayName}</color>";
+        if (player.displayName == null) return $"<color=#ffffff></color>";
 
-        table.nameColorHook.SetProgramVariable("inOwner", name);
+        table.nameColorHook.SetProgramVariable("inOwner", player.displayName);
         table.nameColorHook.SendCustomEvent("_GetNameColor");
 
         string color = (string)table.nameColorHook.GetProgramVariable("outColor");
         if (color == "rainbow")
         {
-            return rainbow(name);
+            return rainbow(player.displayName);
         }
 
-        return $"<color=#{color}>{name}</color>";
+        return $"<color=#{color}>{player.displayName}</color>";
     }
 
     private string rainbow(string name)

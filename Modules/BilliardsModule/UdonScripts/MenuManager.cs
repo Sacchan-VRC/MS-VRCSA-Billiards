@@ -2,6 +2,8 @@
 using UdonSharp;
 using UnityEngine;
 using UnityEngine.UI;
+using VRC.SDKBase;
+using VRC.Udon;
 
 [UdonBehaviourSyncMode(BehaviourSyncMode.NoVariableSync)]
 public class MenuManager : UdonSharpBehaviour
@@ -134,27 +136,27 @@ public class MenuManager : UdonSharpBehaviour
                 buttonJoinBlue.gameObject.SetActive(false);
 
                 // put the leave button where the join button for our team is
-                if (table.localTeamId == 0)
-                {
-                    buttonLeave.transform.localPosition = buttonJoinOrange.transform.localPosition;
-                }
-                else
-                {
-                    buttonLeave.transform.localPosition = buttonJoinBlue.transform.localPosition;
-                }
+                /*                 if (table.localTeamId == 0)
+                                {
+                                    buttonLeave.transform.localPosition = buttonJoinOrange.transform.localPosition;
+                                }
+                                else
+                                {
+                                    buttonLeave.transform.localPosition = buttonJoinBlue.transform.localPosition;
+                                } */
                 buttonLeave._ResetPosition();
                 buttonLeave.gameObject.SetActive(true);
 
                 // host can also start the game
-                buttonPlay.gameObject.SetActive(table.localPlayerId == 0);
+                buttonPlay.gameObject.SetActive(true);
             }
             else // Otherwise, its just join buttons
             {
                 buttonPlay.gameObject.SetActive(false);
                 buttonLeave.gameObject.SetActive(false);
 
-                buttonJoinOrange.gameObject.SetActive(table.playerNamesLocal[0] == "" || (table.teamsLocal && table.playerNamesLocal[2] == ""));
-                buttonJoinBlue.gameObject.SetActive(table.playerNamesLocal[1] == "" || (table.teamsLocal && table.playerNamesLocal[3] == ""));
+                buttonJoinOrange.gameObject.SetActive(table.playerIDsLocal[0] == -1 || (table.teamsLocal && table.playerIDsLocal[2] == -1));
+                buttonJoinBlue.gameObject.SetActive(table.playerIDsLocal[1] == -1 || (table.teamsLocal && table.playerIDsLocal[3] == -1));
             }
         }
         else
@@ -168,11 +170,21 @@ public class MenuManager : UdonSharpBehaviour
 
     public void _RefreshPlayerList()
     {
+        int numPlayers = 0;
         for (int i = 0; i < (table.teamsLocal ? 4 : 2); i++)
         {
-            lobbyNames[i].text = table.graphicsManager._FormatName(table.playerNamesLocal[i]);
+            VRCPlayerApi player = VRCPlayerApi.GetPlayerById(table.playerIDsLocal[i]);
+            if (player == null)
+            {
+                lobbyNames[i].text = "";
+            }
+            else
+            {
+                numPlayers++;
+                lobbyNames[i].text = table.graphicsManager._FormatName(player);
+            }
         }
-
+        table.numPlayersCurrent = numPlayers;
         refreshJoinButtons();
     }
 
@@ -236,17 +248,9 @@ public class MenuManager : UdonSharpBehaviour
         }
         else if (button.name == "LeaveButton")
         {
-            // Close lobby
-            if (table.localPlayerId == 0)
-            {
-                table._TriggerLobbyClosed();
-            }
-            else
-            {
-                table._TriggerLeaveLobby();
-            }
+            table._TriggerLeaveLobby();
         }
-        else if (table.localPlayerId == 0)
+        else if (table.localPlayerId > -1)
         {
             if (button.name == "PlayButton")
             {

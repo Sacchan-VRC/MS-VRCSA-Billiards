@@ -13,7 +13,7 @@ public class NetworkingManager : UdonSharpBehaviour
     [UdonSynced] [NonSerialized] public int packetIdSynced;
 
     // players in the game - this field should only be updated by the host, stored in the zeroth position
-    [UdonSynced] [NonSerialized] public string[] playerNamesSynced = new string[MAX_PLAYERS];
+    [UdonSynced] [NonSerialized] public int[] playerIDsSynced = { -1, -1, -1, -1 };
 
     // ball positions
     [UdonSynced] [NonSerialized] public Vector3[] ballsPSynced = new Vector3[MAX_BALLS];
@@ -28,7 +28,7 @@ public class NetworkingManager : UdonSharpBehaviour
     [UdonSynced] [NonSerialized] public int stateIdSynced;
 
     // who drives the simulation
-    [UdonSynced] [NonSerialized] public string simulationOwnerSynced;
+    [UdonSynced] [NonSerialized] public int simulationOwnerSynced;
 
     // bitmask of pocketed balls
     [UdonSynced] [NonSerialized] public uint ballsPocketedSynced;
@@ -91,7 +91,7 @@ public class NetworkingManager : UdonSharpBehaviour
     [UdonSynced] [NonSerialized] public byte isUrgentSynced;
 
     // the current tournament referee
-    [UdonSynced] [NonSerialized] public string tournamentRefereeSynced;
+    [UdonSynced] [NonSerialized] public int tournamentRefereeSynced = -1;
 
     // 6RedSnooker: currently a turn where a color should be pocketed
     [UdonSynced] [NonSerialized] public bool colorTurnSynced;
@@ -122,33 +122,33 @@ public class NetworkingManager : UdonSharpBehaviour
 
     public void _OnPlayerSlotChanged(PlayerSlot slot)
     {
-        if (gameStateSynced != 1) return; // we don't process player registrations if the lobby isn't open
+        // if (gameStateSynced != 1) return; // we don't process player registrations if the lobby isn't open
 
-        if (Networking.LocalPlayer.displayName != playerNamesSynced[0]) return; // only the host processes player registrations
+        if (Networking.LocalPlayer.playerId != playerIDsSynced[0]) return; // only the host processes player registrations
 
         bool registrationsChanged = false;
 
         // note: we ignore slot zero, because the host should never chnage
-        for (int i = 1; i < MAX_PLAYERS; i++)
+        for (int i = 0; i < MAX_PLAYERS; i++)
         {
             // nothing to update here
-            if (playerNamesSynced[i] == playerSlots[i].owner) continue;
+            if (playerIDsSynced[i] == playerSlots[i].owner) continue;
 
             // if we're deregistering a player, always allow
-            if (playerSlots[i].owner == "")
+            if (playerSlots[i].owner == -1)
             {
                 registrationsChanged = true;
-                playerNamesSynced[i] = "";
+                playerIDsSynced[i] = -1;
                 continue;
             }
 
             // otherwise, only allow registration if not already registered
             int occurences = 0;
-            for (int j = 0; j < MAX_PLAYERS; j++) if (playerNamesSynced[j] == playerSlots[i].owner) occurences++;
+            for (int j = 0; j < MAX_PLAYERS; j++) if (playerIDsSynced[j] == playerSlots[i].owner) occurences++;
             if (occurences == 0)
             {
                 registrationsChanged = true;
-                playerNamesSynced[i] = playerSlots[i].owner;
+                playerIDsSynced[i] = playerSlots[i].owner;
                 continue;
             }
 
@@ -205,8 +205,8 @@ public class NetworkingManager : UdonSharpBehaviour
         }
         else if (gameStateSynced == 2)
         {
-            string[] playerNames = new string[MAX_PLAYERS + 1];
-            Array.Copy(playerNamesSynced, playerNames, MAX_PLAYERS);
+            int[] playerNames = new int[MAX_PLAYERS + 1];
+            Array.Copy(playerIDsSynced, playerNames, MAX_PLAYERS);
             playerNames[MAX_PLAYERS] = tournamentRefereeSynced;
             ownershipManager._AuthorizeUsers(playerNames);
         }
@@ -306,7 +306,7 @@ public class NetworkingManager : UdonSharpBehaviour
         repositionStateSynced = 0;
         cueBallVSynced = cueBallV;
         cueBallWSynced = cueBallW;
-        simulationOwnerSynced = Networking.LocalPlayer.displayName;
+        simulationOwnerSynced = Networking.LocalPlayer.playerId;
 
         bufferMessages(false);
     }
@@ -336,10 +336,10 @@ public class NetworkingManager : UdonSharpBehaviour
         for (int i = 0; i < MAX_PLAYERS; i++)
         {
             playerSlots[i]._Reset();
-            playerNamesSynced[i] = "";
+            playerIDsSynced[i] = -1;
         }
 
-        playerNamesSynced[0] = Networking.LocalPlayer.displayName;
+        playerIDsSynced[0] = Networking.LocalPlayer.playerId;
 
         bufferMessages(false);
     }
@@ -350,7 +350,7 @@ public class NetworkingManager : UdonSharpBehaviour
 
         for (int i = 0; i < MAX_PLAYERS; i++)
         {
-            playerNamesSynced[i] = "";
+            playerIDsSynced[i] = -1;
             playerSlots[i]._Reset();
         }
 
@@ -390,7 +390,7 @@ public class NetworkingManager : UdonSharpBehaviour
     {
         VRCPlayerApi me = Networking.LocalPlayer;
 
-        if (playerSlots[playerId].owner != me.displayName) return;
+        // if (playerSlots[playerId].owner != me.playerId) return;
 
         _OnKickLobby(playerId);
     }
@@ -480,7 +480,7 @@ public class NetworkingManager : UdonSharpBehaviour
         cueBallWSynced = cueBallW;
         fourBallCueBallSynced = (byte)fourBallCueBall;
         timerStartSynced = Networking.GetServerTimeInMilliseconds();
-        simulationOwnerSynced = Networking.LocalPlayer.displayName;
+        simulationOwnerSynced = Networking.LocalPlayer.playerId;
         previewWinningTeamSynced = previewWinningTeam;
         colorTurnSynced = colorTurn;
 
@@ -488,9 +488,9 @@ public class NetworkingManager : UdonSharpBehaviour
         // OnDeserialization(); // jank! force deserialization so the practice manager knows to ignore it
     }
 
-    public void _OnGlobalSettingsChanged(string newTournamentReferee, byte newPhysics, byte newTableModel)
+    public void _OnGlobalSettingsChanged(int newTournamentReferee, byte newPhysics, byte newTableModel)
     {
-        if (Networking.LocalPlayer.displayName != playerNamesSynced[0]) return;
+        if (Networking.LocalPlayer.playerId != playerIDsSynced[0]) return;
 
         tournamentRefereeSynced = newTournamentReferee;
         physicsSynced = newPhysics;
