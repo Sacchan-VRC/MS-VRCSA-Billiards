@@ -39,7 +39,7 @@ public class NetworkingManager : UdonSharpBehaviour
     // when the timer for the current shot started, driven by the player who trigger the transition
     [UdonSynced] [NonSerialized] public int timerStartSynced;
 
-    // the current reposition state (0 is reposition not allowed, 1 is reposition in kitchen, 2 is reposition anywhere)
+    // the current reposition state (0 is reposition not allowed, 1 is reposition in kitchen, 2 is reposition anywhere, 3 is reposition in snooker D)
     [UdonSynced] [NonSerialized] public byte repositionStateSynced;
 
     // whether or not the table is open or not (i.e. no suit decided yet)
@@ -267,14 +267,21 @@ public class NetworkingManager : UdonSharpBehaviour
         bufferMessages(false);
     }
 
-    public void _OnTurnFoul(uint teamId)
+    public void _OnTurnFoul(uint teamId, bool Scratch)
     {
         stateIdSynced++;
 
         teamIdSynced = (byte)teamId;
         turnStateSynced = 2;
         timerStartSynced = Networking.GetServerTimeInMilliseconds();
-        repositionStateSynced = 2;
+        if (!table.isSnooker6Red)
+        {
+            repositionStateSynced = 2;
+        }
+        else if (Scratch)
+        {
+            repositionStateSynced = 3;
+        }
         swapFourBallCueBalls();
 
         bufferMessages(false);
@@ -440,7 +447,7 @@ public class NetworkingManager : UdonSharpBehaviour
         tableModelSynced = (byte)newTableModel;
         table._OnRemoteDeserialization();
 
-        bufferMessages(true);
+        bufferMessages(false);
     }
 
     public void _OnPhysicsChanged(uint newPhysics)
@@ -448,7 +455,7 @@ public class NetworkingManager : UdonSharpBehaviour
         physicsSynced = (byte)newPhysics;
         table._OnRemoteDeserialization();
 
-        bufferMessages(true);
+        bufferMessages(false);
     }
 
     public void _OnGameModeChanged(uint newGameMode)

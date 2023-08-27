@@ -43,7 +43,6 @@ public class RepositionManager : UdonSharpBehaviour
             if (i > 0 && !table.isPracticeMode && !table._IsLocalPlayerReferee()) continue;
 
             GameObject ball = table.balls[i];
-
             Transform pickupTransform = ball.transform.GetChild(0);
 
             float maxX;
@@ -51,7 +50,8 @@ public class RepositionManager : UdonSharpBehaviour
             {
                 maxX = k_pR.x;
             }
-            else if (i != 0)
+            else
+            if (i != 0)
             {
                 maxX = k_pR.x;
             }
@@ -68,30 +68,13 @@ public class RepositionManager : UdonSharpBehaviour
             boundedLocation.x = Mathf.Clamp(boundedLocation.x, -k_pR.x, maxX);
             boundedLocation.z = Mathf.Clamp(boundedLocation.z, -k_pO.z, k_pO.z);
             boundedLocation.y = 0.0f;
-
-            // ensure no collisions
-            bool collides = false;
-            Collider[] colliders = Physics.OverlapSphere(transformSurface.TransformPoint(boundedLocation), k_BALL_RADIUS);
-            for (int j = 0; j < colliders.Length; j++)
+            //confine do D
+            if (!table.isPracticeMode && table.isSnooker6Red && i == 0)
             {
-                if (colliders[j] == null) continue;
-
-                GameObject collided = colliders[j].gameObject;
-                if (collided == ball) continue;
-
-                int collidedBall = Array.IndexOf(table.balls, collided);
-                if (collidedBall != -1)
-                {
-                    collides = true;
-                    break;
-                }
-
-                if (collided.name == "table" || collided.name == "glass" || collided.name == ".4BALL_FILL")
-                {
-                    collides = true;
-                    break;
-                }
+                boundedLocation = ConfineToD(boundedLocation, maxX);
             }
+
+            bool collides = PreventCollision(transformSurface, boundedLocation, ball);
 
             if (!collides)
             {
@@ -102,6 +85,43 @@ public class RepositionManager : UdonSharpBehaviour
                 pickupTransform.localRotation = Quaternion.identity;
             }
         }
+    }
+    public Vector3 ConfineToD(Vector3 BallPos, float maxX)
+    {
+        Vector3 midD = new Vector3(maxX, 0, 0);
+        Vector3 distFromDCenter3 = BallPos - midD;
+        if (distFromDCenter3.magnitude > table.k_SEMICIRCLERADIUS)
+        {
+            return midD + distFromDCenter3.normalized * table.k_SEMICIRCLERADIUS;
+        }
+        return BallPos;
+    }
+    public bool PreventCollision(Transform transformSurface, Vector3 ballPos, GameObject ball)
+    {            // ensure no collisions
+        bool collides = false;
+
+        Collider[] colliders = Physics.OverlapSphere(transformSurface.TransformPoint(ballPos), k_BALL_RADIUS);
+        for (int j = 0; j < colliders.Length; j++)
+        {
+            if (colliders[j] == null) continue;
+
+            GameObject collided = colliders[j].gameObject;
+            if (collided == ball) continue;
+
+            int collidedBall = Array.IndexOf(table.balls, collided);
+            if (collidedBall != -1)
+            {
+                collides = true;
+                break;
+            }
+
+            if (collided.name == "table" || collided.name == "glass" || collided.name == ".4BALL_FILL")
+            {
+                collides = true;
+                break;
+            }
+        }
+        return collides;
     }
 
     public void _BeginReposition(Repositioner grip)
@@ -114,7 +134,7 @@ public class RepositionManager : UdonSharpBehaviour
 
         int idx = grip.idx;
         if (repositioning[idx]) return;
-        
+
         repositioning[idx] = true;
         repositionCount++;
         return;
@@ -124,12 +144,12 @@ public class RepositionManager : UdonSharpBehaviour
     {
         int idx = grip.idx;
         if (!repositioning[idx]) return;
-        
+
         repositioning[idx] = false;
         repositionCount--;
 
         grip._Reset();
-        
+
         table._TriggerPlaceBall(idx);
     }
 

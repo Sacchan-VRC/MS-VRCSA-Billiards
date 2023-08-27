@@ -1093,17 +1093,21 @@ public class BilliardsModule : UdonSharpBehaviour
             return;
         }
 
-        if (repositionStateLocal == 1 || repositionStateLocal == 2)
+        if (repositionStateLocal > 0)
         {
             isReposition = true;
-            if (repositionStateLocal == 1)
+            switch (repositionStateLocal)
             {
-                repoMaxX = -k_SPOT_POSITION_X;
-            }
-            else
-            {
-                Vector3 k_pR = (Vector3)currentPhysicsManager.GetProgramVariable("k_pR");
-                repoMaxX = k_pR.x;
+                case 1://kitchen
+                    repoMaxX = -k_SPOT_POSITION_X;
+                    break;
+                case 2://anywhere
+                    Vector3 k_pR = (Vector3)currentPhysicsManager.GetProgramVariable("k_pR");
+                    repoMaxX = k_pR.x;
+                    break;
+                case 3://snooker D
+                    repoMaxX = -k_TABLE_WIDTH + K_BAULK_LINE;
+                    break;
             }
             setFoulPickupEnabled(true);
         }
@@ -1436,6 +1440,11 @@ public class BilliardsModule : UdonSharpBehaviour
             }
             else /* if (isSnooker) */
             {
+                if (isScratch)
+                {
+                    ballsP[0] = new Vector3(-k_TABLE_WIDTH + K_BAULK_LINE - k_SEMICIRCLERADIUS * .5f, 0f, 0f);
+                    moveBallInDirUntilNotTouching(0, Vector3.back * k_BALL_RADIUS * .051f);
+                }
                 isOpponentSink = false;
                 deferLossCondition = false;
                 foulCondition = false;
