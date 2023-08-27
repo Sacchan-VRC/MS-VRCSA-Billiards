@@ -26,14 +26,14 @@ public class BilliardsModule : UdonSharpBehaviour
     [NonSerialized] public float k_CUSHION_RADIUS; // The roundess of colliders
     [NonSerialized] public float k_POCKET_RADIUS; // Full diameter of pockets
     [NonSerialized] public float k_INNER_RADIUS; // Pocket 'hitbox' cylinder
-    [NonSerialized] public float k_FACING_ANGLE_CORNER; // Pocket 'hitbox' cylinder
-    [NonSerialized] public float k_FACING_ANGLE_SIDE; // Pocket 'hitbox' cylinder
-    [NonSerialized] public float K_BAULK_LINE; // Pocket 'hitbox' cylinder
-    [NonSerialized] public float K_BLACK_SPOT; // Pocket 'hitbox' cylinder
-    [NonSerialized] public float k_SEMICIRCLERADIUS; // Pocket 'hitbox' cylinder
-    [NonSerialized] public float k_BALL_DIAMETRE; // Pocket 'hitbox' cylinder
-    [NonSerialized] public float k_BALL_RADIUS; // Pocket 'hitbox' cylinder
-    [NonSerialized] public float k_BALL_MASS; // Pocket 'hitbox' cylinder
+    [NonSerialized] public float k_FACING_ANGLE_CORNER; // Angle of corner pocket inner walls
+    [NonSerialized] public float k_FACING_ANGLE_SIDE; // Angle of side pocket inner walls
+    [NonSerialized] public float K_BAULK_LINE; // Snooker baulk line distance from end of table
+    [NonSerialized] public float K_BLACK_SPOT; // Snooker Black ball distance from end of table
+    [NonSerialized] public float k_SEMICIRCLERADIUS; // Snooker, radius of D
+    [NonSerialized] public float k_BALL_DIAMETRE; // Diameter of balls
+    [NonSerialized] public float k_BALL_RADIUS; // Radius of balls
+    [NonSerialized] public float k_BALL_MASS; // Mass of balls
     [NonSerialized] public Vector3 k_vE; // corner pocket data
     [NonSerialized] public Vector3 k_vF; // side pocket data
     [NonSerialized] public GameObject[] pockets;
