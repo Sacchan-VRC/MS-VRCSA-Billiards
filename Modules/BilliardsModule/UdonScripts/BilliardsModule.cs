@@ -526,8 +526,6 @@ public class BilliardsModule : UdonSharpBehaviour
 
         if (playerIDsLocal[0] == -1) { return; }
 
-        ballBounced_9Ball = false;
-
         networkingManager._OnGameStart(initialBallsPocketed[gameModeLocal], initialPositions[gameModeLocal]);
     }
 
@@ -1426,7 +1424,6 @@ public class BilliardsModule : UdonSharpBehaviour
                     //keep moving ball down the table until it's not touching any other balls
                     moveBallInDirUntilNotTouching(9, Vector3.right * .051f);
                 }
-                ballBounced_9Ball = false;
             }
             else if (is4Ball)
             {
