@@ -370,7 +370,14 @@ public class NetworkingManager : UdonSharpBehaviour
 
         gameStateSynced = 2;
         ballsPocketedSynced = defaultBallsPocketed;
-        repositionStateSynced = 1;
+        if (table.isSnooker6Red)
+        {
+            repositionStateSynced = 3;
+        }
+        else
+        {
+            repositionStateSynced = 1;
+        }
         turnStateSynced = 0;
         isTableOpenSynced = true;
         teamIdSynced = 0;

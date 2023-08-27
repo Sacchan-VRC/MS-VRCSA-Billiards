@@ -50,8 +50,7 @@ public class RepositionManager : UdonSharpBehaviour
             {
                 maxX = k_pR.x;
             }
-            else
-            if (i != 0)
+            else if (i != 0)
             {
                 maxX = k_pR.x;
             }

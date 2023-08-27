@@ -1729,8 +1729,8 @@ public class BilliardsModule : UdonSharpBehaviour
         {
             // Snooker
             initialBallsPocketed[4] = 0xE000u;
-
-            initialPositions[4][1] = new Vector3//black (TODO: position correctly)
+            initialPositions[4][0] = new Vector3(-k_TABLE_WIDTH + K_BAULK_LINE - k_SEMICIRCLERADIUS * .5f, 0f, 0f);//whte, middle of the semicircle
+            initialPositions[4][1] = new Vector3//black
                     (
                       k_TABLE_WIDTH - K_BLACK_SPOT,
                        0f,
