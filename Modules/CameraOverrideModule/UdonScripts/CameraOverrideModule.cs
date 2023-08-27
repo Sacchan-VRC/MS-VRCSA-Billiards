@@ -38,6 +38,7 @@ namespace Metaphira.Modules.CameraOverride
         }
         public void _Init()
         {
+            if (initialized) { return; }
             initialized = true;
             referenceCamera = this.transform.Find("ReferenceCamera").GetComponent<Camera>();
 
@@ -115,6 +116,7 @@ namespace Metaphira.Modules.CameraOverride
 
         private void updateCamera()
         {
+            if (!initialized) { return; }
             if (renderMode == RENDER_MODE_DISABLED)
             {
                 if (targetCamera != null) targetCamera.enabled = false;
