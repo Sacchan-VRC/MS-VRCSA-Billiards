@@ -1594,7 +1594,7 @@ public class BilliardsModule : UdonSharpBehaviour
             else if (foulCondition)
             {
                 // Foul
-                onLocalTurnFoul();
+                onLocalTurnFoul(isScratch);
             }
             else if (isObjectiveSink && !isOpponentSink)
             {
@@ -1926,11 +1926,11 @@ public class BilliardsModule : UdonSharpBehaviour
         networkingManager._OnTurnPass(teamIdLocal ^ 0x1u);
     }
 
-    private void onLocalTurnFoul()
+    private void onLocalTurnFoul(bool Scratch)
     {
         _LogInfo($"onLocalTurnFoul");
 
-        networkingManager._OnTurnFoul(teamIdLocal ^ 0x1u);
+        networkingManager._OnTurnFoul(teamIdLocal ^ 0x1u, Scratch);
     }
 
     private void onLocalTurnContinue()
@@ -1993,7 +1993,7 @@ public class BilliardsModule : UdonSharpBehaviour
             if (isOurTurn())
             {
                 // everyone on the current team propagates the change
-                onLocalTurnFoul();
+                onLocalTurnFoul(false);
             }
         }
     }
@@ -2060,7 +2060,7 @@ public class BilliardsModule : UdonSharpBehaviour
     {
         if (isPracticeMode || (tournamentRefereeLocal != -1 && _IsLocalPlayerReferee()))
         {
-            onLocalTurnFoul();
+            onLocalTurnFoul(false);
         }
     }
 
