@@ -259,8 +259,6 @@ public class BilliardsModule : UdonSharpBehaviour
         }
         setTableModel(0, false);
 
-        initializeRack();
-
         aud_main = this.GetComponent<AudioSource>();
 
         for (int i = 0; i < balls.Length; i++)
@@ -1874,6 +1872,8 @@ public class BilliardsModule : UdonSharpBehaviour
         tableModels[tableModelLocal]._setTable();
 
         guideline.gameObject.transform.Find("guide_display").GetComponent<MeshRenderer>().material.SetVector("_Dims", new Vector4(tableModels[tableModelLocal].tableWidth, tableModels[tableModelLocal].tableHeight, 0, 0));
+
+        initializeRack();
     }
 
     public GameObject _GetTableBase()
