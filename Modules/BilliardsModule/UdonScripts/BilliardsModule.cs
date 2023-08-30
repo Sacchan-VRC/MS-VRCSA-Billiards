@@ -551,11 +551,6 @@ public class BilliardsModule : UdonSharpBehaviour
     public void _TriggerLeaveLobby()
     {
         if (localPlayerId == -1) return;
-        if (numPlayersCurrent == 1)
-        {
-            networkingManager._OnLobbyClosed();
-            return;
-        }
         _LogInfo("leaving lobby");
 
         networkingManager._OnLeaveLobby(localPlayerId);

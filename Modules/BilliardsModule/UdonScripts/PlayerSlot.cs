@@ -24,8 +24,9 @@ public class PlayerSlot : UdonSharpBehaviour
         if (owner != -1 && owner != player.playerId) return false;
 
         owner = player.playerId;
-        
+
         Networking.SetOwner(Networking.LocalPlayer, this.gameObject);
+        this.OnDeserialization();
         this.RequestSerialization();
 
         return true;

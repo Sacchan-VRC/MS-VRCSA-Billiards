@@ -122,15 +122,19 @@ public class NetworkingManager : UdonSharpBehaviour
 
     public void _OnPlayerSlotChanged(PlayerSlot slot)
     {
-        // if (gameStateSynced != 1) return; // we don't process player registrations if the lobby isn't open
+        if (gameStateSynced == 0) return; // we don't process player registrations if the lobby isn't open
 
-        if (Networking.LocalPlayer.playerId != playerIDsSynced[0]) return; // only the host processes player registrations
+        if (!Networking.LocalPlayer.IsOwner(gameObject)) return; // only the host processes player registrations
 
         bool registrationsChanged = false;
 
-        // note: we ignore slot zero, because the host should never chnage
+        int numPlayersRemaining = 0;
         for (int i = 0; i < MAX_PLAYERS; i++)
         {
+            if (playerSlots[i].owner != -1)
+            {
+                numPlayersRemaining++;
+            }
             // nothing to update here
             if (playerIDsSynced[i] == playerSlots[i].owner) continue;
 
@@ -154,6 +158,10 @@ public class NetworkingManager : UdonSharpBehaviour
 
             // reject
             playerSlots[i]._Reset();
+        }
+        if (numPlayersRemaining == 0)
+        {
+            gameStateSynced = 0;
         }
 
         if (registrationsChanged)
@@ -353,8 +361,6 @@ public class NetworkingManager : UdonSharpBehaviour
 
     public void _OnLobbyClosed()
     {
-        gameStateSynced = 0;
-
         for (int i = 0; i < MAX_PLAYERS; i++)
         {
             playerIDsSynced[i] = -1;
@@ -504,7 +510,7 @@ public class NetworkingManager : UdonSharpBehaviour
 
     public void _OnGlobalSettingsChanged(int newTournamentReferee, byte newPhysics, byte newTableModel)
     {
-        if (Networking.LocalPlayer.playerId != playerIDsSynced[0]) return;
+        if (!Networking.LocalPlayer.IsOwner(gameObject)) return;
 
         tournamentRefereeSynced = newTournamentReferee;
         physicsSynced = newPhysics;
