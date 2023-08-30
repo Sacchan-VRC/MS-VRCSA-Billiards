@@ -656,8 +656,7 @@ public class BilliardsModule : UdonSharpBehaviour
         );
 
         // propagate valid players second
-        onRemotePlayersChanged(networkingManager.playerIDsSynced);
-
+        bool joinedDuringMatch = onRemotePlayersChanged(networkingManager.playerIDsSynced);
         // apply state transitions if needed
         onRemoteGameStateChanged(networkingManager.gameStateSynced);
 
@@ -667,9 +666,9 @@ public class BilliardsModule : UdonSharpBehaviour
         onRemoteFourBallCueBallChanged(networkingManager.fourBallCueBallSynced);
         onRemoteBallsPocketedChanged(networkingManager.ballsPocketedSynced);
         onRemoteFourBallScoresUpdated(networkingManager.fourBallScoresSynced);
-        onRemoteRepositionStateChanged(networkingManager.repositionStateSynced);
-        onRemoteIsTableOpenChanged(networkingManager.isTableOpenSynced, networkingManager.teamColorSynced);
-        onRemoteTurnStateChanged(networkingManager.turnStateSynced);
+        onRemoteRepositionStateChanged(networkingManager.repositionStateSynced, joinedDuringMatch);
+        onRemoteIsTableOpenChanged(networkingManager.isTableOpenSynced, networkingManager.teamColorSynced, joinedDuringMatch);
+        onRemoteTurnStateChanged(networkingManager.turnStateSynced, joinedDuringMatch);
         onRemotePreviewWinningTeamChanged(networkingManager.previewWinningTeamSynced);
         onRemoteColorTurnChanged(networkingManager.colorTurnSynced);
 
@@ -762,9 +761,11 @@ public class BilliardsModule : UdonSharpBehaviour
         }
     }
 
-    private void onRemotePlayersChanged(int[] playerIDsSynced)
+    private bool onRemotePlayersChanged(int[] playerIDsSynced)
     {
-        if (intArrayEquals(playerNamesCached, playerIDsSynced)) return;
+        bool wasPlayer = _WasPlayer(Networking.LocalPlayer);
+
+        if (intArrayEquals(playerNamesCached, playerIDsSynced)) return false;
         Array.Copy(playerIDsSynced, playerNamesCached, playerNamesCached.Length);
 
         string[] playerDetails = new string[4];
@@ -787,6 +788,10 @@ public class BilliardsModule : UdonSharpBehaviour
         menuManager._RefreshPlayerList();
 
         applyCueAccess(false);
+
+        bool isNowPlayer = _IsPlayer(Networking.LocalPlayer);
+
+        return !wasPlayer && isNowPlayer || wasPlayer && !isNowPlayer;
     }
 
     private void onRemoteGameStateChanged(byte gameStateSynced)
@@ -1041,11 +1046,11 @@ public class BilliardsModule : UdonSharpBehaviour
         graphicsManager._UpdateFourBallCueBallTextures(fourBallCueBallLocal);
     }
 
-    private void onRemoteIsTableOpenChanged(bool isTableOpenSynced, uint teamColorSynced)
+    private void onRemoteIsTableOpenChanged(bool isTableOpenSynced, uint teamColorSynced, bool forceUpdate)
     {
         if (!gameLive) return;
 
-        if (teamColorLocal == teamColorSynced && isTableOpenLocal == isTableOpenSynced) return;
+        if ((teamColorLocal == teamColorSynced && isTableOpenLocal == isTableOpenSynced) && !forceUpdate) return;
 
         _LogInfo($"onRemoteIsTableOpenChanged isTableOpen={isTableOpenSynced} teamColor={teamColorSynced}");
         isTableOpenLocal = isTableOpenSynced;
@@ -1070,11 +1075,11 @@ public class BilliardsModule : UdonSharpBehaviour
         colorTurnLocal = ColorTurnSynced;
     }
 
-    private void onRemoteRepositionStateChanged(uint repositionStateSynced)
+    private void onRemoteRepositionStateChanged(uint repositionStateSynced, bool forceUpdate)
     {
         if (!gameLive) return;
 
-        if (repositionStateLocal == repositionStateSynced) return;
+        if (repositionStateLocal == repositionStateSynced && !forceUpdate) return;
 
         _LogInfo($"onRemoteRepositionStateChanged repositionState={repositionStateSynced}");
         repositionStateLocal = repositionStateSynced;
@@ -1166,11 +1171,11 @@ public class BilliardsModule : UdonSharpBehaviour
         auto_colliderBaseVFX.SetActive(true);
     }
 
-    private void onRemoteTurnStateChanged(byte turnStateSynced)
+    private void onRemoteTurnStateChanged(byte turnStateSynced, bool forecUpdate)
     {
         if (!gameLive) return;
 
-        if (turnStateSynced == turnStateLocal) return;
+        if (turnStateSynced == turnStateLocal && !forecUpdate) return;
 
         _LogInfo($"onRemoteTurnStateChanged newState={turnStateSynced}");
         turnStateLocal = turnStateSynced;
@@ -2399,6 +2404,21 @@ public class BilliardsModule : UdonSharpBehaviour
         if (tournamentRefereeLocal == -1) return false;
 
         return player.playerId == tournamentRefereeLocal || _IsModerator(player);
+    }
+
+    public bool _WasPlayer(VRCPlayerApi who)
+    {
+        if (who == null) return false;
+
+        for (int i = 0; i < 4; i++)
+        {
+            if (playerNamesCached[i] == who.playerId)
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     public bool _IsPlayer(VRCPlayerApi who)

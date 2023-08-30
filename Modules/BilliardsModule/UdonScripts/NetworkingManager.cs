@@ -161,7 +161,10 @@ public class NetworkingManager : UdonSharpBehaviour
         }
         if (numPlayersRemaining == 0)
         {
-            gameStateSynced = 0;
+            if (!table.gameLive)
+            {
+                gameStateSynced = 0;
+            }
         }
 
         if (registrationsChanged)
@@ -532,12 +535,6 @@ public class NetworkingManager : UdonSharpBehaviour
 
     private void bufferMessages(bool urgent)
     {
-        if (table.gameLive && !(table._IsPlayer(Networking.LocalPlayer) || table._IsLocalPlayerReferee() || table._AllPlayersOffline()))
-        {
-            table._LogWarn("refusing to broadcast game state since local player is not playing in the current game");
-            return;
-        }
-
         isUrgentSynced = (byte)(urgent ? 2 : 0);
 
         hasBufferedMessages = true;
