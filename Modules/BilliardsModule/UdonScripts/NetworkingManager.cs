@@ -513,6 +513,24 @@ public class NetworkingManager : UdonSharpBehaviour
         bufferMessages(false);
     }
 
+    public void validatePlayers()
+    {
+        bool playerRemoved = false;
+        for (int i = 0; i < MAX_PLAYERS; i++)
+        {
+            VRCPlayerApi plyr = VRCPlayerApi.GetPlayerById(playerIDsSynced[i]);
+            if (plyr == null)
+            {
+                playerRemoved = true;
+                playerIDsSynced[i] = -1;
+            }
+        }
+        if (playerRemoved)
+        {
+            bufferMessages(false);
+        }
+    }
+
     public void _ForceLoadFromState
     (
         int stateIdLocal,

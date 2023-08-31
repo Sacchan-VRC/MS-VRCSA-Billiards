@@ -163,7 +163,7 @@ public class BilliardsModule : UdonSharpBehaviour
     private string[] LOG_LINES = new string[32];
 
     // cached copies of networked data, may be different from local game state
-    [NonSerialized] public int[] playerNamesCached = { -1, -1, -1, -1 };//the 4 is MAX_PLAYERS from NetworkingManager
+    [NonSerialized] public int[] playerIDsCached = { -1, -1, -1, -1 };//the 4 is MAX_PLAYERS from NetworkingManager
 
     // local game state
     [NonSerialized] public bool lobbyOpen;
@@ -240,7 +240,6 @@ public class BilliardsModule : UdonSharpBehaviour
     private bool colorTurnLocal;
     private void OnEnable()
     {
-        currentOwnerID = Networking.GetOwner(gameObject).playerId;
 
         ballsParentStartHeight = balls[0].transform.parent.localPosition.y;
 
@@ -326,55 +325,16 @@ public class BilliardsModule : UdonSharpBehaviour
         if (perfCounters[PERF_MAIN] % 500 == 0) _RedrawDebugger();
     }
 
-    [System.NonSerialized] public int currentOwnerID;
     public override void OnOwnershipTransferred(VRCPlayerApi player)
     {
-        if (!player.isLocal) { currentOwnerID = player.playerId; return; }
-        //if the new owner isn't in the match, find someone who is in the match to give ownership to
-        int myID = player.playerId;
-        bool IAmInMatch = false;
-        VRCPlayerApi playerToRecieveOwnership = null;
-        for (int i = 0; i < playerIDsLocal.Length; i++)
-        {
-            if (myID == playerIDsLocal[i])
-            {
-                IAmInMatch = true;
-                break;
-            }
-            else
-            {
-                VRCPlayerApi thisPlayer = VRCPlayerApi.GetPlayerById(i);
-                if (thisPlayer == null)
-                {
-                    continue;
-                }
-                else if (playerToRecieveOwnership == null)
-                {
-                    playerToRecieveOwnership = thisPlayer;
-                }
-            }
-        }
-        if (!IAmInMatch && playerToRecieveOwnership != null)
-        {
-            Networking.SetOwner(playerToRecieveOwnership, gameObject);
-        }
-        else if (IAmInMatch)
-        {
-            // only host updates player list
-            for (int i = 0; i < 4; i++)
-            {
-                if (playerIDsLocal[i] == -1) continue;
+        if (!player.isLocal) return;
+        networkingManager.validatePlayers();
+    }
 
-                VRCPlayerApi possiblePlayer = VRCPlayerApi.GetPlayerById(playerIDsLocal[i]);
-                if (Utilities.IsValid(possiblePlayer)) continue;
-
-                networkingManager._OnKickLobby(i);
-            }
-        }
-        else
-        {
-            networkingManager._OnLobbyClosed();
-        }
+    public override void OnPlayerLeft(VRCPlayerApi player)
+    {
+        if (!Networking.LocalPlayer.IsOwner(gameObject)) return;
+        networkingManager.validatePlayers();
     }
 
     public UdonSharpBehaviour _GetModule(string type)
@@ -763,10 +723,10 @@ public class BilliardsModule : UdonSharpBehaviour
 
     private bool onRemotePlayersChanged(int[] playerIDsSynced)
     {
-        bool wasPlayer = _WasPlayer(Networking.LocalPlayer);
+        int wasPlayer = _GetlayerSlot(Networking.LocalPlayer, playerIDsCached);
 
-        if (intArrayEquals(playerNamesCached, playerIDsSynced)) return false;
-        Array.Copy(playerIDsSynced, playerNamesCached, playerNamesCached.Length);
+        if (intArrayEquals(playerIDsCached, playerIDsSynced)) return false;
+        Array.Copy(playerIDsSynced, playerIDsCached, playerIDsCached.Length);
 
         string[] playerDetails = new string[4];
         for (int i = 0; i < 4; i++)
@@ -789,9 +749,9 @@ public class BilliardsModule : UdonSharpBehaviour
 
         applyCueAccess(false);
 
-        bool isNowPlayer = _IsPlayer(Networking.LocalPlayer);
+        int isNowPlayer = _GetlayerSlot(Networking.LocalPlayer, playerIDsLocal);
 
-        return !wasPlayer && isNowPlayer || wasPlayer && !isNowPlayer;
+        return wasPlayer != isNowPlayer;//if our slot changed, we left, or we joined, return true to force updates
     }
 
     private void onRemoteGameStateChanged(byte gameStateSynced)
@@ -2406,19 +2366,19 @@ public class BilliardsModule : UdonSharpBehaviour
         return player.playerId == tournamentRefereeLocal || _IsModerator(player);
     }
 
-    public bool _WasPlayer(VRCPlayerApi who)
+    public int _GetlayerSlot(VRCPlayerApi who, int[] playerlist)
     {
-        if (who == null) return false;
+        if (who == null) return -1;
 
         for (int i = 0; i < 4; i++)
         {
-            if (playerNamesCached[i] == who.playerId)
+            if (playerlist[i] == who.playerId)
             {
-                return true;
+                return i;
             }
         }
 
-        return false;
+        return -1;
     }
 
     public bool _IsPlayer(VRCPlayerApi who)
