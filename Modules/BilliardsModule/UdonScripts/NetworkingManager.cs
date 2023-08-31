@@ -349,12 +349,11 @@ public class NetworkingManager : UdonSharpBehaviour
         broadcastAndProcess(false);
     }*/
 
-    public void _OnRepositionBalls(Vector3[] ballsP, bool consumeReposition)
+    public void _OnRepositionBalls(Vector3[] ballsP)
     {
         stateIdSynced++;
 
         Array.Copy(ballsP, ballsPSynced, MAX_BALLS);
-        if (consumeReposition) repositionStateSynced = 0;
 
         bufferMessages(false);
     }

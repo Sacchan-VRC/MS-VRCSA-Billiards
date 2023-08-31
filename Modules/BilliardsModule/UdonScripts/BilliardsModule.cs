@@ -466,16 +466,7 @@ public class BilliardsModule : UdonSharpBehaviour
 
         // practiceManager._Record();
 
-        bool consumeReposition = false;
-        if (idx == 0)
-        {
-            currentPhysicsManager.SendCustomEvent("_IsCueBallTouching");
-            bool isTouching = (bool)currentPhysicsManager.GetProgramVariable("outIsTouching");
-
-            consumeReposition = !isTouching;
-        }
-
-        networkingManager._OnRepositionBalls(ballsP, consumeReposition);
+        networkingManager._OnRepositionBalls(ballsP);
     }
 
     public void _TriggerGameStart()
