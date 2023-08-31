@@ -529,7 +529,7 @@ public class BilliardsModule : UdonSharpBehaviour
 
     public void _TriggerJoinTeam(int teamId)
     {
-        if (localPlayerId != -1) return;
+        if (localPlayerId != -1 || networkingManager.gameStateSynced == 0 || networkingManager.gameStateSynced == 3) return;
 
         _LogInfo("joining team " + teamId);
 
