@@ -740,6 +740,8 @@ public class BilliardsModule : UdonSharpBehaviour
 
         applyCueAccess(false);
 
+        graphicsManager._SetScorecardPlayers(playerIDsLocal);
+
         int isNowPlayer = _GetlayerSlot(Networking.LocalPlayer, playerIDsLocal);
 
         return wasPlayer != isNowPlayer;//if our slot changed, we left, or we joined, return true to force updates
@@ -835,8 +837,6 @@ public class BilliardsModule : UdonSharpBehaviour
         // Effects
         graphicsManager._PlayIntroAnimation();
         aud_main.PlayOneShot(snd_Intro, 1.0f);
-
-        graphicsManager._SetScorecardPlayers(playerIDsLocal);
 
         timerRunning = false;
 
