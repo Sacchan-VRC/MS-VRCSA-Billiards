@@ -96,7 +96,7 @@ public class NetworkingManager : UdonSharpBehaviour
     // 6RedSnooker: currently a turn where a color should be pocketed
     [UdonSynced] [NonSerialized] public bool colorTurnSynced;
 
-    [SerializeField] private PlayerSlot[] playerSlots;
+    [SerializeField] private PlayerSlot playerSlot;
     private BilliardsModule table;
     private OwnershipManager ownershipManager;
 
@@ -116,7 +116,7 @@ public class NetworkingManager : UdonSharpBehaviour
 
         for (int i = 0; i < MAX_PLAYERS; i++)
         {
-            playerSlots[i]._Init(this);
+            playerSlot._Init(this);
         }
     }
 
@@ -126,49 +126,58 @@ public class NetworkingManager : UdonSharpBehaviour
 
         if (!Networking.LocalPlayer.IsOwner(gameObject)) return; // only the host processes player registrations
 
-        bool registrationsChanged = false;
+        VRCPlayerApi slotOwner = Networking.GetOwner(slot.gameObject);
+        if (slotOwner == null) return;
+        int slotOwnerID = slotOwner.playerId;
 
-        int numPlayersRemaining = 0;
+        bool changedSlot = false;
+        int prevslot = -1;
+        int numPlayersPrev = 0;
         for (int i = 0; i < MAX_PLAYERS; i++)
         {
-            if (playerSlots[i].owner != -1)
+            if (playerIDsSynced[i] != -1)
+            {
+                numPlayersPrev++;
+            }
+            if (playerIDsSynced[i] == slotOwnerID)
+            {
+                if (i != slot.slot)
+                {
+                    playerIDsSynced[i] = -1;
+                    changedSlot = true;
+                }
+            }
+        }
+
+        int numPlayersRemaining = 0;
+
+        // if we're deregistering a player, always allow
+        if (slot.leave)
+        {
+            playerIDsSynced[slot.slot] = -1;
+        }
+        else
+        {
+            // otherwise, only allow registration if not already registered
+            playerIDsSynced[slot.slot] = slotOwner.playerId;
+        }
+        for (int i = 0; i < MAX_PLAYERS; i++)
+        {
+            if (playerIDsSynced[i] != -1)
             {
                 numPlayersRemaining++;
             }
-            // nothing to update here
-            if (playerIDsSynced[i] == playerSlots[i].owner) continue;
-
-            // if we're deregistering a player, always allow
-            if (playerSlots[i].owner == -1)
-            {
-                registrationsChanged = true;
-                playerIDsSynced[i] = -1;
-                continue;
-            }
-
-            // otherwise, only allow registration if not already registered
-            int occurences = 0;
-            for (int j = 0; j < MAX_PLAYERS; j++) if (playerIDsSynced[j] == playerSlots[i].owner) occurences++;
-            if (occurences == 0)
-            {
-                registrationsChanged = true;
-                playerIDsSynced[i] = playerSlots[i].owner;
-                continue;
-            }
-
-            // reject
-            playerSlots[i]._Reset();
-        }
-        if (numPlayersRemaining == 0)
-        {
-            if (!table.gameLive)
-            {
-                gameStateSynced = 0;
-            }
         }
 
-        if (registrationsChanged)
+        if (numPlayersPrev != numPlayersRemaining || changedSlot)
         {
+            if (numPlayersRemaining == 0)
+            {
+                if (!table.gameLive)
+                {
+                    gameStateSynced = 0;
+                }
+            }
             bufferMessages(false);
         }
     }
@@ -252,6 +261,10 @@ public class NetworkingManager : UdonSharpBehaviour
     {
         gameStateSynced = 3;
         winningTeamSynced = 2;
+        for (int i = 0; i < MAX_PLAYERS; i++)
+        {
+            playerIDsSynced[i] = 1;
+        }
 
         bufferMessages(true);
     }
@@ -353,10 +366,8 @@ public class NetworkingManager : UdonSharpBehaviour
 
         for (int i = 0; i < MAX_PLAYERS; i++)
         {
-            playerSlots[i]._Reset();
             playerIDsSynced[i] = -1;
         }
-
         playerIDsSynced[0] = Networking.LocalPlayer.playerId;
 
         bufferMessages(false);
@@ -367,7 +378,6 @@ public class NetworkingManager : UdonSharpBehaviour
         for (int i = 0; i < MAX_PLAYERS; i++)
         {
             playerIDsSynced[i] = -1;
-            playerSlots[i]._Reset();
         }
 
         bufferMessages(false);
@@ -403,24 +413,46 @@ public class NetworkingManager : UdonSharpBehaviour
 
     public int _OnJoinTeam(int teamId)
     {
-        if (playerSlots[teamId]._Register()) return teamId;
-        else if (teamsSynced && playerSlots[teamId + 2]._Register()) return teamId + 2;
-
+        if (teamId == 0)
+        {
+            if (playerIDsSynced[0] == -1)
+            {
+                playerSlot.JoinSlot(0);
+                return 0;
+            }
+            else if (teamsSynced && playerIDsSynced[2] == -1)
+            {
+                playerSlot.JoinSlot(2);
+                return 2;
+            }
+        }
+        else if (teamId == 1)
+        {
+            if (playerIDsSynced[1] == -1)
+            {
+                playerSlot.JoinSlot(1);
+                return 1;
+            }
+            else if (teamsSynced && playerIDsSynced[3] == -1)
+            {
+                playerSlot.JoinSlot(3);
+                return 3;
+            }
+        }
         return -1;
     }
 
     public void _OnLeaveLobby(int playerId)
     {
-        VRCPlayerApi me = Networking.LocalPlayer;
-
-        // if (playerSlots[playerId].owner != me.playerId) return;
-
-        _OnKickLobby(playerId);
+        playerSlot.LeaveSlot(playerId);
     }
 
     public void _OnKickLobby(int playerId)
     {
-        playerSlots[playerId]._Reset();
+        if (playerIDsSynced[playerId] == -1) return;
+        playerIDsSynced[playerId] = -1;
+
+        bufferMessages(false);
     }
 
     public void _OnTeamsChanged(bool teamsEnabled)
@@ -430,7 +462,7 @@ public class NetworkingManager : UdonSharpBehaviour
         {
             for (int i = 2; i < 4; i++)
             {
-                playerSlots[i]._Reset();
+                playerIDsSynced[i] = -1;
             }
         }
 

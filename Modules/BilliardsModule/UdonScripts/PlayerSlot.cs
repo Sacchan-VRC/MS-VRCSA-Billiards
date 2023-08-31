@@ -8,8 +8,10 @@ using VRC.Udon;
 [UdonBehaviourSyncMode(BehaviourSyncMode.Manual)]
 public class PlayerSlot : UdonSharpBehaviour
 {
-    [UdonSynced] [NonSerialized] public int owner = -1;
-
+    [UdonSynced] [NonSerialized] public byte eventID;
+    [UdonSynced] [NonSerialized] public byte slot = byte.MaxValue;
+    [UdonSynced] [NonSerialized] public bool leave = false;
+    private byte eventIDLocal;
     private NetworkingManager networkingManager;
 
     public void _Init(NetworkingManager networkingManager_)
@@ -17,13 +19,28 @@ public class PlayerSlot : UdonSharpBehaviour
         networkingManager = networkingManager_;
     }
 
+    public void JoinSlot(int slot_)
+    {
+        eventID++;
+        slot = (byte)slot_;
+        leave = false;
+        Networking.SetOwner(Networking.LocalPlayer, gameObject);
+        RequestSerialization();
+        OnDeserialization();
+    }
+
+    public void LeaveSlot(int slot_)
+    {
+        eventID++;
+        slot = (byte)slot_;
+        leave = true;
+        Networking.SetOwner(Networking.LocalPlayer, gameObject);
+        RequestSerialization();
+        OnDeserialization();
+    }
     public bool _Register()
     {
         VRCPlayerApi player = Networking.LocalPlayer;
-
-        if (owner != -1 && owner != player.playerId) return false;
-
-        owner = player.playerId;
 
         Networking.SetOwner(Networking.LocalPlayer, this.gameObject);
         this.OnDeserialization();
@@ -32,20 +49,12 @@ public class PlayerSlot : UdonSharpBehaviour
         return true;
     }
 
-    public void _Reset()
-    {
-        if (owner == -1) return;
-
-        owner = -1;
-        
-        Networking.SetOwner(Networking.LocalPlayer, this.gameObject);
-        this.RequestSerialization();
-        this.OnDeserialization();
-    }
-
     public override void OnDeserialization()
     {
+        if (eventIDLocal == eventID) return;
+        eventIDLocal = eventID;
         if (networkingManager == null) return;
+        if (slot > 3) return;
 
         networkingManager._OnPlayerSlotChanged(this);
     }

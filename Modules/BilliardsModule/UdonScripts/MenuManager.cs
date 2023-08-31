@@ -236,7 +236,6 @@ public class MenuManager : UdonSharpBehaviour
         if (button.name == "StartButton")
         {
             table._TriggerLobbyOpen();
-            table._TriggerJoinTeam(0);
         }
         else if (button.name == "JoinOrange")
         {
