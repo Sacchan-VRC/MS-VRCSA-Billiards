@@ -488,7 +488,6 @@ public class NetworkingManager : UdonSharpBehaviour
     public void _OnTableModelChanged(uint newTableModel)
     {
         tableModelSynced = (byte)newTableModel;
-        table._OnRemoteDeserialization();
 
         bufferMessages(false);
     }
@@ -496,7 +495,6 @@ public class NetworkingManager : UdonSharpBehaviour
     public void _OnPhysicsChanged(uint newPhysics)
     {
         physicsSynced = (byte)newPhysics;
-        table._OnRemoteDeserialization();
 
         bufferMessages(false);
     }
