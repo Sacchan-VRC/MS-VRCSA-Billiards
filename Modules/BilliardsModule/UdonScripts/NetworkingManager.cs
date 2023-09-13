@@ -98,7 +98,6 @@ public class NetworkingManager : UdonSharpBehaviour
 
     [SerializeField] private PlayerSlot playerSlot;
     private BilliardsModule table;
-    private OwnershipManager ownershipManager;
 
     private int lastProcessedPacketId = 0;
 
@@ -110,9 +109,6 @@ public class NetworkingManager : UdonSharpBehaviour
     public void _Init(BilliardsModule table_)
     {
         table = table_;
-
-        ownershipManager = GetComponent<OwnershipManager>();
-        ownershipManager._Init(nameof(NetworkingManager), table);
 
         for (int i = 0; i < MAX_PLAYERS; i++)
         {
@@ -215,20 +211,15 @@ public class NetworkingManager : UdonSharpBehaviour
 
         if (gameStateSynced == 0 || gameStateSynced == 3)
         {
-            ownershipManager._AuthorizeAll();
         }
         else if (gameStateSynced == 1)
         {
-            ownershipManager._AuthorizeAll();
-            // this is probably breaking when two players try to start the game at the same time, probably by causing a brain split
-            // ownershipManager._AuthorizeUsers(new string[] { playerNamesSynced[0] });
         }
         else if (gameStateSynced == 2)
         {
             int[] playerNames = new int[MAX_PLAYERS + 1];
             Array.Copy(playerIDsSynced, playerNames, MAX_PLAYERS);
             playerNames[MAX_PLAYERS] = tournamentRefereeSynced;
-            ownershipManager._AuthorizeUsers(playerNames);
         }
 
         table._OnRemoteDeserialization();
