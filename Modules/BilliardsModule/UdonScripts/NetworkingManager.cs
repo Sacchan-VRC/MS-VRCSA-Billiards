@@ -110,6 +110,11 @@ public class NetworkingManager : UdonSharpBehaviour
     {
         table = table_;
 
+        for (int i = 0; i < ballsPSynced.Length; i++)
+        {
+            ballsPSynced[i] = table_.balls[i].transform.localPosition;
+        }
+
         for (int i = 0; i < MAX_PLAYERS; i++)
         {
             playerSlot._Init(this);

@@ -251,6 +251,15 @@ public class BilliardsModule : UdonSharpBehaviour
 
         currentPhysicsManager = PhysicsManagers[0];
 
+        for (int i = 0; i < balls.Length; i++)
+        {
+            ballsP[i] = balls[i].transform.localPosition;
+            balls[i].GetComponentInChildren<Repositioner>(true)._Init(this, i);
+
+            Rigidbody ballRB = balls[i].GetComponent<Rigidbody>();
+            ballRB.maxAngularVelocity = 999;
+        }
+
         for (int i = 0; i < tableModels.Length; i++)
         {
             tableModels[i].gameObject.SetActive(false);
@@ -259,14 +268,6 @@ public class BilliardsModule : UdonSharpBehaviour
         setTableModel(0, false);
 
         aud_main = this.GetComponent<AudioSource>();
-
-        for (int i = 0; i < balls.Length; i++)
-        {
-            balls[i].GetComponentInChildren<Repositioner>(true)._Init(this, i);
-
-            Rigidbody ballRB = balls[i].GetComponent<Rigidbody>();
-            ballRB.maxAngularVelocity = 999;
-        }
 
         networkingManager._Init(this);
         practiceManager._Init(this);
@@ -1620,6 +1621,29 @@ public class BilliardsModule : UdonSharpBehaviour
         }
         return -1;
     }
+    private void moveBallInDirUntilNotTouching_Transform(int id, Vector3 Dir)
+    {
+        //keep moving ball down the table until it's not touching any other balls
+        while (CheckIfBallTouchingBall_Transform(id) > 0)
+        {
+            balls[id].transform.localPosition += Dir;
+        }
+    }
+    private int CheckIfBallTouchingBall_Transform(int id)
+    {
+        float ballDiameter = k_BALL_RADIUS * 2f;
+        float k_BALL_DSQR = ballDiameter * ballDiameter;
+        for (int i = 1; i < 16; i++)
+        {
+            if (i == id) { continue; }
+            if (((ballsPocketedLocal >> i) & 0x1u) == 0x1u) { continue; }
+            if ((balls[id].transform.position - balls[i].transform.position).sqrMagnitude < k_BALL_DSQR)
+            {
+                return i;
+            }
+        }
+        return -1;
+    }
     #endregion
 
     #region GameLogic
@@ -1824,6 +1848,35 @@ public class BilliardsModule : UdonSharpBehaviour
         guideline.gameObject.transform.Find("guide_display").GetComponent<MeshRenderer>().material.SetVector("_Dims", new Vector4(tableModels[tableModelLocal].tableWidth, tableModels[tableModelLocal].tableHeight, 0, 0));
 
         initializeRack();
+        ConfineBallTransformsToTable();
+    }
+    private void ConfineBallTransformsToTable()
+    {
+        for (int i = 0; i < balls.Length; i++)
+        {
+            balls[i].transform.localPosition = ballsP[i];
+            Vector3 thisBallPos = balls[i].transform.localPosition;
+            if (thisBallPos.x > k_TABLE_WIDTH - k_CUSHION_RADIUS)
+            {
+                thisBallPos.x = k_TABLE_WIDTH - k_CUSHION_RADIUS;
+            }
+            else if (thisBallPos.x < -k_TABLE_WIDTH + k_CUSHION_RADIUS)
+            {
+                thisBallPos.x = -k_TABLE_WIDTH + k_CUSHION_RADIUS;
+            }
+            if (thisBallPos.z > k_TABLE_HEIGHT - k_CUSHION_RADIUS)
+            {
+                thisBallPos.z = k_TABLE_HEIGHT - k_CUSHION_RADIUS;
+            }
+            else if (thisBallPos.z < -k_TABLE_HEIGHT + k_CUSHION_RADIUS)
+            {
+                thisBallPos.z = -k_TABLE_HEIGHT + k_CUSHION_RADIUS;
+            }
+            balls[i].transform.localPosition = thisBallPos;
+            Vector3 moveDir = -thisBallPos.normalized;
+            if (moveDir == Vector3.zero) { moveDir = Vector3.right; }
+            moveBallInDirUntilNotTouching_Transform(i, moveDir * k_BALL_RADIUS);
+        }
     }
 
     public GameObject _GetTableBase()
