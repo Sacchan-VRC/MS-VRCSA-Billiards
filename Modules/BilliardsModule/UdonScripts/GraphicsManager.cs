@@ -423,7 +423,6 @@ int uniform_cue_colour;
     Color pColour1;      // Team 1
     Color pColour2;      // No team / open / 9 ball
     Color pColourErr;
-    Color pClothColour;
 
     private void updateFourBallCues()
     {
@@ -664,7 +663,6 @@ int uniform_cue_colour;
             pColour2 = table.k_colour_default;
 
             pColourErr = table.k_colour_default; // No error effect
-            pClothColour = table.k_fabricColour_9ball;
 
             // 9 ball only uses one colourset / cloth colour
             ballMaterial.SetTexture("_MainTex", table.textureSets[1]);
@@ -679,9 +677,8 @@ int uniform_cue_colour;
             pColourErr = table.k_colour_foul;
 
             ballMaterial.SetTexture("_MainTex", table.textureSets[1]);
-            pClothColour = table.k_fabricColour_4ball;
         }
-        else if (table.isSnooker6Red)//TODO this is just a copy of 8ball but with a different texture set, what else needs to change?
+        else if (table.isSnooker6Red)
         {
             pColourErr = table.k_colour_foul;
             pColour2 = table.k_colour_default;
@@ -690,7 +687,6 @@ int uniform_cue_colour;
             pColour1 = table.k_teamColour_stripes;
 
             ballMaterial.SetTexture("_MainTex", table.textureSets[2]);
-            pClothColour = table.k_fabricColour_8ball;
         }
         else // Standard 8 ball derivatives
         {
@@ -701,7 +697,6 @@ int uniform_cue_colour;
             pColour1 = table.k_teamColour_stripes;
 
             ballMaterial.SetTexture("_MainTex", usColors ? usColorTexture : table.textureSets[0]);
-            pClothColour = table.k_fabricColour_8ball;
         }
     }
 

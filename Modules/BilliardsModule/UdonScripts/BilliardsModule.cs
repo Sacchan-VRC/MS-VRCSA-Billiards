@@ -818,6 +818,7 @@ public class BilliardsModule : UdonSharpBehaviour
         applyCueAccess(false);
         practiceManager._Clear();
         repositionManager._OnGameStarted();
+        tableModels[tableModelLocal]._OnGameStarted();
         if (isPracticeMode)
         {
             cueControllers[1].gameObject.SetActive(false);
@@ -843,8 +844,6 @@ public class BilliardsModule : UdonSharpBehaviour
         reflection_main.RenderProbe();
 
         activeCue = cueControllers[0];
-
-        tableModels[tableModelLocal]._OnGameStarted();
     }
 
     private void onRemoteBallPositionsChanged(Vector3[] ballsPSynced)
@@ -1750,7 +1749,7 @@ public class BilliardsModule : UdonSharpBehaviour
             playerIDsLocal[i] = -1;
         }
         repositionStateLocal = 0;
-        gameModeLocal = uint.MaxValue;
+        gameModeLocal = int.MaxValue;
         turnStateLocal = byte.MaxValue;
         previewWinningTeamLocal = 2;
     }
@@ -1820,7 +1819,7 @@ public class BilliardsModule : UdonSharpBehaviour
 
         // todo: reposition cues
 
-        tableModels[tableModelLocal]._setTable();
+        tableModels[tableModelLocal]._setTable(gameModeLocal);
 
         guideline.gameObject.transform.Find("guide_display").GetComponent<MeshRenderer>().material.SetVector("_Dims", new Vector4(tableModels[tableModelLocal].tableWidth, tableModels[tableModelLocal].tableHeight, 0, 0));
 

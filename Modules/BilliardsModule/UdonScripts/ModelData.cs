@@ -17,6 +17,7 @@ public class ModelData : UdonSharpBehaviour
     public string onGameEndedTriggerName = "OnGameEnded";
     public string setGameModeTriggerName = "SetGameMode";
     public string setTableTriggerName = "SetTable";
+    public string gameModeIntName = "GameMode";
 
     [Header("Table Properties")]
     [SerializeField] public float tableWidth = 1.06f;
@@ -46,57 +47,40 @@ public class ModelData : UdonSharpBehaviour
     public void onBallPocketed()
     {
         if (tableAnimator) { tableAnimator.SetTrigger(ballPocketedTriggerName); }
-        Debug.Log("BallPocketed");
-        //celebration event
     }
     public void _indicateSuccess()
     {
         if (tableAnimator) { tableAnimator.SetTrigger(indicateSuccessTriggerName); }
-        Debug.Log("indicateSuccess");
-        //success
     }
     public void _flashTableColor(Color color)
     {
         if (tableAnimator) { tableAnimator.SetTrigger(flashTableColorTriggerName); }
-        Debug.Log("flashTable");
-        //flash animation
     }
     public void _flashTableLight()
     {
         if (tableAnimator) { tableAnimator.SetTrigger(flashTableLightTriggerName); }
-        Debug.Log("flashTable");
-        //flash animation
     }
     public void _flashTableError()
     {
         if (tableAnimator) { tableAnimator.SetTrigger(flashTableErrorTriggerName); }
-        Debug.Log("flashTableError");
-        //errorflash animation
     }
     public void _OnGameStarted()
     {
         if (tableAnimator) { tableAnimator.SetTrigger(onGameStartedTriggerName); }
-        Debug.Log("GameStart");
-        //play a sound maybe
     }
     public void _OnGameEnded()
     {
         if (tableAnimator) { tableAnimator.SetTrigger(onGameEndedTriggerName); }
-        Debug.Log("GameEnd");
-        //celebration event
     }
     public void _setGameMode(uint mode)
     {
         if (tableAnimator) { tableAnimator.SetTrigger(setGameModeTriggerName); }
-        Debug.Log("SetGameMode");
-        //done
-        //set table skin for mode
+        if (tableAnimator) { tableAnimator.SetInteger(gameModeIntName, (int)mode); }
     }
-    public void _setTable()
+    //everything needs to be re-set in _setTable because disabling the table resets the animator.
+    public void _setTable(uint mode)
     {
         if (tableAnimator) { tableAnimator.SetTrigger(setTableTriggerName); }
-        Debug.Log("TableSelected");
-        //done
-        //spawn in animation?
+        if (tableAnimator) { tableAnimator.SetInteger(gameModeIntName, (int)mode); }
     }
 }
