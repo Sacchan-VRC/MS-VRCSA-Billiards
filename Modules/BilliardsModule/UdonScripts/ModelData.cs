@@ -2,9 +2,10 @@
 using UdonSharp;
 using UnityEngine;
 
-[UdonBehaviourSyncMode(BehaviourSyncMode.NoVariableSync)]
+[UdonBehaviourSyncMode(BehaviourSyncMode.None)]
 public class ModelData : UdonSharpBehaviour
 {
+    public string tableName = "Pool Table";
     [Header("Table Visuals")]
     [System.NonSerialized] public Animator tableAnimator;
     [Header("Animator trigger names")]
