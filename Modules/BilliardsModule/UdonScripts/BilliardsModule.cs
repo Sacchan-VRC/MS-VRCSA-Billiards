@@ -929,8 +929,6 @@ public class BilliardsModule : UdonSharpBehaviour
         localTeamId = 0;
         applyCueAccess(true);
 
-        resetCachedData();
-
         cueControllers[1].gameObject.SetActive(true);
 
         menuManager._EnableMenu();
@@ -938,6 +936,8 @@ public class BilliardsModule : UdonSharpBehaviour
         infReset.text = "Reset";
 
         tableModels[tableModelLocal]._OnGameEnded();
+
+        resetCachedData();
     }
 
     private void onRemoteBallsPocketedChanged(uint ballsPocketedSynced)
