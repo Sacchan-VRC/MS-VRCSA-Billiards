@@ -44,8 +44,6 @@ public class PracticeManager : UdonSharpBehaviour
             return;
         }*/
 
-        if (!table.isPracticeMode) return; // doesn't matter
-
         int stateIdLocal = table.networkingManager.stateIdSynced;
         
         if (stateIdLocal == currentPtr) return; // already seen

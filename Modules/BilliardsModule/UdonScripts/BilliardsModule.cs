@@ -715,7 +715,7 @@ public class BilliardsModule : UdonSharpBehaviour
 
     private bool onRemotePlayersChanged(int[] playerIDsSynced)
     {
-        int wasPlayer = _GetlayerSlot(Networking.LocalPlayer, playerIDsCached);
+        int myOldSlot = _GetlayerSlot(Networking.LocalPlayer, playerIDsCached);
 
         if (intArrayEquals(playerIDsCached, playerIDsSynced)) return false;
         Array.Copy(playerIDsSynced, playerIDsCached, playerIDsCached.Length);
@@ -743,9 +743,11 @@ public class BilliardsModule : UdonSharpBehaviour
 
         graphicsManager._SetScorecardPlayers(playerIDsLocal);
 
-        int isNowPlayer = _GetlayerSlot(Networking.LocalPlayer, playerIDsLocal);
+        int myNewSlot = _GetlayerSlot(Networking.LocalPlayer, playerIDsLocal);
+        bool amPlayer = myNewSlot != -1;
+        enablePracticeControls(amPlayer && gameLive);
 
-        return wasPlayer != isNowPlayer;//if our slot changed, we left, or we joined, return true to force updates
+        return gameLive && myOldSlot != myNewSlot;//if our slot changed, we left, or we joined, return true to force updates
     }
 
     private void onRemoteGameStateChanged(byte gameStateSynced)
@@ -920,9 +922,7 @@ public class BilliardsModule : UdonSharpBehaviour
 
         disablePlayComponents();
 
-        this.transform.Find("intl.controls/undo").gameObject.SetActive(false);
-        this.transform.Find("intl.controls/redo").gameObject.SetActive(false);
-        this.transform.Find("intl.controls/skipturn").gameObject.SetActive(false);
+        enablePracticeControls(false);
 
         // Remove any access rights
         localPlayerId = -1;
@@ -2032,16 +2032,18 @@ public class BilliardsModule : UdonSharpBehaviour
     }
 
     // turn on any game elements that are enabled when someone is taking a shot
+    private void enablePracticeControls(bool enable)
+    {
+        this.transform.Find("intl.controls/undo").gameObject.SetActive(enable);
+        this.transform.Find("intl.controls/redo").gameObject.SetActive(enable);
+        this.transform.Find("intl.controls/skipturn").gameObject.SetActive(enable);
+    }
     private void enablePlayComponents()
     {
         bool isOurTurnVar = isOurTurn();
 
-        if ((isOurTurnVar && isPracticeMode) || (tournamentRefereeLocal != -1 && _IsLocalPlayerReferee()))
-        {
-            this.transform.Find("intl.controls/undo").gameObject.SetActive(true);
-            this.transform.Find("intl.controls/redo").gameObject.SetActive(true);
-            this.transform.Find("intl.controls/skipturn").gameObject.SetActive(true);
-        }
+        bool amPlayer = _GetlayerSlot(Networking.LocalPlayer, playerIDsLocal) != -1;
+        enablePracticeControls(amPlayer || (tournamentRefereeLocal != -1 && _IsLocalPlayerReferee()));
 
         if (is9Ball)
         {
