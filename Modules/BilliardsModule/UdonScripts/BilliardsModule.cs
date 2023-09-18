@@ -238,6 +238,7 @@ public class BilliardsModule : UdonSharpBehaviour
     private float ballsParentStartHeight;
     [NonSerialized] public Vector3 ballsParentHeightOffset;
     private bool colorTurnLocal;
+    private int numBallsPocketedThisTurn;
     private void OnEnable()
     {
 
@@ -1106,6 +1107,8 @@ public class BilliardsModule : UdonSharpBehaviour
         fbMadeFoul = false;
         ballBounced_9Ball = false;
         ballsPocketedOrig = ballsPocketedLocal;
+        jumpShot = false;
+        numBallsPocketedThisTurn = 0;
         if (Networking.LocalPlayer.playerId == simulationOwner)
         {
             isLocalSimulationOurs = true;
@@ -1242,17 +1245,51 @@ public class BilliardsModule : UdonSharpBehaviour
 
         ballsPocketedLocal ^= 1U << id;
 
-        uint bmask = 0x1FCU << ((int)(teamIdLocal ^ teamColorLocal) * 7);
-
-        // Good pocket
-        //TODO: Check if it's actually a foul based on ruleset
-        if (((0x1U << id) & ((bmask) | (isTableOpenLocal ? 0xFFFCU : 0x0000U) | ((bmask & ballsPocketedLocal) == bmask ? 0x2U : 0x0U))) > 0)
+        bool foulPocket = false;
+        if (isSnooker6Red)//largely a copy of code from _TriggerSimulationEnded()
         {
-            tableModels[tableModelLocal]._flashTableLight();
+            uint bmask = 0x1E50u;
+            int nextcolor = sixRedFindLowestUnpocketedColor(ballsPocketedOrig);
+            bool redOnTable = sixRedCheckIfRedOnTable(ballsPocketedOrig);
+            if (colorTurnLocal)
+            {
+                bmask = 0x1AE;//color balls
+            }
+            else if (!redOnTable)
+            {
+                bmask = (uint)(1 << break_order_sixredsnooker[nextcolor]);
+            }
+            if (((0x1U << id) & bmask) > 0)
+            {
+                if (colorTurnLocal)
+                {
+                    if (numBallsPocketedThisTurn > 0)//potting 2 colors is always a foul
+                    {
+                        foulPocket = true;
+                    }
+                    numBallsPocketedThisTurn++;
+                }
+            }
+            else
+            {
+                foulPocket = true;
+            }
         }
         else
         {
+            uint bmask = 0x1FCU << ((int)(teamIdLocal ^ teamColorLocal) * 7);
+            if (!(((0x1U << id) & ((bmask) | (isTableOpenLocal ? 0xFFFCU : 0x0000U) | ((bmask & ballsPocketedLocal) == bmask ? 0x2U : 0x0U))) > 0))
+            {
+                foulPocket = true;
+            }
+        }
+        if (foulPocket)
+        {
             tableModels[tableModelLocal]._flashTableError();
+        }
+        else
+        {
+            tableModels[tableModelLocal]._flashTableLight();
         }
         aud_main.PlayOneShot(snd_Sink, 1.0f);
 
@@ -1526,8 +1563,6 @@ public class BilliardsModule : UdonSharpBehaviour
                 /*                 _LogInfo("6RED: " + Convert.ToString((ballsPocketedLocal & 0x1FFEu), 2));
                                 _LogInfo("6RED: " + Convert.ToString(0x1FFEu, 2)); */
             }
-
-            jumpShot = false;
 
             networkingManager._OnSimulationEnded(ballsP, ballsPocketedLocal, fbScoresLocal, colorTurnLocal);
 
