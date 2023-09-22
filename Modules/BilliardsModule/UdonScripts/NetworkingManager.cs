@@ -526,29 +526,35 @@ public class NetworkingManager : UdonSharpBehaviour
 
     public void _ForceLoadFromState
     (
-        int stateIdLocal,
+        int stateIdLocal, bool snookerUndo,
         Vector3[] newBallsP, uint ballsPocketed, int[] newScores, uint gameMode, uint teamId, uint repositionState, bool isTableOpen, uint teamColor, uint fourBallCueBall,
         byte turnStateLocal, Vector3 cueBallV, Vector3 cueBallW, byte previewWinningTeam, bool colorTurn
     )
     {
-        stateIdSynced = stateIdLocal;
-
         Array.Copy(newBallsP, ballsPSynced, MAX_BALLS);
         ballsPocketedSynced = ballsPocketed;
-        Array.Copy(newScores, fourBallScoresSynced, 2);
-        gameModeSynced = (byte)gameMode;
-        teamIdSynced = (byte)teamId;
         repositionStateSynced = (byte)repositionState;
-        isTableOpenSynced = isTableOpen;
-        teamColorSynced = (byte)teamColor;
         turnStateSynced = turnStateLocal;
         cueBallVSynced = cueBallV;
         cueBallWSynced = cueBallW;
-        fourBallCueBallSynced = (byte)fourBallCueBall;
-        timerStartSynced = Networking.GetServerTimeInMilliseconds();
         simulationOwnerSynced = Networking.LocalPlayer.playerId;
-        previewWinningTeamSynced = previewWinningTeam;
         colorTurnSynced = colorTurn;
+        if (snookerUndo)
+        {
+            stateIdSynced++;//record a new state
+        }
+        else
+        {
+            Array.Copy(newScores, fourBallScoresSynced, 2);
+            gameModeSynced = (byte)gameMode;
+            teamIdSynced = (byte)teamId;
+            isTableOpenSynced = isTableOpen;
+            teamColorSynced = (byte)teamColor;
+            fourBallCueBallSynced = (byte)fourBallCueBall;
+            timerStartSynced = Networking.GetServerTimeInMilliseconds();
+            previewWinningTeamSynced = previewWinningTeam;
+            stateIdSynced = stateIdLocal;
+        }
 
         bufferMessages(true);
         // OnDeserialization(); // jank! force deserialization so the practice manager knows to ignore it

@@ -2403,10 +2403,10 @@ public class BilliardsModule : UdonSharpBehaviour
         };
     }
 
-    public void _LoadInMemoryState(object[] state, int stateIdLocal)
+    public void _LoadInMemoryState(object[] state, int stateIdLocal, bool snookerUndo)
     {
         networkingManager._ForceLoadFromState(
-            stateIdLocal,
+            stateIdLocal, snookerUndo,
             (Vector3[])state[0], (uint)state[1], (int[])state[2], (uint)state[3], (uint)state[4], (uint)state[5], (bool)state[6], (uint)state[7], (uint)state[8],
             (byte)state[9], (Vector3)state[10], (Vector3)state[11], (byte)state[12], (bool)state[13]
         );

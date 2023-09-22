@@ -8,7 +8,7 @@ public class PracticeManager : UdonSharpBehaviour
     private BilliardsModule table;
 
     private object[] history = new object[128];
-    
+
     private int currentPtr;
     private int latestPtr;
 
@@ -45,7 +45,7 @@ public class PracticeManager : UdonSharpBehaviour
         }*/
 
         int stateIdLocal = table.networkingManager.stateIdSynced;
-        
+
         if (stateIdLocal == currentPtr) return; // already seen
 
         if (stateIdLocal < 0 || stateIdLocal >= 1024) return; // abuse?
@@ -79,7 +79,7 @@ public class PracticeManager : UdonSharpBehaviour
         {
             latestPtr = stateIdLocal;
         }
-        
+
         table._LogInfo($"recording state current={currentPtr} latest={latestPtr}");
     }
 
@@ -92,7 +92,19 @@ public class PracticeManager : UdonSharpBehaviour
             return;
         }
 
-        load(newPtr);
+        load(newPtr, false);
+    }
+
+    public void _SnookerUndo()
+    {
+        int newPtr = pop();
+        if (newPtr == -1)
+        {
+            table._IndicateError();
+            return;
+        }
+
+        load(newPtr, true);
     }
 
     public void _Redo()
@@ -104,7 +116,7 @@ public class PracticeManager : UdonSharpBehaviour
             return;
         }
 
-        load(newPtr);
+        load(newPtr, false);
     }
 
     private int push()
@@ -139,7 +151,7 @@ public class PracticeManager : UdonSharpBehaviour
             if (history[newPtr] == null) continue;
 
             object[] state = (object[])history[newPtr];
-            if ((byte)state[9] == 0 || (byte) state[9] == 2)
+            if ((byte)state[9] == 0 || (byte)state[9] == 2)
             {
                 return newPtr;
             }
@@ -148,17 +160,17 @@ public class PracticeManager : UdonSharpBehaviour
         return -1;
     }
 
-    private void load(int newPtr)
+    private void load(int newPtr, bool snookerUndo)
     {
         if (table.isLocalSimulationRunning)
         {
             table._LogInfo("interrupting simulation and loading new state");
         }
-        
+
         object[] state = (object[])history[newPtr];
         // hack_dontRecordNext = (byte) state[9] == 1;
         // hack_currentlyLoading = true;
-        table._LoadInMemoryState(state, newPtr);
+        table._LoadInMemoryState(state, newPtr, snookerUndo);
         // hack_currentlyLoading = false;
 
         table._IndicateSuccess();

@@ -5,10 +5,11 @@ using UnityEngine;
 [UdonBehaviourSyncMode(BehaviourSyncMode.None)]
 public class ButtonUndo : UdonSharpBehaviour
 {
-    [SerializeField] BilliardsModule table;
+    [SerializeField] string methodName = "_Undo";
+    [SerializeField] UdonSharpBehaviour script;
 
     public override void Interact()
     {
-        table.practiceManager._Undo();
+        script.SendCustomEvent(methodName);
     }
 }
