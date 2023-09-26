@@ -2374,9 +2374,6 @@ public class BilliardsModule : UdonSharpBehaviour
         {
             // no loading on top of other people's games
             if (!_IsPlayer(Networking.LocalPlayer)) return;
-
-            // no loading outside of practice
-            if (!isPracticeMode) return;
         }
         else
         {
