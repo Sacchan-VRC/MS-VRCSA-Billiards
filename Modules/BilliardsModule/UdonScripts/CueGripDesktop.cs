@@ -2,7 +2,7 @@
 using UdonSharp;
 using VRC.SDKBase;
 
-[UdonBehaviourSyncMode(BehaviourSyncMode.NoVariableSync)]
+[UdonBehaviourSyncMode(BehaviourSyncMode.None)]
 public class CueGripDesktop : UdonSharpBehaviour
 {
     private CueController controller;

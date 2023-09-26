@@ -14,7 +14,7 @@ using VRC.Udon;
 using System;
 using Metaphira.Modules.CameraOverride;
 
-[UdonBehaviourSyncMode(BehaviourSyncMode.NoVariableSync)]
+[UdonBehaviourSyncMode(BehaviourSyncMode.None)]
 public class BilliardsModule : UdonSharpBehaviour
 {
     [NonSerialized] public readonly string[] DEPENDENCIES = new string[] { nameof(CameraOverrideModule) };
@@ -325,18 +325,6 @@ public class BilliardsModule : UdonSharpBehaviour
         _EndPerf(PERF_MAIN);
 
         if (perfCounters[PERF_MAIN] % 500 == 0) _RedrawDebugger();
-    }
-
-    public override void OnOwnershipTransferred(VRCPlayerApi player)
-    {
-        if (!player.isLocal) return;
-        networkingManager.validatePlayers();
-    }
-
-    public override void OnPlayerLeft(VRCPlayerApi player)
-    {
-        if (!Networking.LocalPlayer.IsOwner(gameObject)) return;
-        networkingManager.validatePlayers();
     }
 
     public UdonSharpBehaviour _GetModule(string type)

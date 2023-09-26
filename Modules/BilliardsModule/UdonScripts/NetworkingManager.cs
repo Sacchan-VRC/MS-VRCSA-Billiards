@@ -27,9 +27,6 @@ public class NetworkingManager : UdonSharpBehaviour
     // the current state id - this value should increment monotonically, with each id representing a distinct state that's worth snapshotting
     [UdonSynced] [NonSerialized] public int stateIdSynced;
 
-    // who drives the simulation
-    [UdonSynced] [NonSerialized] public int simulationOwnerSynced;
-
     // bitmask of pocketed balls
     [UdonSynced] [NonSerialized] public uint ballsPocketedSynced;
 
@@ -354,7 +351,6 @@ public class NetworkingManager : UdonSharpBehaviour
         repositionStateSynced = 0;
         cueBallVSynced = cueBallV;
         cueBallWSynced = cueBallW;
-        simulationOwnerSynced = Networking.LocalPlayer.playerId;
 
         bufferMessages(false);
     }
@@ -567,7 +563,6 @@ public class NetworkingManager : UdonSharpBehaviour
         cueBallWSynced = cueBallW;
         fourBallCueBallSynced = (byte)fourBallCueBall;
         timerStartSynced = Networking.GetServerTimeInMilliseconds();
-        simulationOwnerSynced = Networking.LocalPlayer.playerId;
         previewWinningTeamSynced = previewWinningTeam;
         colorTurnSynced = colorTurn;
 
@@ -887,5 +882,16 @@ public class NetworkingManager : UdonSharpBehaviour
 
         // + or /
         return intValue != 43 && intValue != 47;
+    }
+    public override void OnOwnershipTransferred(VRCPlayerApi player)
+    {
+        if (!player.isLocal) return;
+        validatePlayers();
+    }
+
+    public override void OnPlayerLeft(VRCPlayerApi player)
+    {
+        if (!Networking.LocalPlayer.IsOwner(gameObject)) return;
+        validatePlayers();
     }
 }

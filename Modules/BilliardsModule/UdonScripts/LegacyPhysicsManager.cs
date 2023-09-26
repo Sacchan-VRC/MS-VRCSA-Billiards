@@ -5,7 +5,7 @@ using UnityEngine;
 using VRC.SDKBase;
 using VRC.Udon;
 
-[UdonBehaviourSyncMode(BehaviourSyncMode.NoVariableSync)]
+[UdonBehaviourSyncMode(BehaviourSyncMode.None)]
 public class LegacyPhysicsManager : UdonSharpBehaviour
 {
     public string PHYSICSNAME = "<color=\"#4287F5\">Legacy</color>";

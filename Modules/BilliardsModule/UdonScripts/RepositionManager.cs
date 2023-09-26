@@ -4,7 +4,7 @@ using UdonSharp;
 using UnityEngine;
 using VRC.SDKBase;
 
-[UdonBehaviourSyncMode(BehaviourSyncMode.NoVariableSync)]
+[UdonBehaviourSyncMode(BehaviourSyncMode.None)]
 public class RepositionManager : UdonSharpBehaviour
 {
     private const float k_BALL_DSQR = 0.0036f;

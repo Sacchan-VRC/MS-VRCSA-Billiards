@@ -5,7 +5,7 @@ using UnityEngine;
 using VRC.SDKBase;
 using VRC.Udon;
 
-[UdonBehaviourSyncMode(BehaviourSyncMode.NoVariableSync)]
+[UdonBehaviourSyncMode(BehaviourSyncMode.None)]
 public class BetaPhysicsManager : UdonSharpBehaviour
 {
     public string PHYSICSNAME = "<color=\"#678AC2\">Beta</color>";

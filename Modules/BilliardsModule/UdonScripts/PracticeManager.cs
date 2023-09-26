@@ -2,7 +2,7 @@
 using System;
 using UdonSharp;
 
-[UdonBehaviourSyncMode(BehaviourSyncMode.NoVariableSync)]
+[UdonBehaviourSyncMode(BehaviourSyncMode.None)]
 public class PracticeManager : UdonSharpBehaviour
 {
     private BilliardsModule table;
