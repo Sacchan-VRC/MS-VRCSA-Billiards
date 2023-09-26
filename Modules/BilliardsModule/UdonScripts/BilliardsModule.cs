@@ -1070,9 +1070,11 @@ public class BilliardsModule : UdonSharpBehaviour
         Array.Clear(ballsW, 0, ballsW.Length);
     }
 
-    private void onRemoteTurnSimulate(Vector3 cueBallV, Vector3 cueBallW, int simulationOwner)
+    private void onRemoteTurnSimulate(Vector3 cueBallV, Vector3 cueBallW)
     {
-        _LogInfo($"onRemoteTurnSimulate cueBallV={cueBallV.ToString("F4")} cueBallW={cueBallW.ToString("F4")} owner={simulationOwner}");
+        VRCPlayerApi owner = Networking.GetOwner(networkingManager.gameObject);
+        int ownerID = owner != null ? owner.playerId : -1;
+        _LogInfo($"onRemoteTurnSimulate cueBallV={cueBallV.ToString("F4")} cueBallW={cueBallW.ToString("F4")} owner={ownerID}");
 
         balls[0].GetComponent<AudioSource>().PlayOneShot(snd_hitball, 1.0f);
 
@@ -1105,7 +1107,7 @@ public class BilliardsModule : UdonSharpBehaviour
         ballsPocketedOrig = ballsPocketedLocal;
         jumpShot = false;
         numBallsPocketedThisTurn = 0;
-        if (Networking.LocalPlayer.playerId == simulationOwner)
+        if (Networking.LocalPlayer.playerId == ownerID)
         {
             isLocalSimulationOurs = true;
         }
@@ -1139,7 +1141,7 @@ public class BilliardsModule : UdonSharpBehaviour
         }
         else if (turnStateLocal == 1)
         {
-            onRemoteTurnSimulate(networkingManager.cueBallVSynced, networkingManager.cueBallWSynced, networkingManager.simulationOwnerSynced);
+            onRemoteTurnSimulate(networkingManager.cueBallVSynced, networkingManager.cueBallWSynced);
             // practiceManager._Record();
         }
         else

@@ -194,7 +194,7 @@ public class BetaPhysicsManager : UdonSharpBehaviour
                     table.devhit.transform.localPosition = RaySphere_output;
 
                     Vector3 q = transform_Surface.InverseTransformDirection(cuetip.transform.forward); // direction of cue in surface space
-                    Vector3 o = balls[0].transform.localPosition; // location of ball in surface
+                    Vector3 o = balls_P[0]; o.y = 0;// location of ball in surface
 
                     Vector3 j = -Vector3.ProjectOnPlane(q, transform_Surface.up); // project cue direction onto table surface, gives us j
                     Vector3 k = transform_Surface.up;
@@ -471,23 +471,23 @@ public class BetaPhysicsManager : UdonSharpBehaviour
                     /*if (Mathf.Abs(srcPosAL.x) > k_pR.x || Mathf.Abs(srcPosAL.z) > k_pO.z)
                     {
                         table.LogInfo(balls[srcId].name + " may have really phased into cushion");*/
-                        if (gm_is_2)
-                        {
-                            _phy_ball_table_carom(srcId);
-                        }
-                        else
-                        {
-                            _phy_ball_table_std(srcId);
-                        }
+                    if (gm_is_2)
+                    {
+                        _phy_ball_table_carom(srcId);
+                    }
+                    else
+                    {
+                        _phy_ball_table_std(srcId);
+                    }
 
-                        if (balls_V[srcId] == srcVL)
-                        {
-                            hitCushionMaybe = false;
-                        }
-                        else
-                        {
-                            table._LogInfo(balls[srcId].name + " actually phased into cushion");
-                        }
+                    if (balls_V[srcId] == srcVL)
+                    {
+                        hitCushionMaybe = false;
+                    }
+                    else
+                    {
+                        table._LogInfo(balls[srcId].name + " actually phased into cushion");
+                    }
                     /*}
                     else
                     {
@@ -594,54 +594,54 @@ public class BetaPhysicsManager : UdonSharpBehaviour
                                 table.LogInfo(balls[srcId] + " may really have collided with a cushion");
                                 if (Mathf.Abs(A.x) > k_pR.x - k_BALL_RADIUS || Mathf.Abs(A.z) > k_pO.z - k_BALL_RADIUS)
                                 {*/
-                                    
-                                    float distance = (Mathf.Ceil(result.distance * 1000f) / 1000f - 0.005f);
-                                    table._LogInfo("collided after travelling " + distance.ToString("F4") + " (" + result.distance.ToString("F4") + ")");
-                                    if (distance < srcPosDelta.magnitude)
-                                    {
-                                        Vector3 N = transform_Surface.InverseTransformDirection(result.normal);
-                                        _phy_bounce_cushion(srcId, N);
-                                        table._LogInfo(balls[srcId] + " actually collided with a cushion");
-                                        srcPosDelta = balls_V[srcId] * k_FIXED_TIME_STEP;
-                                        srcPosB = srcPosAL + srcPosDelta;
-                                    }
-                                    else
-                                    {
-                                        hitCushionMaybe = false;
-                                    }
-                                    /*Vector3 roundedBallPos = srcPosAL + distance * dirL;
 
-                                    roundedBallPos.y = 0f;
+                            float distance = (Mathf.Ceil(result.distance * 1000f) / 1000f - 0.005f);
+                            table._LogInfo("collided after travelling " + distance.ToString("F4") + " (" + result.distance.ToString("F4") + ")");
+                            if (distance < srcPosDelta.magnitude)
+                            {
+                                Vector3 N = transform_Surface.InverseTransformDirection(result.normal);
+                                _phy_bounce_cushion(srcId, N);
+                                table._LogInfo(balls[srcId] + " actually collided with a cushion");
+                                srcPosDelta = balls_V[srcId] * k_FIXED_TIME_STEP;
+                                srcPosB = srcPosAL + srcPosDelta;
+                            }
+                            else
+                            {
+                                hitCushionMaybe = false;
+                            }
+                            /*Vector3 roundedBallPos = srcPosAL + distance * dirL;
 
-                                    balls_P[srcId] = roundedBallPos;
-                                    
-                                    if (gm_is_2)
-                                    {
-                                        _phy_ball_table_carom(srcId);
-                                    }
-                                    else
-                                    {
-                                        _phy_ball_table_std(srcId);
-                                    }
-                                    
-                                    balls_P[srcId] = srcPosAL;
+                            roundedBallPos.y = 0f;
 
-                                    if (balls_V[srcId] == srcVL)
-                                    {
-                                        hitCushionMaybe = false;
-                                    }
-                                    else
-                                    {
-                                        table._LogInfo(balls[srcId] + " actually collided with a cushion");
-                                        srcPosDelta = balls_V[srcId] * k_FIXED_TIME_STEP;
-                                        srcPosB = srcPosAL + srcPosDelta;
-                                    }*/
-                                /*}
+                            balls_P[srcId] = roundedBallPos;
+
+                            if (gm_is_2)
+                            {
+                                _phy_ball_table_carom(srcId);
+                            }
+                            else
+                            {
+                                _phy_ball_table_std(srcId);
+                            }
+
+                            balls_P[srcId] = srcPosAL;
+
+                            if (balls_V[srcId] == srcVL)
+                            {
+                                hitCushionMaybe = false;
+                            }
+                            else
+                            {
+                                table._LogInfo(balls[srcId] + " actually collided with a cushion");
+                                srcPosDelta = balls_V[srcId] * k_FIXED_TIME_STEP;
+                                srcPosB = srcPosAL + srcPosDelta;
                             }*/
+                            /*}
+                        }*/
                         }
                     }
                 }
-                
+
                 balls_P[srcId] = srcPosB;
                 ballRigidbodies[srcId].position = transform_Surface.TransformPoint(balls_P[srcId]);
             }
@@ -1001,7 +1001,7 @@ public class BetaPhysicsManager : UdonSharpBehaviour
         {
             collider[i].enabled = true;
         }
-        
+
         // Handy values
         k_MINOR_REGION_CONST = table.k_TABLE_WIDTH - table.k_TABLE_HEIGHT;
         k_TABLE_WIDTH = table.k_TABLE_WIDTH;
@@ -1467,11 +1467,11 @@ public class BetaPhysicsManager : UdonSharpBehaviour
             table._LogWarn("cue velocity too high (" + V0.ToString("F2") + " m/s)! capped to 10 m/s");
             V0 = 10.0f;
         }
-        
+
         GameObject cuetip = table.activeCue._GetCuetip();
 
         Vector3 q = transform_Surface.InverseTransformDirection(cuetip.transform.forward); // direction of cue in surface space
-        Vector3 o = balls[0].transform.localPosition; // location of ball in surface
+        Vector3 o = balls_P[0]; o.y = 0;// location of ball in surface
 
         Vector3 j = -Vector3.ProjectOnPlane(q, transform_Surface.up); // project cue direction onto table surface, gives us j
         Vector3 k = transform_Surface.up;
