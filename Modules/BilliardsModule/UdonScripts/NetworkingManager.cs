@@ -39,7 +39,7 @@ public class NetworkingManager : UdonSharpBehaviour
     // when the timer for the current shot started, driven by the player who trigger the transition
     [UdonSynced] [NonSerialized] public int timerStartSynced;
 
-    // the current reposition state (0 is reposition not allowed, 1 is reposition in kitchen, 2 is reposition anywhere, 3 is reposition in snooker D)
+    // the current reposition state (0 is reposition not allowed, 1 is reposition in kitchen, 2 is reposition anywhere, 3 is reposition in snooker D, 4 is a foul with no reposition)
     [UdonSynced] [NonSerialized] public byte repositionStateSynced;
 
     // whether or not the table is open or not (i.e. no suit decided yet)
@@ -84,7 +84,7 @@ public class NetworkingManager : UdonSharpBehaviour
     // scores if game state is 2 or 3 (4ball)
     [UdonSynced] [NonSerialized] public int[] fourBallScoresSynced = new int[2];
 
-    // the currently active four ball cue ball (0 is white, 1 is yellow)
+    // the currently active four ball cue ball (0 is white, 1 is yellow) // also used in Snooker to track how many fouls/repeated shots have occurred in a row
     [UdonSynced] [NonSerialized] public byte fourBallCueBallSynced;
 
     // whether this update is urgent and should interrupt any local simulations (0 is no, 1 is interrupt, 2 is interrupt and halt)
@@ -283,6 +283,11 @@ public class NetworkingManager : UdonSharpBehaviour
         turnStateSynced = 0;
         timerStartSynced = Networking.GetServerTimeInMilliseconds();
         swapFourBallCueBalls();
+        if (table.isSnooker6Red)
+        {
+            fourBallCueBallSynced = 0;
+            isTableOpenSynced = true;
+        }
 
         bufferMessages(false);
     }
@@ -298,9 +303,25 @@ public class NetworkingManager : UdonSharpBehaviour
         {
             repositionStateSynced = 2;
         }
-        else if (Scratch)
+        else
         {
-            repositionStateSynced = 3;
+            if (Scratch)
+            {
+                repositionStateSynced = 3;
+            }
+            else
+            {
+                repositionStateSynced = 4;
+            }
+
+            if (fourBallCueBallSynced > 5)//reused variable to track number of fouls/repeated shots
+            {
+                fourBallCueBallSynced = 0;//after the limit, 5, we set it to 0 to prevent the SnookerUndo button from appearing again
+            }
+            else
+            {
+                fourBallCueBallSynced++;
+            }
         }
         swapFourBallCueBalls();
 
@@ -526,35 +547,29 @@ public class NetworkingManager : UdonSharpBehaviour
 
     public void _ForceLoadFromState
     (
-        int stateIdLocal, bool snookerUndo,
+        int stateIdLocal,
         Vector3[] newBallsP, uint ballsPocketed, int[] newScores, uint gameMode, uint teamId, uint repositionState, bool isTableOpen, uint teamColor, uint fourBallCueBall,
         byte turnStateLocal, Vector3 cueBallV, Vector3 cueBallW, byte previewWinningTeam, bool colorTurn
     )
     {
+        stateIdSynced = stateIdLocal;
+
         Array.Copy(newBallsP, ballsPSynced, MAX_BALLS);
         ballsPocketedSynced = ballsPocketed;
+        Array.Copy(newScores, fourBallScoresSynced, 2);
+        gameModeSynced = (byte)gameMode;
+        teamIdSynced = (byte)teamId;
         repositionStateSynced = (byte)repositionState;
+        isTableOpenSynced = isTableOpen;
+        teamColorSynced = (byte)teamColor;
         turnStateSynced = turnStateLocal;
         cueBallVSynced = cueBallV;
         cueBallWSynced = cueBallW;
+        fourBallCueBallSynced = (byte)fourBallCueBall;
+        timerStartSynced = Networking.GetServerTimeInMilliseconds();
         simulationOwnerSynced = Networking.LocalPlayer.playerId;
+        previewWinningTeamSynced = previewWinningTeam;
         colorTurnSynced = colorTurn;
-        if (snookerUndo)
-        {
-            stateIdSynced++;//record a new state
-        }
-        else
-        {
-            Array.Copy(newScores, fourBallScoresSynced, 2);
-            gameModeSynced = (byte)gameMode;
-            teamIdSynced = (byte)teamId;
-            isTableOpenSynced = isTableOpen;
-            teamColorSynced = (byte)teamColor;
-            fourBallCueBallSynced = (byte)fourBallCueBall;
-            timerStartSynced = Networking.GetServerTimeInMilliseconds();
-            previewWinningTeamSynced = previewWinningTeam;
-            stateIdSynced = stateIdLocal;
-        }
 
         bufferMessages(true);
         // OnDeserialization(); // jank! force deserialization so the practice manager knows to ignore it

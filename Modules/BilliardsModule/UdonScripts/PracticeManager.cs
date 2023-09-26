@@ -92,11 +92,14 @@ public class PracticeManager : UdonSharpBehaviour
             return;
         }
 
-        load(newPtr, false);
+        load(newPtr);
     }
 
     public void _SnookerUndo()
     {
+        if (!table.isSnooker6Red) { return; }
+        //if NOTMYTURN { RETURN }
+
         int newPtr = pop();
         if (newPtr == -1)
         {
@@ -104,7 +107,7 @@ public class PracticeManager : UdonSharpBehaviour
             return;
         }
 
-        load(newPtr, true);
+        load_SnookerUndo(currentPtr - newPtr);
     }
 
     public void _Redo()
@@ -116,7 +119,7 @@ public class PracticeManager : UdonSharpBehaviour
             return;
         }
 
-        load(newPtr, false);
+        load(newPtr);
     }
 
     private int push()
@@ -160,7 +163,36 @@ public class PracticeManager : UdonSharpBehaviour
         return -1;
     }
 
-    private void load(int newPtr, bool snookerUndo)
+    private void load_SnookerUndo(int amountBack)
+    {
+        if (table.isLocalSimulationRunning)
+        {
+            table._LogInfo("interrupting simulation and loading new state");
+        }
+
+        object[] state = (object[])history[currentPtr - amountBack];
+        object[] curState = (object[])history[currentPtr];
+        //set the values we don't want to reset
+        state[2] = curState[2];//scores
+        state[5] = (uint)0;//repositionstate
+        state[6] = false;//tableisopen
+        state[8] = curState[8];//fourBallCueBall
+
+        // (Vector3[])state[0], (uint)state[1], (int[])state[2], (uint)state[3], (uint)state[4], (uint)state[5], (bool)state[6], (uint)state[7], (uint)state[8],
+        // (byte)state[9], (Vector3)state[10], (Vector3)state[11], (byte)state[12], (bool)state[13]
+        //==
+        // Vector3[] newBallsP, uint ballsPocketed, int[] newScores, uint gameMode, uint teamId, uint repositionState, bool isTableOpen, uint teamColor, uint fourBallCueBall,
+        // byte turnStateLocal, Vector3 cueBallV, Vector3 cueBallW, byte previewWinningTeam, bool colorTurn
+
+        // hack_dontRecordNext = (byte) state[9] == 1;
+        // hack_currentlyLoading = true;
+        table._LoadInMemoryState(state, currentPtr + 1);
+        // hack_currentlyLoading = false;
+
+        table._IndicateSuccess();
+    }
+
+    private void load(int newPtr)
     {
         if (table.isLocalSimulationRunning)
         {
@@ -170,7 +202,7 @@ public class PracticeManager : UdonSharpBehaviour
         object[] state = (object[])history[newPtr];
         // hack_dontRecordNext = (byte) state[9] == 1;
         // hack_currentlyLoading = true;
-        table._LoadInMemoryState(state, newPtr, snookerUndo);
+        table._LoadInMemoryState(state, newPtr);
         // hack_currentlyLoading = false;
 
         table._IndicateSuccess();

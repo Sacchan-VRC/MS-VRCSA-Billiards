@@ -616,7 +616,7 @@ public class BilliardsModule : UdonSharpBehaviour
         // now update game state
         onRemoteBallPositionsChanged(networkingManager.ballsPSynced);
         onRemoteTeamIdChanged(networkingManager.teamIdSynced);
-        onRemoteFourBallCueBallChanged(networkingManager.fourBallCueBallSynced);
+        onRemoteFourBallCueBallChanged(networkingManager.fourBallCueBallSynced, joinedDuringMatch);
         onRemoteBallsPocketedChanged(networkingManager.ballsPocketedSynced);
         onRemoteFourBallScoresUpdated(networkingManager.fourBallScoresSynced);
         onRemoteRepositionStateChanged(networkingManager.repositionStateSynced, joinedDuringMatch);
@@ -985,12 +985,15 @@ public class BilliardsModule : UdonSharpBehaviour
         activeCue = cueControllers[isPracticeMode ? 0 : (int)teamIdLocal];
     }
 
-    private void onRemoteFourBallCueBallChanged(uint fourBallCueBallSynced)
+    private void onRemoteFourBallCueBallChanged(uint fourBallCueBallSynced, bool forceUpdate)
     {
         if (!gameLive) return;
+        if (!forceUpdate && fourBallCueBallLocal == fourBallCueBallSynced) return;
+        if (isSnooker6Red)//reusing this variable for the number of fouls/repeated shots in a row in snooker
+        {
+            fourBallCueBallLocal = fourBallCueBallSynced;
+        }
         if (!is4Ball) return;
-
-        if (fourBallCueBallLocal == fourBallCueBallSynced) return;
 
         _LogInfo($"onRemoteFourBallCueBallChanged cueBall={fourBallCueBallSynced}");
         fourBallCueBallLocal = fourBallCueBallSynced;
@@ -1002,7 +1005,7 @@ public class BilliardsModule : UdonSharpBehaviour
     {
         if (!gameLive) return;
 
-        if ((teamColorLocal == teamColorSynced && isTableOpenLocal == isTableOpenSynced) && !forceUpdate) return;
+        if (!forceUpdate && (teamColorLocal == teamColorSynced && isTableOpenLocal == isTableOpenSynced)) return;
 
         _LogInfo($"onRemoteIsTableOpenChanged isTableOpen={isTableOpenSynced} teamColor={teamColorSynced}");
         isTableOpenLocal = isTableOpenSynced;
@@ -1031,7 +1034,12 @@ public class BilliardsModule : UdonSharpBehaviour
     {
         if (!gameLive) return;
 
-        if (repositionStateLocal == repositionStateSynced && !forceUpdate) return;
+        if (!forceUpdate && repositionStateLocal == repositionStateSynced) return;
+
+        if (isSnooker6Red)//enable SnookerUndo button if foul
+        {
+            this.transform.Find("intl.controls/undo_snooker").gameObject.SetActive(fourBallCueBallLocal > 0 && repositionStateLocal > 0);
+        }
 
         _LogInfo($"onRemoteRepositionStateChanged repositionState={repositionStateSynced}");
         repositionStateLocal = repositionStateSynced;
@@ -1129,7 +1137,7 @@ public class BilliardsModule : UdonSharpBehaviour
     {
         if (!gameLive) return;
 
-        if (turnStateSynced == turnStateLocal && !forecUpdate) return;
+        if (!forecUpdate && turnStateSynced == turnStateLocal) return;
 
         _LogInfo($"onRemoteTurnStateChanged newState={turnStateSynced}");
         turnStateLocal = turnStateSynced;
@@ -2403,10 +2411,10 @@ public class BilliardsModule : UdonSharpBehaviour
         };
     }
 
-    public void _LoadInMemoryState(object[] state, int stateIdLocal, bool snookerUndo)
+    public void _LoadInMemoryState(object[] state, int stateIdLocal)
     {
         networkingManager._ForceLoadFromState(
-            stateIdLocal, snookerUndo,
+            stateIdLocal,
             (Vector3[])state[0], (uint)state[1], (int[])state[2], (uint)state[3], (uint)state[4], (uint)state[5], (bool)state[6], (uint)state[7], (uint)state[8],
             (byte)state[9], (Vector3)state[10], (Vector3)state[11], (byte)state[12], (bool)state[13]
         );
