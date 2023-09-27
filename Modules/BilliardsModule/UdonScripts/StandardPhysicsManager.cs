@@ -1529,4 +1529,169 @@ public class StandardPhysicsManager : UdonSharpBehaviour
         balls_V[0] = v;
         balls_W[0] = w;
     }
+
+    bool objVisible(int objMask)
+    {
+        //TODO: turn objmask into list of balls
+        bool visible;
+        for (int i = 0; i < 16; i++)
+        {
+            visible = ballVisible(i, 0);
+            if (visible) { return true; }
+        }
+        return false;
+    }
+    
+    bool ballVisible(int from, int to)
+    {
+        Vector3 center = (balls_P[from] + balls_P[to]) / 2;
+        float cenMag = (balls_P[from] - center).magnitude;
+
+        Vector2 out1 = Vector3.zero, out2 = Vector3.zero, out3 = Vector3.zero, out4 = Vector3.zero,
+            circle1, circle2, center2;
+        circle1 = new Vector2(balls_P[from].x, balls_P[from].z);
+        circle2 = new Vector2(balls_P[to].x, balls_P[to].z);
+        // float Ball1Rad = k_BALL_RADIUS;
+        // float Ball2Rad = k_BALL_RADIUS;
+        center2 = new Vector2(center.x, center.z);
+
+        FindCircleCircleIntersections(center2, cenMag, circle1, k_BALL_DIAMETRE /* Ball1Rad + Ball2Rad */, out out1, out out2);
+        FindCircleCircleIntersections(center2, cenMag, circle2, k_BALL_DIAMETRE /* Ball1Rad + Ball2Rad */, out out3, out out4);
+
+        Vector3 ipoint1 = new Vector3(out1.x, balls_P[from].y, out1.y);
+        Vector3 ipoint2 = new Vector3(out2.x, balls_P[from].y, out2.y);
+        Vector3 ipoint3 = new Vector3(out3.x, balls_P[from].y, out3.y);
+        Vector3 ipoint4 = new Vector3(out4.x, balls_P[from].y, out4.y);
+
+        Vector3 innerTanPoint1 = balls_P[from] + (ipoint1 - balls_P[from]).normalized * k_BALL_RADIUS;
+        Vector3 innerTanPoint2 = balls_P[from] + (ipoint2 - balls_P[from]).normalized * k_BALL_RADIUS;
+        Vector3 innerTanPoint3 = balls_P[to] + (ipoint3 - balls_P[to]).normalized * k_BALL_RADIUS;
+        Vector3 innerTanPoint4 = balls_P[to] + (ipoint4 - balls_P[to]).normalized * k_BALL_RADIUS;
+
+        Vector3 innerTanPoint1_oposite = innerTanPoint1 - balls_P[from];
+        innerTanPoint1_oposite = balls_P[from] - innerTanPoint1_oposite;
+        Vector3 innerTanPoint2_oposite = innerTanPoint2 - balls_P[from];
+        innerTanPoint2_oposite = balls_P[from] - innerTanPoint2_oposite;
+
+        // Debug.DrawRay(balls[0].transform.parent.TransformPoint(innerTanPoint1), balls[0].transform.parent.TransformDirection(innerTanPoint3 - innerTanPoint1), Color.red, 10);
+        // Debug.DrawRay(balls[0].transform.parent.TransformPoint(innerTanPoint2), balls[0].transform.parent.TransformDirection(innerTanPoint4 - innerTanPoint2), Color.blue, 10);
+        // Debug.DrawRay(balls[0].transform.parent.TransformPoint(innerTanPoint2_oposite), balls[0].transform.parent.TransformDirection(innerTanPoint4 - innerTanPoint2), Color.blue, 10);
+        // Debug.DrawRay(balls[0].transform.parent.TransformPoint(innerTanPoint1_oposite), balls[0].transform.parent.TransformDirection(innerTanPoint3 - innerTanPoint1), Color.red, 10);
+
+        float distTo = (balls_P[from] - balls_P[to]).magnitude;
+        bool blockedLeft = false;
+        bool blockedRight = false;
+        for (int i = 0; i < 16; i++)
+        {
+            if (i == from) { continue; }
+            if (i == to) { continue; }
+            float distToThis = (balls_P[from] - balls_P[i]).magnitude;
+            if (distToThis > distTo) { continue; }
+            if (_phy_ray_sphere(innerTanPoint1, innerTanPoint3 - innerTanPoint1, balls_P[i]))
+            {
+                blockedLeft = true;
+                break;
+            }
+        }
+
+        for (int i = 0; i < 16; i++)
+        {
+            if (i == from) { continue; }
+            if (i == to) { continue; }
+            float distToThis = (balls_P[from] - balls_P[i]).magnitude;
+            if (distToThis > distTo) { continue; }
+            if (_phy_ray_sphere(innerTanPoint2, innerTanPoint4 - innerTanPoint2, balls_P[i]))
+            {
+                blockedRight = true;
+                break;
+            }
+        }
+        if (!blockedRight)
+        {
+            for (int i = 0; i < 16; i++)
+            {
+                if (i == from) { continue; }
+                if (i == to) { continue; }
+                float distToThis = (balls_P[from] - balls_P[i]).magnitude;
+                if (distToThis > distTo) { continue; }
+                if (_phy_ray_sphere(innerTanPoint2_oposite, innerTanPoint4 - innerTanPoint2, balls_P[i]))
+                {
+                    blockedRight = true;
+                    break;
+                }
+            }
+        }
+        if (!blockedLeft)
+        {
+            for (int i = 0; i < 16; i++)
+            {
+                if (i == from) { continue; }
+                if (i == to) { continue; }
+                float distToThis = (balls_P[from] - balls_P[i]).magnitude;
+                if (distToThis > distTo) { continue; }
+                if (_phy_ray_sphere(innerTanPoint1_oposite, innerTanPoint3 - innerTanPoint1, balls_P[i]))
+                {
+                    blockedLeft = true;
+                    break;
+                }
+            }
+        }
+        return !blockedLeft || !blockedRight;
+    }
+
+    // Found on Unity Forums. Thanks to QuincyC.
+    // Find the points where the two circles intersect.
+    private void FindCircleCircleIntersections(Vector2 c0, float r0, Vector2 c1, float r1, out Vector2 intersection1, out Vector2 intersection2)
+    {
+        // Find the distance between the centers.
+        float dx = c0.x - c1.x;
+        float dy = c0.y - c1.y;
+        float dist = Mathf.Sqrt(dx * dx + dy * dy);
+
+        if (Mathf.Abs(dist - (r0 + r1)) < 0.00001)
+        {
+            intersection1 = Vector2.Lerp(c0, c1, r0 / (r0 + r1));
+            intersection2 = intersection1;
+        }
+
+        // See how many solutions there are.
+        if (dist > r0 + r1)
+        {
+            // No solutions, the circles are too far apart.
+            intersection1 = new Vector2(float.NaN, float.NaN);
+            intersection2 = new Vector2(float.NaN, float.NaN);
+        }
+        else if (dist < Mathf.Abs(r0 - r1))
+        {
+            // No solutions, one circle contains the other.
+            intersection1 = new Vector2(float.NaN, float.NaN);
+            intersection2 = new Vector2(float.NaN, float.NaN);
+        }
+        else if ((dist == 0) && (r0 == r1))
+        {
+            // No solutions, the circles coincide.
+            intersection1 = new Vector2(float.NaN, float.NaN);
+            intersection2 = new Vector2(float.NaN, float.NaN);
+        }
+        else
+        {
+            // Find a and h.
+            float a = (r0 * r0 -
+                        r1 * r1 + dist * dist) / (2 * dist);
+            float h = Mathf.Sqrt(r0 * r0 - a * a);
+
+            // Find P2.
+            float cx2 = c0.x + a * (c1.x - c0.x) / dist;
+            float cy2 = c0.y + a * (c1.y - c0.y) / dist;
+
+            // Get the points P3.
+            intersection1 = new Vector2(
+                (float)(cx2 + h * (c1.y - c0.y) / dist),
+                (float)(cy2 - h * (c1.x - c0.x) / dist));
+            intersection2 = new Vector2(
+                (float)(cx2 - h * (c1.y - c0.y) / dist),
+                (float)(cy2 + h * (c1.x - c0.x) / dist));
+
+        }
+    }
 }
