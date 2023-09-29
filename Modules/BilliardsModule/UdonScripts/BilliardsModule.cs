@@ -1024,13 +1024,13 @@ public class BilliardsModule : UdonSharpBehaviour
 
         if (!forceUpdate && repositionStateLocal == repositionStateSynced) return;
 
+        _LogInfo($"onRemoteRepositionStateChanged repositionState={repositionStateSynced}");
+        repositionStateLocal = repositionStateSynced;
+
         if (isSnooker6Red)//enable SnookerUndo button if foul
         {
             this.transform.Find("intl.controls/undo_snooker").gameObject.SetActive(fourBallCueBallLocal > 0 && repositionStateLocal > 0);
         }
-
-        _LogInfo($"onRemoteRepositionStateChanged repositionState={repositionStateSynced}");
-        repositionStateLocal = repositionStateSynced;
 
         if (!isOurTurn() || repositionStateLocal == 0)
         {
