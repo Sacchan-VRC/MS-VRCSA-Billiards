@@ -2261,6 +2261,223 @@ public class BilliardsModule : UdonSharpBehaviour
         return 0;
     }
 
+    public void debug_DrawBallMask(int ballMask)
+    {
+        for (int i = 0; i < 16; i++)
+        {
+            if ((ballsPocketedLocal & (1 << i)) > 0) { continue; }
+            if ((ballMask & (1 << i)) == 0) { continue; }
+            Debug.DrawRay(balls[0].transform.parent.TransformPoint(ballsP[i]), Vector3.up * .3f, Color.white, 3f);
+        }
+    }
+
+    public void debug_TestObjVisible()
+    {
+        int redmask = 0;
+        for (int i = 0; i < 6; i++)
+        {
+            redmask += (1 << break_order_sixredsnooker[i]);
+        }
+        debug_DrawBallMask(redmask);
+        if (objVisible(redmask))
+        { Debug.Log("CAN SEE"); }
+        else
+        { Debug.Log("CAN NOT SEE"); }
+    }
+
+    bool objVisible(int objMask)
+    {
+        for (int i = 0; i < 16; i++)
+        {
+            if ((objMask & (1 << i)) > 0)
+            {
+                if (ballVisible(0, i))
+                    return true;
+            }
+        }
+        return false;
+    }
+
+    bool ballVisible(int from, int to)
+    {
+        Vector3 center = (ballsP[from] + ballsP[to]) / 2;
+        float cenMag = (ballsP[from] - center).magnitude;
+
+        Vector2 out1 = Vector3.zero, out2 = Vector3.zero, out3 = Vector3.zero, out4 = Vector3.zero,
+            circle1, circle2, center2;
+        circle1 = new Vector2(ballsP[from].x, ballsP[from].z);
+        circle2 = new Vector2(ballsP[to].x, ballsP[to].z);
+        // float Ball1Rad = k_BALL_RADIUS;
+        // float Ball2Rad = k_BALL_RADIUS;
+        center2 = new Vector2(center.x, center.z);
+
+        FindCircleCircleIntersections(center2, cenMag, circle1, k_BALL_DIAMETRE /* Ball1Rad + Ball2Rad */, out out1, out out2);
+        FindCircleCircleIntersections(center2, cenMag, circle2, k_BALL_DIAMETRE /* Ball1Rad + Ball2Rad */, out out3, out out4);
+
+        Vector3 ipoint1 = new Vector3(out1.x, ballsP[from].y, out1.y);
+        Vector3 ipoint2 = new Vector3(out2.x, ballsP[from].y, out2.y);
+        Vector3 ipoint3 = new Vector3(out3.x, ballsP[from].y, out3.y);
+        Vector3 ipoint4 = new Vector3(out4.x, ballsP[from].y, out4.y);
+
+        Vector3 innerTanPoint1 = ballsP[from] + (ipoint1 - ballsP[from]).normalized * k_BALL_RADIUS /* Ball1Rad */;
+        Vector3 innerTanPoint2 = ballsP[from] + (ipoint2 - ballsP[from]).normalized * k_BALL_RADIUS /* Ball1Rad */;
+        Vector3 innerTanPoint3 = ballsP[to] + (ipoint3 - ballsP[to]).normalized * k_BALL_RADIUS /* Ball2Rad */;
+        Vector3 innerTanPoint4 = ballsP[to] + (ipoint4 - ballsP[to]).normalized * k_BALL_RADIUS /* Ball2Rad */;
+
+        Vector3 innerTanPoint1_oposite = innerTanPoint1 - ballsP[from];
+        innerTanPoint1_oposite = ballsP[from] - innerTanPoint1_oposite;
+        Vector3 innerTanPoint2_oposite = innerTanPoint2 - ballsP[from];
+        innerTanPoint2_oposite = ballsP[from] - innerTanPoint2_oposite;
+
+        // Debug.DrawRay(balls[0].transform.parent.TransformPoint(innerTanPoint1), balls[0].transform.parent.TransformDirection(innerTanPoint3 - innerTanPoint1), Color.red, 10);
+        // Debug.DrawRay(balls[0].transform.parent.TransformPoint(innerTanPoint2), balls[0].transform.parent.TransformDirection(innerTanPoint4 - innerTanPoint2), Color.blue, 10);
+        // Debug.DrawRay(balls[0].transform.parent.TransformPoint(innerTanPoint2_oposite), balls[0].transform.parent.TransformDirection(innerTanPoint4 - innerTanPoint2), Color.blue, 10);
+        // Debug.DrawRay(balls[0].transform.parent.TransformPoint(innerTanPoint1_oposite), balls[0].transform.parent.TransformDirection(innerTanPoint3 - innerTanPoint1), Color.red, 10);
+
+        float distTo = (ballsP[from] - ballsP[to]).magnitude;
+        bool blockedLeft = false;
+        bool blockedRight = false;
+        for (int i = 0; i < 16; i++)
+        {
+            if (i == from) { continue; }
+            if (i == to) { continue; }
+            float distToThis = (ballsP[from] - ballsP[i]).magnitude;
+            if (distToThis > distTo) { continue; }
+            if (_phy_ray_sphere(innerTanPoint1, innerTanPoint3 - innerTanPoint1, ballsP[i]))
+            {
+                blockedLeft = true;
+                break;
+            }
+        }
+
+        for (int i = 0; i < 16; i++)
+        {
+            if (i == from) { continue; }
+            if (i == to) { continue; }
+            float distToThis = (ballsP[from] - ballsP[i]).magnitude;
+            if (distToThis > distTo) { continue; }
+            if (_phy_ray_sphere(innerTanPoint2, innerTanPoint4 - innerTanPoint2, ballsP[i]))
+            {
+                blockedRight = true;
+                break;
+            }
+        }
+        if (!blockedRight)
+        {
+            for (int i = 0; i < 16; i++)
+            {
+                if (i == from) { continue; }
+                if (i == to) { continue; }
+                float distToThis = (ballsP[from] - ballsP[i]).magnitude;
+                if (distToThis > distTo) { continue; }
+                if (_phy_ray_sphere(innerTanPoint2_oposite, innerTanPoint4 - innerTanPoint2, ballsP[i]))
+                {
+                    blockedRight = true;
+                    break;
+                }
+            }
+        }
+        if (!blockedLeft)
+        {
+            for (int i = 0; i < 16; i++)
+            {
+                if (i == from) { continue; }
+                if (i == to) { continue; }
+                float distToThis = (ballsP[from] - ballsP[i]).magnitude;
+                if (distToThis > distTo) { continue; }
+                if (_phy_ray_sphere(innerTanPoint1_oposite, innerTanPoint3 - innerTanPoint1, ballsP[i]))
+                {
+                    blockedLeft = true;
+                    break;
+                }
+            }
+        }
+        return !blockedLeft || !blockedRight;
+    }
+
+    // Found on Unity Forums. Thanks to QuincyC.
+    // Find the points where the two circles intersect.
+    private void FindCircleCircleIntersections(Vector2 c0, float r0, Vector2 c1, float r1, out Vector2 intersection1, out Vector2 intersection2)
+    {
+        // Find the distance between the centers.
+        float dx = c0.x - c1.x;
+        float dy = c0.y - c1.y;
+        float dist = Mathf.Sqrt(dx * dx + dy * dy);
+
+        if (Mathf.Abs(dist - (r0 + r1)) < 0.00001)
+        {
+            intersection1 = Vector2.Lerp(c0, c1, r0 / (r0 + r1));
+            intersection2 = intersection1;
+        }
+
+        // See how many solutions there are.
+        if (dist > r0 + r1)
+        {
+            // No solutions, the circles are too far apart.
+            intersection1 = new Vector2(float.NaN, float.NaN);
+            intersection2 = new Vector2(float.NaN, float.NaN);
+        }
+        else if (dist < Mathf.Abs(r0 - r1))
+        {
+            // No solutions, one circle contains the other.
+            intersection1 = new Vector2(float.NaN, float.NaN);
+            intersection2 = new Vector2(float.NaN, float.NaN);
+        }
+        else if ((dist == 0) && (r0 == r1))
+        {
+            // No solutions, the circles coincide.
+            intersection1 = new Vector2(float.NaN, float.NaN);
+            intersection2 = new Vector2(float.NaN, float.NaN);
+        }
+        else
+        {
+            // Find a and h.
+            float a = (r0 * r0 -
+                        r1 * r1 + dist * dist) / (2 * dist);
+            float h = Mathf.Sqrt(r0 * r0 - a * a);
+
+            // Find P2.
+            float cx2 = c0.x + a * (c1.x - c0.x) / dist;
+            float cy2 = c0.y + a * (c1.y - c0.y) / dist;
+
+            // Get the points P3.
+            intersection1 = new Vector2(
+                (float)(cx2 + h * (c1.y - c0.y) / dist),
+                (float)(cy2 - h * (c1.x - c0.x) / dist));
+            intersection2 = new Vector2(
+                (float)(cx2 - h * (c1.y - c0.y) / dist),
+                (float)(cy2 + h * (c1.x - c0.x) / dist));
+
+        }
+    }
+
+    //copy of method from StandardPhysicsManager
+    bool _phy_ray_sphere(Vector3 start, Vector3 dir, Vector3 sphere)
+    {
+        float k_BALL_RSQR = k_BALL_RADIUS * k_BALL_RADIUS;
+        Vector3 nrm = dir.normalized;
+        Vector3 h = sphere - start;
+        float lf = Vector3.Dot(nrm, h);
+        float s = k_BALL_RSQR - Vector3.Dot(h, h) + lf * lf;
+
+        if (s < 0.0f) return false;
+
+        s = Mathf.Sqrt(s);
+
+        if (lf < s)
+        {
+            if (lf + s >= 0)
+            {
+                s = -s;
+            }
+            else
+            {
+                return false;
+            }
+        }
+        return true;
+    }
+
     private void setBallPickupActive(int ballId, bool active)
     {
         Transform pickup = balls[ballId].transform.GetChild(0);
