@@ -36,8 +36,8 @@ public class NetworkingManager : UdonSharpBehaviour
     // when the timer for the current shot started, driven by the player who trigger the transition
     [UdonSynced] [NonSerialized] public int timerStartSynced;
 
-    // the current reposition state (0 is reposition not allowed, 1 is reposition in kitchen, 2 is reposition anywhere, 3 is reposition in snooker D, 4 is a foul with no reposition)
-    [UdonSynced] [NonSerialized] public byte repositionStateSynced;
+    // the current reposition state (0 is reposition not allowed, 1 is reposition in kitchen, 2 is reposition anywhere, 3 is reposition in snooker D, 4 is a foul with no reposition, 5 is foul with no reposition and snookered (free ball))
+    [UdonSynced] [NonSerialized] public byte foulStateSynced;
 
     // whether or not the table is open or not (i.e. no suit decided yet)
     [UdonSynced] [NonSerialized] public bool isTableOpenSynced;
@@ -278,6 +278,7 @@ public class NetworkingManager : UdonSharpBehaviour
 
         teamIdSynced = (byte)teamId;
         turnStateSynced = 0;
+        foulStateSynced = 0;
         timerStartSynced = Networking.GetServerTimeInMilliseconds();
         swapFourBallCueBalls();
         if (table.isSnooker6Red)
@@ -289,7 +290,7 @@ public class NetworkingManager : UdonSharpBehaviour
         bufferMessages(false);
     }
 
-    public void _OnTurnFoul(uint teamId, bool Scratch)
+    public void _OnTurnFoul(uint teamId, bool Scratch, bool Snookered)
     {
         stateIdSynced++;
 
@@ -298,17 +299,21 @@ public class NetworkingManager : UdonSharpBehaviour
         timerStartSynced = Networking.GetServerTimeInMilliseconds();
         if (!table.isSnooker6Red)
         {
-            repositionStateSynced = 2;
+            foulStateSynced = 2;
         }
         else
         {
             if (Scratch)
             {
-                repositionStateSynced = 3;
+                foulStateSynced = 3;
+            }
+            else if (Snookered)
+            {
+                foulStateSynced = 5;
             }
             else
             {
-                repositionStateSynced = 4;
+                foulStateSynced = 4;
             }
 
             if (fourBallCueBallSynced > 5)//reused variable to track number of fouls/repeated shots
@@ -330,6 +335,7 @@ public class NetworkingManager : UdonSharpBehaviour
         stateIdSynced++;
 
         turnStateSynced = 0;
+        foulStateSynced = 0;
         timerStartSynced = Networking.GetServerTimeInMilliseconds();
 
         bufferMessages(false);
@@ -348,7 +354,6 @@ public class NetworkingManager : UdonSharpBehaviour
         stateIdSynced++;
 
         turnStateSynced = 1;
-        repositionStateSynced = 0;
         cueBallVSynced = cueBallV;
         cueBallWSynced = cueBallW;
 
@@ -357,7 +362,7 @@ public class NetworkingManager : UdonSharpBehaviour
 
     /*public void _OnPlaceBall()
     {
-        repositionStateSynced = 0;
+        foulStateSynced = 0;
 
         broadcastAndProcess(false);
     }*/
@@ -401,13 +406,14 @@ public class NetworkingManager : UdonSharpBehaviour
 
         gameStateSynced = 2;
         ballsPocketedSynced = defaultBallsPocketed;
+        //reposition state
         if (table.isSnooker6Red)
         {
-            repositionStateSynced = 3;
+            foulStateSynced = 3;
         }
         else
         {
-            repositionStateSynced = 1;
+            foulStateSynced = 1;
         }
         turnStateSynced = 0;
         isTableOpenSynced = true;
@@ -544,7 +550,7 @@ public class NetworkingManager : UdonSharpBehaviour
     public void _ForceLoadFromState
     (
         int stateIdLocal,
-        Vector3[] newBallsP, uint ballsPocketed, int[] newScores, uint gameMode, uint teamId, uint repositionState, bool isTableOpen, uint teamColor, uint fourBallCueBall,
+        Vector3[] newBallsP, uint ballsPocketed, int[] newScores, uint gameMode, uint teamId, uint foulState, bool isTableOpen, uint teamColor, uint fourBallCueBall,
         byte turnStateLocal, Vector3 cueBallV, Vector3 cueBallW, byte previewWinningTeam, bool colorTurn
     )
     {
@@ -555,7 +561,7 @@ public class NetworkingManager : UdonSharpBehaviour
         Array.Copy(newScores, fourBallScoresSynced, 2);
         gameModeSynced = (byte)gameMode;
         teamIdSynced = (byte)teamId;
-        repositionStateSynced = (byte)repositionState;
+        foulStateSynced = (byte)foulState;
         isTableOpenSynced = isTableOpen;
         teamColorSynced = (byte)teamColor;
         turnStateSynced = turnStateLocal;
@@ -731,7 +737,7 @@ public class NetworkingManager : UdonSharpBehaviour
         uint state = decodeU16(gameState, 0x4E);
         turnStateSynced = (byte)((state & 0x1u) == 0x1u ? 1 : 0);
         teamIdSynced = (byte)((state & 0x2u) >> 1);
-        repositionStateSynced = (byte)((state & 0x4u) == 0x4u ? 1 : 0);
+        foulStateSynced = (byte)((state & 0x4u) == 0x4u ? 1 : 0);
         isTableOpenSynced = (state & 0x8u) == 0x8u;
         teamColorSynced = (byte)((state & 0x10u) >> 4);
         gameModeSynced = (byte)((state & 0x700u) >> 8);
@@ -786,7 +792,7 @@ public class NetworkingManager : UdonSharpBehaviour
 
         ballsPocketedSynced = decodeU16(gameState, 0x6C);
         teamIdSynced = gameState[0x6E];
-        repositionStateSynced = gameState[0x6F];
+        foulStateSynced = gameState[0x6F];
         isTableOpenSynced = gameState[0x70] != 0;
         teamColorSynced = gameState[0x71];
         turnStateSynced = gameState[0x72];
@@ -813,7 +819,7 @@ public class NetworkingManager : UdonSharpBehaviour
 
         encodeU16(gameState, 0x6C, (ushort)(ballsPocketedSynced & 0xFFFFu));
         gameState[0x6E] = teamIdSynced;
-        gameState[0x6F] = repositionStateSynced;
+        gameState[0x6F] = foulStateSynced;
         gameState[0x70] = (byte)(isTableOpenSynced ? 1 : 0);
         gameState[0x71] = teamColorSynced;
         gameState[0x72] = turnStateSynced;
