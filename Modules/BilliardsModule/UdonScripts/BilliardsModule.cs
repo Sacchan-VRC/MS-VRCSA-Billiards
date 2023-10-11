@@ -1410,6 +1410,7 @@ public class BilliardsModule : UdonSharpBehaviour
 
                     ballsPocketedLocal = ballsPocketedLocal & ~(0x2U);
                     ballsP[1] = Vector3.zero;
+                    moveBallInDirUntilNotTouching(1, Vector3.right * k_BALL_RADIUS * .051f);
                 }
 
                 winCondition = isSetComplete && is8Sink;
@@ -1680,7 +1681,7 @@ public class BilliardsModule : UdonSharpBehaviour
     private void moveBallInDirUntilNotTouching(int Ball, Vector3 Dir)
     {
         //keep moving ball down the table until it's not touching any other balls
-        while (CheckIfBallTouchingBall(Ball) > 0)
+        while (CheckIfBallTouchingBall(Ball) > -1)
         {
             ballsP[Ball] += Dir;
         }
@@ -1689,7 +1690,7 @@ public class BilliardsModule : UdonSharpBehaviour
     {
         float ballDiameter = k_BALL_RADIUS * 2f;
         float k_BALL_DSQR = ballDiameter * ballDiameter;
-        for (int i = 1; i < 16; i++)
+        for (int i = 0; i < 16; i++)
         {
             if (i == Input) { continue; }
             if (((ballsPocketedLocal >> i) & 0x1u) == 0x1u) { continue; }
