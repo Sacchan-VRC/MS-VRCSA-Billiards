@@ -4,6 +4,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using VRC.SDKBase;
 using VRC.Udon;
+using TMPro;
 
 [UdonBehaviourSyncMode(BehaviourSyncMode.None)]
 public class GraphicsManager : UdonSharpBehaviour
@@ -17,8 +18,7 @@ public class GraphicsManager : UdonSharpBehaviour
     [SerializeField] GameObject scorecardHolder;
     [SerializeField] Text[] playerNames;
 
-    [SerializeField] GameObject winnerTextHolder;
-    [SerializeField] Text winnerText;
+    [SerializeField] TextMeshPro winnerText;
 
     [Header("Cues")]
     [SerializeField] MeshRenderer[] cueBodyRenderers;
@@ -220,9 +220,8 @@ public class GraphicsManager : UdonSharpBehaviour
     {
         if (table.gameLive || table.lobbyOpen) return;
 
-
-        winnerTextHolder.transform.localPosition = new Vector3(0.0f, Mathf.Sin(Time.timeSinceLevelLoad) * 0.1f, 0.0f);
-        winnerTextHolder.transform.Rotate(Vector3.up, 90.0f * Time.deltaTime);
+        winnerText.gameObject.transform.localPosition = new Vector3(0.0f, Mathf.Sin(Time.timeSinceLevelLoad) * 0.1f, 0.0f);
+        winnerText.gameObject.transform.Rotate(Vector3.up, 90.0f * Time.deltaTime);
     }
 
     public void _SetScorecardPlayers(int[] players)
@@ -254,13 +253,13 @@ public class GraphicsManager : UdonSharpBehaviour
 
     public void _OnGameReset()
     {
-        winnerTextHolder.SetActive(true);
+        winnerText.gameObject.SetActive(true);
         winnerText.text = "Game reset!";
     }
 
     public void _ResetWinners()
     {
-        winnerTextHolder.SetActive(false);
+        winnerText.gameObject.SetActive(false);
     }
 
     public void _SetWinners(uint winnerId, int[] players)
@@ -268,8 +267,8 @@ public class GraphicsManager : UdonSharpBehaviour
         VRCPlayerApi player1 = winnerId == 0 ? VRCPlayerApi.GetPlayerById(players[0]) : VRCPlayerApi.GetPlayerById(players[1]);
         VRCPlayerApi player2 = winnerId == 0 ? VRCPlayerApi.GetPlayerById(players[2]) : VRCPlayerApi.GetPlayerById(players[3]);
 
-        winnerTextHolder.SetActive(true);
-        winnerTextHolder.transform.localRotation = Quaternion.identity;
+        winnerText.gameObject.SetActive(true);
+        winnerText.gameObject.transform.localRotation = Quaternion.identity;
         if (player2 == null || !table.teamsLocal)
         {
             winnerText.text = _FormatName(player1) + " wins!";
@@ -597,12 +596,12 @@ int uniform_cue_colour;
 
     public void _OnLobbyOpened()
     {
-        winnerTextHolder.SetActive(false);
+        winnerText.gameObject.SetActive(false);
     }
 
     public void _OnLobbyClosed()
     {
-        winnerTextHolder.SetActive(true);
+        winnerText.gameObject.SetActive(true);
     }
 
     public void _OnGameStarted()
@@ -680,14 +679,11 @@ int uniform_cue_colour;
     {
         table.guideline.SetActive(false);
         table.devhit.SetActive(false);
-        winnerTextHolder.SetActive(false);
+        winnerText.gameObject.SetActive(false);
         table.markerObj.SetActive(false);
         scorecardHolder.SetActive(false);
         table.marker9ball.SetActive(false);
         fourBallPoint.SetActive(false);
-        table.transform.Find("intl.controls/undo").gameObject.SetActive(false);
-        table.transform.Find("intl.controls/redo").gameObject.SetActive(false);
-        table.transform.Find("intl.controls/skipturn").gameObject.SetActive(false);
         _HideTimers();
 
         winnerText.text = "";

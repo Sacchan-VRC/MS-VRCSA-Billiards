@@ -252,7 +252,7 @@ public class NetworkingManager : UdonSharpBehaviour
 
     public void _OnGameReset()
     {
-        gameStateSynced = 0;
+        gameStateSynced = 3;
         winningTeamSynced = 2;
         for (int i = 0; i < MAX_PLAYERS; i++)
         {

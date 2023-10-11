@@ -523,15 +523,6 @@ public class BilliardsModule : UdonSharpBehaviour
     {
         int self = Networking.LocalPlayer.playerId;
 
-        if (!gameLive)
-        {
-            if (lobbyOpen && _IsModerator(Networking.LocalPlayer))
-            {
-                networkingManager._OnLobbyClosed();
-            }
-            return;
-        }
-
         int[] allowedPlayers = playerIDsLocal;
         if (tournamentRefereeLocal != -1)
         {
@@ -683,8 +674,6 @@ public class BilliardsModule : UdonSharpBehaviour
             isSnooker6Red = gameModeLocal == 4u;
             is4Ball = isJp4Ball || isKr4Ball;
 
-            menuManager._RefreshGameMode();
-
             tableModels[tableModelLocal]._setGameMode(gameModeLocal);
         }
 
@@ -746,7 +735,10 @@ public class BilliardsModule : UdonSharpBehaviour
         menuManager._RefreshLobbyOpen();
         menuManager._RefreshPlayerList();
 
-        applyCueAccess(false);
+        if (gameLive)
+        {
+            applyCueAccess(false);
+        }
 
         graphicsManager._SetScorecardPlayers(playerIDsLocal);
 
@@ -948,10 +940,9 @@ public class BilliardsModule : UdonSharpBehaviour
         localTeamId = 0;
         applyCueAccess(true);
 
-        cueControllers[1].gameObject.SetActive(true);
+        lobbyOpen = false;
 
-        menuManager._EnableMenuJoinLeave();
-        menuManager._EnableLobbyMenu();
+        cueControllers[1].gameObject.SetActive(true);
 
         infReset.text = "Reset";
 
@@ -2124,9 +2115,6 @@ public class BilliardsModule : UdonSharpBehaviour
     // turn on any game elements that are enabled when someone is taking a shot
     private void enablePracticeControls(bool enable)
     {
-        this.transform.Find("intl.controls/undo").gameObject.SetActive(enable);
-        this.transform.Find("intl.controls/redo").gameObject.SetActive(enable);
-        this.transform.Find("intl.controls/skipturn").gameObject.SetActive(enable);
         if (enable)
         {
             menuManager._EnableInGameMenu();
