@@ -14,13 +14,14 @@ public class MenuManager : UdonSharpBehaviour
     [SerializeField] private GameObject menuStart;
     [SerializeField] private GameObject menuJoinLeave;
     [SerializeField] private GameObject menuLobby;
-    [SerializeField] private GameObject MenuInGame;
+    [SerializeField] private GameObject menuInGame;
     [SerializeField] private GameObject menuSnookerUndo;
     [SerializeField] private TextMeshProUGUI[] lobbyNames;
 
     [SerializeField] private TextMeshProUGUI timelimitDisplay;
     [SerializeField] private TextMeshProUGUI tableDisplay;
     [SerializeField] private TextMeshProUGUI physicsDisplay;
+    [SerializeField] private TextMeshProUGUI refereeDisplay;
 
     private BilliardsModule table;
 
@@ -38,6 +39,7 @@ public class MenuManager : UdonSharpBehaviour
         _RefreshToggleSettings();
         _RefreshLobbyOpen();
         _RefreshPlayerList();
+        _RefreshRefereeDisplay();
 
         _DisableMenuJoinLeave();
         _DisableLobbyMenu();
@@ -139,6 +141,14 @@ public class MenuManager : UdonSharpBehaviour
     {
         bool isNormalPlayer = table.localPlayerId != 0;
         _RefreshToggleSettings();
+    }
+
+    public void _RefreshRefereeDisplay()
+    {
+        if (table.tournamentRefereeLocal != -1)
+        {
+            refereeDisplay.text = $"\nTournament Mode ({table.tournamentRefereeLocal})";
+        }
     }
 
     public void StartButton()
@@ -402,12 +412,12 @@ public class MenuManager : UdonSharpBehaviour
 
     public void _EnableInGameMenu()
     {
-        MenuInGame.SetActive(true);
+        menuInGame.SetActive(true);
     }
 
     public void _DisableInGameMenu()
     {
-        MenuInGame.SetActive(false);
+        menuInGame.SetActive(false);
     }
 
     public void _EnableSnookerUndoMenu()

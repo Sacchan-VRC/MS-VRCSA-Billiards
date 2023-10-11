@@ -646,6 +646,8 @@ public class BilliardsModule : UdonSharpBehaviour
         {
             setTableModel(tableModelSynced, true);
         }
+
+        menuManager._RefreshRefereeDisplay();
     }
 
     private void onRemoteGameSettingsUpdated(uint gameModeSynced, uint timerSynced, bool teamsSynced, bool noGuidelineSynced, bool noLockingSynced)
