@@ -20,9 +20,6 @@ public class GraphicsManager : UdonSharpBehaviour
     [SerializeField] GameObject winnerTextHolder;
     [SerializeField] Text winnerText;
 
-    [SerializeField] GameObject lobbyStatusTextHolder;
-    [SerializeField] Text lobbyStatusText;
-
     [Header("Cues")]
     [SerializeField] MeshRenderer[] cueBodyRenderers;
     [SerializeField] MeshRenderer[] cuePrimaryGripRenderers;
@@ -119,7 +116,6 @@ public class GraphicsManager : UdonSharpBehaviour
         tickFourBallPoint();
         tickIntroAnimation();
         tickTableColor();
-        tickLobbyStatus();
         tickWinner();
     }
 
@@ -220,22 +216,6 @@ public class GraphicsManager : UdonSharpBehaviour
         tableCurrentColour = Color.Lerp(tableCurrentColour, tableSrcColour, Time.deltaTime * multiplier);
     }
 
-    private void tickLobbyStatus()
-    {
-        if (table.gameLive || !table.lobbyOpen) return;
-
-        string settings = (string)table.currentPhysicsManager.GetProgramVariable("PHYSICSNAME");
-
-        if (table.tournamentRefereeLocal != -1)
-        {
-            settings += $"\nTournament Mode ({table.tournamentRefereeLocal})";
-        }
-        string message = "Game Settings: " + settings;
-        lobbyStatusText.text = message;
-        lobbyStatusTextHolder.transform.localPosition = new Vector3(0.0f, Mathf.Sin(Time.timeSinceLevelLoad) * 0.1f, 0.0f);
-        lobbyStatusTextHolder.transform.Rotate(Vector3.up, 90.0f * Time.deltaTime);
-    }
-
     private void tickWinner()
     {
         if (table.gameLive || table.lobbyOpen) return;
@@ -303,8 +283,8 @@ public class GraphicsManager : UdonSharpBehaviour
     public string _FormatName(VRCPlayerApi player)
     {
         if (player == null) { return "No one"; }
-        if (table.nameColorHook == null) return $"<color=#ffffff>{player.displayName}</color>";
-        if (player.displayName == null) return $"<color=#ffffff></color>";
+        if (table.nameColorHook == null) return player.displayName;
+        if (player.displayName == null) return string.Empty;
 
         table.nameColorHook.SetProgramVariable("inOwner", player.displayName);
         table.nameColorHook.SendCustomEvent("_GetNameColor");
@@ -618,13 +598,11 @@ int uniform_cue_colour;
     public void _OnLobbyOpened()
     {
         winnerTextHolder.SetActive(false);
-        lobbyStatusTextHolder.SetActive(true);
     }
 
     public void _OnLobbyClosed()
     {
         winnerTextHolder.SetActive(true);
-        lobbyStatusTextHolder.SetActive(false);
     }
 
     public void _OnGameStarted()
@@ -635,8 +613,6 @@ int uniform_cue_colour;
 
         _UpdateTableColorScheme();
         _UpdateTeamColor(0);
-
-        lobbyStatusTextHolder.SetActive(false);
 
         if (table.is4Ball)
         {
@@ -705,7 +681,6 @@ int uniform_cue_colour;
         table.guideline.SetActive(false);
         table.devhit.SetActive(false);
         winnerTextHolder.SetActive(false);
-        lobbyStatusTextHolder.SetActive(false);
         table.markerObj.SetActive(false);
         scorecardHolder.SetActive(false);
         table.marker9ball.SetActive(false);
@@ -716,7 +691,6 @@ int uniform_cue_colour;
         _HideTimers();
 
         winnerText.text = "";
-        lobbyStatusText.text = "";
     }
 
     // Finalize positions onto their rack spots

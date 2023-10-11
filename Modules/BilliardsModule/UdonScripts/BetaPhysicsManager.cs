@@ -8,7 +8,7 @@ using VRC.Udon;
 [UdonBehaviourSyncMode(BehaviourSyncMode.None)]
 public class BetaPhysicsManager : UdonSharpBehaviour
 {
-    public string PHYSICSNAME = "<color=\"#678AC2\">Beta</color>";
+    public string PHYSICSNAME = "<color=#678AC2>Beta</color>";
     private const float k_FIXED_TIME_STEP = 0.0125f; // time step in seconds per iteration
 #if HT_QUEST
    private const float k_MAX_DELTA = k_FIXED_TIME_STEP * 2; // max time to process per frame on quest

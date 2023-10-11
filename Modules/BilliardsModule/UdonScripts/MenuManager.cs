@@ -4,19 +4,24 @@ using UnityEngine;
 using UnityEngine.UI;
 using VRC.SDKBase;
 using VRC.Udon;
+using TMPro;
 
 [UdonBehaviourSyncMode(BehaviourSyncMode.None)]
 public class MenuManager : UdonSharpBehaviour
 {
     private readonly uint[] TIMER_VALUES = new uint[] { 0, 60, 30, 15 };
 
-    [SerializeField] private GameObject menuBase;
-    [SerializeField] public GameObject menuSettings;
     [SerializeField] private GameObject menuStart;
-    [SerializeField] private Text[] lobbyNames;
+    [SerializeField] private GameObject menuJoinLeave;
+    [SerializeField] private GameObject menuLobby;
+    [SerializeField] private GameObject MenuInGame;
+    [SerializeField] private GameObject menuSnookerUndo;
+    [SerializeField] private GameObject menuSettings;//old menu, delete me
+    [SerializeField] private TextMeshProUGUI[] lobbyNames;
 
-    [SerializeField] private GameObject teamCover;
-    [SerializeField] private GameObject timelimitDisplay;
+    [SerializeField] private TextMeshProUGUI timelimitDisplay;
+    [SerializeField] private TextMeshProUGUI tableDisplay;
+    [SerializeField] private TextMeshProUGUI physicsDisplay;
 
     [SerializeField] public UIButton button8Ball;
     [SerializeField] public UIButton button9Ball;
@@ -38,8 +43,6 @@ public class MenuManager : UdonSharpBehaviour
     private BilliardsModule table;
 
     private uint selectedTimer;
-    private uint selectedTimerPrev;
-    private bool timerSpinPlaying;
     private uint selectedTable;
     private uint selectedPhysics;
 
@@ -48,33 +51,25 @@ public class MenuManager : UdonSharpBehaviour
         table = table_;
 
         _RefreshTimer();
+        _RefreshPhysics();
+        _RefreshTable();
         _RefreshToggleSettings();
         _RefreshGameMode();
         _RefreshLobbyOpen();
+        _RefreshPlayerList();
+
+        _DisableMenuJoinLeave();
+        _DisableLobbyMenu();
+        _DisableInGameMenu();
+        _DisableSnookerUndoMenu();
+        _EnableStartMenu();
+        menuSettings.transform.localScale = Vector3.zero;
     }
 
-    public void _Tick()
-    {
-        if (table.gameLive) return;
-
-        // animate team cover
-        teamCover.transform.localScale = Vector3.Lerp(teamCover.transform.localScale, table.teamsLocal ? new Vector3(0, 1, 1) : new Vector3(1, 1, 1), Time.deltaTime * 5.0f);
-
-        // animate menu swap
-        menuSettings.transform.localScale = Vector3.Lerp(menuSettings.transform.localScale, table.lobbyOpen ? Vector3.one : Vector3.zero, Time.deltaTime * 5.0f);
-        menuStart.transform.localScale = Vector3.one - menuSettings.transform.localScale;
-
-        // animate timer slider
-        float targetPosition = -0.128f * selectedTimer;
-        Vector3 position = timelimitDisplay.transform.localPosition;
-        position.x = Mathf.Lerp(position.x, targetPosition, Time.deltaTime * 5.0f);
-        timelimitDisplay.transform.localPosition = position;
-        if (timerSpinPlaying && Mathf.Abs(targetPosition - position.x) < 0.01f)
-        {
-            timerSpinPlaying = false;
-            table.aud_main.PlayOneShot(table.snd_spinstop);
-        }
-    }
+    // public void _Tick()
+    // {
+    //     if (table.gameLive) return;
+    // }
 
     // View gamemode changes
     public void _RefreshGameMode()
@@ -117,6 +112,28 @@ public class MenuManager : UdonSharpBehaviour
                 button4BallJP.gameObject.SetActive(false);
                 if (buttonSnooker) { buttonSnooker._SetButtonPushed(); }
                 break;
+        }
+    }
+
+    private void refreshJoinMenu()
+    {
+        if (!table._IsPlayer(Networking.LocalPlayer))
+        {
+            if (table.gameLive || table.lobbyOpen)
+            {
+                if ((table.teamsLocal && table.numPlayersCurrent == 4) || (!table.teamsLocal && table.numPlayersCurrent == 2))
+                {
+                    _DisableMenuJoinLeave();
+                }
+                else
+                {
+                    _EnableMenuJoinLeave();
+                }
+            }
+        }
+        else
+        {
+            _EnableMenuJoinLeave();
         }
     }
 
@@ -171,12 +188,17 @@ public class MenuManager : UdonSharpBehaviour
     public void _RefreshPlayerList()
     {
         int numPlayers = 0;
-        for (int i = 0; i < (table.teamsLocal ? 4 : 2); i++)
+        for (int i = 0; i < 4; i++)
         {
+            if (!table.teamsLocal && i > 1)
+            {
+                lobbyNames[i].text = string.Empty;
+                continue;
+            }
             VRCPlayerApi player = VRCPlayerApi.GetPlayerById(table.playerIDsLocal[i]);
             if (player == null)
             {
-                lobbyNames[i].text = "";
+                lobbyNames[i].text = "Free slot";
             }
             else
             {
@@ -185,6 +207,9 @@ public class MenuManager : UdonSharpBehaviour
             }
         }
         table.numPlayersCurrent = numPlayers;
+
+        refreshJoinMenu();
+
         refreshJoinButtons();
     }
 
@@ -192,13 +217,27 @@ public class MenuManager : UdonSharpBehaviour
     {
         int index = Array.IndexOf(TIMER_VALUES, table.timerLocal);
         selectedTimer = index == -1 ? 0 : (uint)index;
-
-        if (selectedTimerPrev != selectedTimer)
+        if (index > -1)
         {
-            selectedTimerPrev = selectedTimer;
-            timerSpinPlaying = true;
-            table.aud_main.PlayOneShot(table.snd_spin);
+            if (TIMER_VALUES[index] == 0)
+            {
+                timelimitDisplay.text = "No limit";
+            }
+            else
+            {
+                timelimitDisplay.text = TIMER_VALUES[index].ToString("F0");
+            }
         }
+    }
+
+    public void _RefreshPhysics()
+    {
+        physicsDisplay.text = (string)table.currentPhysicsManager.GetProgramVariable("PHYSICSNAME");
+    }
+
+    public void _RefreshTable()
+    {
+        tableDisplay.text = (string)table.tableModels[table.tableModelLocal].GetProgramVariable("TABLENAME");
     }
 
     public void _RefreshToggleSettings()
@@ -206,6 +245,10 @@ public class MenuManager : UdonSharpBehaviour
         buttonTeamsToggle._SetButtonToggle(table.teamsLocal);
         buttonGuidelineToggle._SetButtonToggle(!table.noGuidelineLocal);
         buttonLockingToggle._SetButtonToggle(!table.noLockingLocal);
+
+        TeamsToggle_button.SetIsOnWithoutNotify(table.teamsLocal);
+        GuidelineToggle_button.SetIsOnWithoutNotify(!table.noGuidelineLocal);
+        LockingToggle_button.SetIsOnWithoutNotify(!table.noLockingLocal);
 
         _RefreshPlayerList();
     }
@@ -227,6 +270,118 @@ public class MenuManager : UdonSharpBehaviour
 
         refreshJoinButtons();
         _RefreshToggleSettings();
+    }
+
+    public void StartButton()
+    {
+        table._TriggerLobbyOpen();
+    }
+    public void JoinOrange()
+    {
+        table._TriggerJoinTeam(0);
+    }
+    public void JoinBlue()
+    {
+        table._TriggerJoinTeam(1);
+    }
+    public void LeaveButton()
+    {
+        table._TriggerLeaveLobby();
+    }
+    public void PlayButton()
+    {
+        table._TriggerGameStart();
+    }
+    public void Mode8Ball()
+    {
+        table._TriggerGameModeChanged(0);
+    }
+    public void Mode9Ball()
+    {
+        table._TriggerGameModeChanged(1);
+    }
+    public void Mode4Ball()
+    {
+        table._TriggerGameModeChanged(2);
+    }
+    public void Mode4BallKR()
+    {
+        table._TriggerGameModeChanged(3);
+    }
+    public void ModeSnooker6Red()
+    {
+        table._TriggerGameModeChanged(4);
+    }
+    [SerializeField] private Toggle TeamsToggle_button;
+    public void TeamsToggle()
+    {
+        table._TriggerTeamsChanged(TeamsToggle_button.isOn);
+    }
+    [SerializeField] private Toggle GuidelineToggle_button;
+    public void GuidelineToggle()
+    {
+        table._TriggerNoGuidelineChanged(!GuidelineToggle_button.isOn);
+    }
+    [SerializeField] private Toggle LockingToggle_button;
+    public void LockingToggle()
+    {
+        table._TriggerNoLockingChanged(!LockingToggle_button.isOn);
+    }
+    public void TimeRight()
+    {
+        if (selectedTimer > 0)
+        {
+            selectedTimer--;
+
+            table._TriggerTimerChanged(TIMER_VALUES[selectedTimer]);
+        }
+    }
+    public void TimeLeft()
+    {
+        if (selectedTimer < 3)
+        {
+            selectedTimer++;
+
+            table._TriggerTimerChanged(TIMER_VALUES[selectedTimer]);
+        }
+    }
+    public void TableRight()
+    {
+        if (selectedTable == table.tableModels.Length - 1) { return; }
+        selectedTable++;
+
+        table._TriggerTableModelChanged(selectedTable);
+    }
+    public void TableLeft()
+    {
+        if (selectedTable == 0) { return; }
+        selectedTable--;
+
+        table._TriggerTableModelChanged(selectedTable);
+    }
+    public void PhysicsRight()
+    {
+        if (selectedPhysics == table.PhysicsManagers.Length - 1) { return; }
+        {
+            selectedPhysics++;
+
+            table._TriggerPhysicsChanged(selectedPhysics);
+        }
+    }
+    public void PhysicsLeft()
+    {
+        if (selectedPhysics == 0) { return; }
+        {
+            selectedPhysics--;
+
+            table._TriggerPhysicsChanged(selectedPhysics);
+        }
+    }
+
+    public void _OnGameStarted()
+    {
+        _DisableLobbyMenu();
+        refreshJoinMenu();
     }
 
     [NonSerialized] public UIButton inButton;
@@ -356,13 +511,62 @@ public class MenuManager : UdonSharpBehaviour
         }
     }
 
-    public void _EnableMenu()
+    public void _EnableLobbyMenu()
     {
-        menuBase.SetActive(true);
+        menuLobby.SetActive(true);
     }
 
-    public void _DisableMenu()
+    public void _DisableLobbyMenu()
     {
-        menuBase.SetActive(false);
+        menuLobby.SetActive(false);
+    }
+    public void _EnableMenuSettings()
+    {
+        menuSettings.SetActive(true);
+    }
+
+    public void _DisableMenuSettings()
+    {
+        menuSettings.SetActive(false);
+    }
+
+    public void _EnableStartMenu()
+    {
+        menuStart.SetActive(true);
+    }
+
+    public void _DisableStartMenu()
+    {
+        menuStart.SetActive(false);
+    }
+
+    public void _EnableInGameMenu()
+    {
+        MenuInGame.SetActive(true);
+    }
+
+    public void _DisableInGameMenu()
+    {
+        MenuInGame.SetActive(false);
+    }
+
+    public void _EnableSnookerUndoMenu()
+    {
+        menuSnookerUndo.SetActive(true);
+    }
+
+    public void _DisableSnookerUndoMenu()
+    {
+        menuSnookerUndo.SetActive(false);
+    }
+
+    public void _EnableMenuJoinLeave()
+    {
+        menuJoinLeave.SetActive(true);
+    }
+
+    public void _DisableMenuJoinLeave()
+    {
+        menuJoinLeave.SetActive(false);
     }
 }

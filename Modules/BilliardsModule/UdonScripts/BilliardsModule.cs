@@ -13,6 +13,7 @@ using VRC.SDKBase;
 using VRC.Udon;
 using System;
 using Metaphira.Modules.CameraOverride;
+using TMPro;
 
 [UdonBehaviourSyncMode(BehaviourSyncMode.None)]
 public class BilliardsModule : UdonSharpBehaviour
@@ -132,7 +133,7 @@ public class BilliardsModule : UdonSharpBehaviour
 
     // Texts
     [SerializeField] Text ltext;
-    [SerializeField] Text infReset;
+    [SerializeField] TextMeshProUGUI infReset;
 
     [SerializeField] ReflectionProbe reflection_main;
     #endregion
@@ -190,7 +191,7 @@ public class BilliardsModule : UdonSharpBehaviour
     private byte gameStateLocal = byte.MaxValue;
     private byte turnStateLocal = byte.MaxValue;
     private int timerStartLocal;
-    private uint foulStateLocal;
+    [NonSerialized] public uint foulStateLocal;
     [NonSerialized] public int tableModelLocal;
 
     // physics simulation data, must be reset before every simulation
@@ -261,13 +262,6 @@ public class BilliardsModule : UdonSharpBehaviour
             ballRB.maxAngularVelocity = 999;
         }
 
-        for (int i = 0; i < tableModels.Length; i++)
-        {
-            tableModels[i].gameObject.SetActive(false);
-            tableModels[i]._Init();
-        }
-        setTableModel(0, false);
-
         aud_main = this.GetComponent<AudioSource>();
 
         networkingManager._Init(this);
@@ -277,12 +271,20 @@ public class BilliardsModule : UdonSharpBehaviour
         cameraManager._Init(this);
         graphicsManager._Init(this);
         cameraOverrideModule._Init();
+        menuManager._Init(this);
+        for (int i = 0; i < tableModels.Length; i++)
+        {
+            tableModels[i].gameObject.SetActive(false);
+            tableModels[i]._Init();
+        }
+
+        setTableModel(0, false);
+
         for (int i = 0; i < PhysicsManagers.Length; i++)
         {
             PhysicsManagers[i].SetProgramVariable("table_", this);
             PhysicsManagers[i].SendCustomEvent("_Init");
         }
-        menuManager._Init(this);
 
         currentPhysicsManager.SendCustomEvent("_InitConstants");
 
@@ -297,7 +299,6 @@ public class BilliardsModule : UdonSharpBehaviour
 
 #if UNITY_EDITOR
         graphicsManager._OnGameStarted();
-        menuManager.menuSettings.transform.localScale = Vector3.zero;
 #endif
     }
 
@@ -311,7 +312,7 @@ public class BilliardsModule : UdonSharpBehaviour
         networkingManager._Tick();
 
         desktopManager._Tick();
-        menuManager._Tick();
+        // menuManager._Tick();
 
         _BeginPerf(PERF_MAIN);
         practiceManager._Tick();
@@ -387,7 +388,7 @@ public class BilliardsModule : UdonSharpBehaviour
 
     public void _TriggerCueBallHit()
     {
-        if (localTeamId != teamIdLocal && !isPracticeMode) return; // is there a better way to do this?
+        if (!isMyTurn()) return;
 
         _LogWarn("trying to propagate cue ball hit, linear velocity is " + ballsV[0].ToString("F4") + " and angular velocity is " + ballsW[0].ToString("F4"));
 
@@ -414,7 +415,7 @@ public class BilliardsModule : UdonSharpBehaviour
 
     public void _TriggerCueActivate()
     {
-        if (!isOurTurn()) return;
+        if (!isMyTurn()) return;
 
         if (Vector3.Distance(activeCue._GetCuetip().transform.position, ballsP[0]) < k_BALL_RADIUS)
         {
@@ -470,9 +471,16 @@ public class BilliardsModule : UdonSharpBehaviour
 
     public void _TriggerGameStart()
     {
-        _LogYes("starting game");
 
-        if (playerIDsLocal[0] == -1) { return; }
+        if (playerIDsLocal[0] == -1)
+        {
+            _LogWarn("Cannot start without first player");
+            return;
+        }
+        else
+        {
+            _LogYes("starting game");
+        }
 
         networkingManager._OnGameStart(initialBallsPocketed[gameModeLocal], initialPositions[gameModeLocal]);
     }
@@ -640,6 +648,7 @@ public class BilliardsModule : UdonSharpBehaviour
         {
             currentPhysicsManager = PhysicsManagers[physicsSynced];
             currentPhysicsManager.SendCustomEvent("_InitConstants");
+            menuManager._RefreshPhysics();
         }
         Debug.Log("onRemoteGlobalSettingsUpdated");
         if (tableModelLocal != tableModelSynced)
@@ -782,6 +791,10 @@ public class BilliardsModule : UdonSharpBehaviour
         menuManager._RefreshLobbyOpen();
         menuManager._RefreshPlayerList();
 
+        menuManager._EnableMenuJoinLeave();
+        menuManager._EnableLobbyMenu();
+        menuManager._DisableStartMenu();
+
         if (callbacks != null) callbacks.SendCustomEvent("_OnLobbyOpened");
     }
 
@@ -793,6 +806,10 @@ public class BilliardsModule : UdonSharpBehaviour
         localPlayerId = -1;
         graphicsManager._OnLobbyClosed();
         menuManager._RefreshLobbyOpen();
+
+        menuManager._DisableMenuJoinLeave();
+        menuManager._DisableLobbyMenu();
+        menuManager._EnableStartMenu();
 
         resetCachedData();
 
@@ -812,7 +829,7 @@ public class BilliardsModule : UdonSharpBehaviour
 
         isPracticeMode = playerIDsLocal[1] == -1 && playerIDsLocal[3] == -1;
 
-        menuManager._DisableMenu();
+        menuManager._OnGameStarted();
 
         graphicsManager._OnGameStarted();
         desktopManager._OnGameStarted();
@@ -881,6 +898,10 @@ public class BilliardsModule : UdonSharpBehaviour
     {
         _LogInfo($"onRemoteGameEnded winningTeam={winningTeamSynced}");
 
+        menuManager._EnableStartMenu();
+        menuManager._DisableMenuJoinLeave();
+        menuManager._DisableLobbyMenu();
+
         isLocalSimulationRunning = false;
 
         if (tournamentRefereeLocal != -1)
@@ -929,7 +950,8 @@ public class BilliardsModule : UdonSharpBehaviour
 
         cueControllers[1].gameObject.SetActive(true);
 
-        menuManager._EnableMenu();
+        menuManager._EnableMenuJoinLeave();
+        menuManager._EnableLobbyMenu();
 
         infReset.text = "Reset";
 
@@ -1039,9 +1061,17 @@ public class BilliardsModule : UdonSharpBehaviour
         if (isSnooker6Red)//enable SnookerUndo button if foul
         {
             this.transform.Find("intl.controls/undo_snooker").gameObject.SetActive(fourBallCueBallLocal > 0 && foulStateLocal > 0);
+            if (fourBallCueBallLocal > 0 && foulStateLocal > 0)
+            {
+                menuManager._EnableSnookerUndoMenu();
+            }
+            else
+            {
+                menuManager._DisableSnookerUndoMenu();
+            }
         }
 
-        if (!isOurTurn() || foulStateLocal == 0)
+        if (!isMyTurn() || foulStateLocal == 0)
         {
             isReposition = false;
             setFoulPickupEnabled(false);
@@ -1907,6 +1937,8 @@ public class BilliardsModule : UdonSharpBehaviour
 
         initializeRack();
         ConfineBallTransformsToTable();
+
+        menuManager._RefreshTable();
     }
     private void ConfineBallTransformsToTable()
     {
@@ -2060,7 +2092,7 @@ public class BilliardsModule : UdonSharpBehaviour
             // no one is allowed to play
             canPlayLocal = false;
 
-            if (isOurTurn())
+            if (isMyTurn())
             {
                 // everyone on the current team propagates the change
                 onLocalTurnFoul(false, false);
@@ -2095,10 +2127,18 @@ public class BilliardsModule : UdonSharpBehaviour
         this.transform.Find("intl.controls/undo").gameObject.SetActive(enable);
         this.transform.Find("intl.controls/redo").gameObject.SetActive(enable);
         this.transform.Find("intl.controls/skipturn").gameObject.SetActive(enable);
+        if (enable)
+        {
+            menuManager._EnableInGameMenu();
+        }
+        else
+        {
+            menuManager._DisableInGameMenu();
+        }
     }
     private void enablePlayComponents()
     {
-        bool isOurTurnVar = isOurTurn();
+        bool isOurTurnVar = isMyTurn();
 
         bool amPlayer = _GetlayerSlot(Networking.LocalPlayer, playerIDsLocal) != -1;
         enablePracticeControls(amPlayer || (tournamentRefereeLocal != -1 && _IsLocalPlayerReferee()));
@@ -2613,7 +2653,7 @@ public class BilliardsModule : UdonSharpBehaviour
 
     private void refreshBallPickups()
     {
-        bool canUsePickup = (isOurTurn() && isPracticeMode) || (tournamentRefereeLocal != -1 && _IsLocalPlayerReferee());
+        bool canUsePickup = (isMyTurn() && isPracticeMode) || (tournamentRefereeLocal != -1 && _IsLocalPlayerReferee());
 
         uint ball_bit = 0x1u;
         for (int i = 0; i < balls.Length; i++)
@@ -2659,7 +2699,7 @@ public class BilliardsModule : UdonSharpBehaviour
         }
     }
 
-    private bool isOurTurn()
+    public bool isMyTurn()
     {
         return localPlayerId >= 0 && (localTeamId == teamIdLocal || isPracticeMode);
     }

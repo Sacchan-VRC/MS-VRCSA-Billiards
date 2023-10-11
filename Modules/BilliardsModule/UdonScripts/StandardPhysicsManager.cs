@@ -8,7 +8,7 @@ using VRC.Udon;
 [UdonBehaviourSyncMode(BehaviourSyncMode.None)]
 public class StandardPhysicsManager : UdonSharpBehaviour
 {
-    public string PHYSICSNAME = "<color=\"#678AC2\">Standard</color>";
+    public string PHYSICSNAME = "<color=#678AC2>Standard</color>";
 #if HT_QUEST
    private  float k_MAX_DELTA =  k_FIXED_TIME_STEP * 2; // Private Const Float 0.05f max time to process per frame on quest (~4)
 #else

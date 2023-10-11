@@ -98,7 +98,8 @@ public class PracticeManager : UdonSharpBehaviour
     public void _SnookerUndo()
     {
         if (!table.isSnooker6Red) { return; }
-        //if NOTMYTURN { RETURN }
+        if (table.foulStateLocal == 0 || table.fourBallCueBallLocal == 0) { return; }
+        if (!table.isMyTurn()) { return; }
 
         int newPtr = pop();
         if (newPtr == -1)
@@ -174,14 +175,14 @@ public class PracticeManager : UdonSharpBehaviour
         object[] curState = (object[])history[currentPtr];
         //set the values we don't want to reset
         state[2] = curState[2];//scores
-        state[5] = (uint)0;//repositionstate
+        state[5] = (uint)0;//foulstate
         state[6] = false;//tableisopen
         state[8] = curState[8];//fourBallCueBall
 
         // (Vector3[])state[0], (uint)state[1], (int[])state[2], (uint)state[3], (uint)state[4], (uint)state[5], (bool)state[6], (uint)state[7], (uint)state[8],
         // (byte)state[9], (Vector3)state[10], (Vector3)state[11], (byte)state[12], (bool)state[13]
         //==
-        // Vector3[] newBallsP, uint ballsPocketed, int[] newScores, uint gameMode, uint teamId, uint repositionState, bool isTableOpen, uint teamColor, uint fourBallCueBall,
+        // Vector3[] newBallsP, uint ballsPocketed, int[] newScores, uint gameMode, uint teamId, uint foulState, bool isTableOpen, uint teamColor, uint fourBallCueBall,
         // byte turnStateLocal, Vector3 cueBallV, Vector3 cueBallW, byte previewWinningTeam, bool colorTurn
 
         // hack_dontRecordNext = (byte) state[9] == 1;

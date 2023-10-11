@@ -5,7 +5,7 @@ using UnityEngine;
 [UdonBehaviourSyncMode(BehaviourSyncMode.None)]
 public class ModelData : UdonSharpBehaviour
 {
-    public string tableName = "Pool Table";
+    public string TABLENAME = "Pool Table";
     [Header("Table Visuals")]
     [System.NonSerialized] public Animator tableAnimator;
     [Header("Animator trigger names")]

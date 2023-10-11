@@ -252,11 +252,11 @@ public class NetworkingManager : UdonSharpBehaviour
 
     public void _OnGameReset()
     {
-        gameStateSynced = 3;
+        gameStateSynced = 0;
         winningTeamSynced = 2;
         for (int i = 0; i < MAX_PLAYERS; i++)
         {
-            playerIDsSynced[i] = 1;
+            playerIDsSynced[i] = -1;
         }
 
         bufferMessages(true);

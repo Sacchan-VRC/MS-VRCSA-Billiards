@@ -2801,6 +2801,7 @@ MonoBehaviour:
     PrefabModifications: []
     SerializationNodes: []
   _udonSharpBackingUdonBehaviour: {fileID: 1121263254494094316}
+  TABLENAME: Snooker Table
   ballPocketedTriggerName: BallPocketed
   indicateSuccessTriggerName: IndicateSuccess
   flashTableColorTriggerName: FlashTableColor
@@ -2810,6 +2811,7 @@ MonoBehaviour:
   onGameEndedTriggerName: OnGameEnded
   setGameModeTriggerName: SetGameMode
   setTableTriggerName: SetTable
+  gameModeIntName: GameMode
   tableWidth: 1.807
   tableHeight: 0.9115
   pocketRadius: 0.1
