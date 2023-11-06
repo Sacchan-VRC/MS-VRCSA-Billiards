@@ -1053,7 +1053,6 @@ public class BilliardsModule : UdonSharpBehaviour
 
         if (isSnooker6Red)//enable SnookerUndo button if foul
         {
-            this.transform.Find("intl.controls/undo_snooker").gameObject.SetActive(fourBallCueBallLocal > 0 && foulStateLocal > 0);
             if (fourBallCueBallLocal > 0 && foulStateLocal > 0)
             {
                 menuManager._EnableSnookerUndoMenu();
