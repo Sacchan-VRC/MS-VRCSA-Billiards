@@ -18,6 +18,7 @@ public class MenuManager : UdonSharpBehaviour
     [SerializeField] private GameObject menuSnookerUndo;
     [SerializeField] private TextMeshProUGUI[] lobbyNames;
 
+    [SerializeField] private TextMeshProUGUI gameModeDisplay;
     [SerializeField] private TextMeshProUGUI timelimitDisplay;
     [SerializeField] private TextMeshProUGUI tableDisplay;
     [SerializeField] private TextMeshProUGUI physicsDisplay;
@@ -118,6 +119,30 @@ public class MenuManager : UdonSharpBehaviour
         }
     }
 
+    public void _RefreshGameMode()
+    {
+        string modeName = "";
+        uint mode = (uint)table.GetProgramVariable("gameModeLocal");
+        switch (mode)
+        {
+            case 0:
+                modeName = "8 Ball";
+                break;
+            case 1:
+                modeName = "9 Ball";
+                break;
+            case 2:
+                modeName = "4 Ball JP";
+                break;
+            case 3:
+                modeName = "4 Ball KR";
+                break;
+            case 4:
+                modeName = "Snooker 6 Red";
+                break;
+        }
+        gameModeDisplay.text = modeName;
+    }
     public void _RefreshPhysics()
     {
         physicsDisplay.text = (string)table.currentPhysicsManager.GetProgramVariable("PHYSICSNAME");

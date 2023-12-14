@@ -378,6 +378,7 @@ public class BilliardsModule : UdonSharpBehaviour
 
     public void _TriggerGameModeChanged(uint newGameMode)
     {
+        Debug.Log("4ball_1");
         networkingManager._OnGameModeChanged(newGameMode);
     }
 
@@ -677,6 +678,8 @@ public class BilliardsModule : UdonSharpBehaviour
             is4Ball = isJp4Ball || isKr4Ball;
 
             tableModels[tableModelLocal]._setGameMode(gameModeLocal);
+
+            menuManager._RefreshGameMode();
         }
 
         if (timerLocal != timerSynced)
