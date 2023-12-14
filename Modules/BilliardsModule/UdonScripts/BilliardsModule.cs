@@ -1405,7 +1405,9 @@ public class BilliardsModule : UdonSharpBehaviour
 
                 bool is8Sink = (ballsPocketedLocal & 0x2U) == 0x2U;
 
-                if (is8Sink && isPracticeMode)
+                winCondition = isSetComplete && is8Sink;
+
+                if (is8Sink && isPracticeMode && !winCondition)
                 {
                     is8Sink = false;
 
@@ -1414,7 +1416,6 @@ public class BilliardsModule : UdonSharpBehaviour
                     moveBallInDirUntilNotTouching(1, Vector3.right * k_BALL_RADIUS * .051f);
                 }
 
-                winCondition = isSetComplete && is8Sink;
                 foulCondition = isScratch || isWrongHit;
 
                 deferLossCondition = is8Sink;
