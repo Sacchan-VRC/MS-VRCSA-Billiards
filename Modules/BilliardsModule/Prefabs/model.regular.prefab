@@ -2804,16 +2804,17 @@ MonoBehaviour:
     PrefabModifications: []
     SerializationNodes: []
   _udonSharpBackingUdonBehaviour: {fileID: 2157089718363398246}
-  tableAnimator: {fileID: 0}
-  BallPocketedTriggerName: BallPocketed
-  IndicateSuccessTriggerName: IndicateSuccess
-  FlashTableColorTriggerName: FlashTableColor
-  FlashTableLightTriggerName: FlashTableLight
-  FlashTableErrorTriggerName: FlashTableError
-  OnGameStartedTriggerName: OnGameStarted
-  OnGameEndedTriggerName: OnGameEnded
-  SetGameModeTriggerName: SetGameMode
-  SetTableTriggerName: SetTable
+  TABLENAME: Pool Table
+  ballPocketedTriggerName: BallPocketed
+  indicateSuccessTriggerName: IndicateSuccess
+  flashTableColorTriggerName: FlashTableColor
+  flashTableLightTriggerName: FlashTableLight
+  flashTableErrorTriggerName: FlashTableError
+  onGameStartedTriggerName: OnGameStarted
+  onGameEndedTriggerName: OnGameEnded
+  setGameModeTriggerName: SetGameMode
+  setTableTriggerName: SetTable
+  gameModeIntName: GameMode
   tableWidth: 1.06
   tableHeight: 0.603
   pocketRadius: 0.1
@@ -2834,7 +2835,7 @@ MonoBehaviour:
   - {fileID: 1910372508039238870}
   - {fileID: 7270788586971075787}
   baulkLine: 0.7367
-  blackSpotFromR: 0.324
+  blackSpotFromR: 0.2
   semiCircleRadius: 0.2921
 --- !u!1 &7608883923268825010
 GameObject:
