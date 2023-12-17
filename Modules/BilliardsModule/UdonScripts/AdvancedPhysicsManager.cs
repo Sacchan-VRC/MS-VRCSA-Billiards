@@ -1,5 +1,4 @@
 // #define HT8B_DRAW_REGIONS
-using Microsoft.SqlServer.Server;
 using System;
 using UdonSharp;
 using UnityEngine;
@@ -10,13 +9,13 @@ using VRC.Udon;
 [UdonBehaviourSyncMode(BehaviourSyncMode.NoVariableSync)]
 public class AdvancedPhysicsManager : UdonSharpBehaviour
 {
-    public string PHYSICSNAME = "<color=#FFD700>Mabel</color>";
+    public string PHYSICSNAME = "<color=#FFD700>Advanced W.I.P</color>";
 #if HT_QUEST
-   private  float Time.deltaTime =  0.05f; // Private Const Float 0.05f max time to process per frame on quest (~4)
+   private  float k_MAX_DELTA =  0.05f; // Private Const Float 0.05f max time to process per frame on quest (~4)
 #else
     private float k_MAX_DELTA = 0.1f; // Private Cont Float 0.1f max time to process per frame on pc (~8)
 #endif
-    private const float k_FIXED_TIME_STEP = 1 / 80f;      // time step in seconds per iteration
+    private const float k_FIXED_TIME_STEP = 1 / 80f;    // time step in seconds per iteration
     private float k_BALL_DSQRPE = 0.003598f;            // ball diameter squared plus epsilon // this is actually minus epsilon?
     private float k_BALL_DIAMETREPE = 0.06001f;         // width of ball
     private float k_BALL_DIAMETREPESQ = 0.0036012001f;  // width of ball
@@ -27,13 +26,13 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
     private float k_BALL_DSQR = 0.0036f;                // ball diameter squared
     private float k_BALL_MASS = 0.16f;                  // Weight of ball in kg
     private float k_BALL_RSQR = 0.0009f;                // ball radius squared
-    const float k_F_SLIDE = 0.2f;                     // Friction coefficient of sliding          (Ball-Table).
+    const float k_F_SLIDE = 0.2f;                       // Friction coefficient of sliding          (Ball-Table).
     const float k_F_ROLL = 0.008f;                      // Friction coefficient of rolling          (Ball-table)
     const float k_F_SPIN = 0.022f;                      // Friction coefficient of Spin             (Ball-table)
     const float k_F_SLIDE_C = 0.2f;                     // Friction coefficient of sliding Cushion  (Ball-Cushion)
-    public float k_BALL_BALL_F = 0.03f;                 // Friction coefficient between balls       (ball-ball)
-    public float k_BALL_E = 0.94f;
-    const float K_BOUNCE_FACTOR = 0.5f;                 // COR Ball-Slate
+    const float k_BALL_BALL_F = 0.03f;                  // Friction coefficient between balls       (ball-ball) 0.03f
+    const float k_BALL_E = 1f;                          // Coefficient of Restitution between balls (Data suggests 0.94 to 0.96, but it seems there is an issue during calculation, Happens rarely now after some fixes.)
+    const float K_BOUNCE_FACTOR = 0.5f;                 // COR Ball-Slate Emperically determinaed by Dr.Dave billiards in his physical proprieties page as the Average value. (The maximum i would suggest is 0.7f, slate material and quality varies.
 
     private Color markerColorYes = new Color(0.0f, 1.0f, 0.0f, 1.0f);
     private Color markerColorNo = new Color(1.0f, 0.0f, 0.0f, 1.0f);
@@ -66,31 +65,6 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
     private Vector3 k_vE;
     private Vector3 k_vF;
 
-    private void Start()
-    {
-        //Temporary Organization variables that will need to be stored and saved ONCE down to Cushion Physics, using Han 2005 Model.
-        //here just for reference
-
-        /*
-       float rvw                            // the ball state, "r" is Ball Displacement (ball_P) / "v" is velocity (ball_V) / "w" is angular velocity (ball_W)
-       float R = k_BALL_RADIUS;
-       float m = k_BALL_MASS;
-       float h = 7f * k_BALL_RADIUS / 5f;   // the height of the cushion
-       float s =                            // the motion state of the ball.
-       float mu =                           // The coefficient of friction, If ball motion state is sliding, assume coefficient of sliding friction. If rolling, assume coefficient of rolling friction. If spinning, assume coefficient of spinning friction
-       float u_s = k_F_SLIDE;
-       float u_sp                           // Spiining Coefficient of Friction
-       float u_r = k_F_ROLL;                // rolling coefficicient of firction.
-       float e_c = (1 + e);                 // Cushion Coefficient of restitution.
-       float f_c = k_F_SLIDE_C;             // cushion coefficient of friction
-       float g = k_GRAVITY;                 // Acceleration due to gravity felt by a ball.
-       */
-
-
-        //audioSource = GetComponent<AudioSource>();
-        //audioSource.volume = initialVolume;
-
-    }
     [NonSerialized] public BilliardsModule table_;
     public void _Init()
     {
@@ -118,13 +92,13 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
 
         if (!table.isLocalSimulationRunning) return;
 
-        float newAccumulatedTime = Mathf.Clamp(accumulatedTime + Time.fixedDeltaTime, 0, Time.deltaTime);
-        while (newAccumulatedTime >= Time.fixedDeltaTime)
+        float newAccumulatedTime = Mathf.Clamp(accumulatedTime + k_FIXED_TIME_STEP, 0, Time.deltaTime);
+        while (newAccumulatedTime >= k_FIXED_TIME_STEP)
         {
             table._BeginPerf(table.PERF_PHYSICS_MAIN);
             tickOnce();
             table._EndPerf(table.PERF_PHYSICS_MAIN);
-            newAccumulatedTime -= Time.fixedDeltaTime;
+            newAccumulatedTime -= k_FIXED_TIME_STEP;
         }
 
         accumulatedTime = newAccumulatedTime;
@@ -281,13 +255,6 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
 
         if ((sn_pocketed & 0x1U) == 0)
         {
-            /*
-            if (balls_P[0].y < 0)
-            {
-                balls_P[0].y = 0;
-                //balls_P[0].y = -balls_P[0].y * 0.5f; // bounce with restitution
-            }
-            */
             // Apply movement
             Vector3 deltaPos = calculateDeltaPosition(sn_pocketed);
             balls_P[0] += deltaPos;
@@ -305,10 +272,7 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
 
             if ((ball_bit & sn_pocketed) == 0U)
             {
-                //balls_V[i].y = 0f;
-                //balls_P[i].y = 0f;
-
-                Vector3 deltaPos = balls_V[i] * Time.fixedDeltaTime;
+                Vector3 deltaPos = balls_V[i] * k_FIXED_TIME_STEP;
                 balls_P[i] += deltaPos;
                 moved[i] = deltaPos != Vector3.zero;
 
@@ -385,7 +349,7 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
     private Vector3 calculateDeltaPosition(uint sn_pocketed)
     {
         // Get what will be the next position
-        Vector3 originalDelta = balls_V[0] * Time.fixedDeltaTime;
+        Vector3 originalDelta = balls_V[0] * k_FIXED_TIME_STEP;
 
         Vector3 norm = balls_V[0].normalized;
 
@@ -443,8 +407,12 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
     private bool stepOneBall(int id, uint sn_pocketed, bool[] moved)
     {
         GameObject g_ball_current = balls[id];
+       
+        /// LOG DEPENDENCIES
+        /*
         GameObject cueBall = balls[0];
         GameObject nine_Ball = balls[9];
+        */
 
         bool isBallMoving = false;
 
@@ -465,538 +433,87 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
             if ((ball_bit & sn_pocketed) != 0U)
                 continue;
 
-
+            /// DRAWS DIRECTION VECTOR RAY
+            /*
             GameObject ball = balls[i];
             Vector3 ballPosition = ball.transform.position;
             Vector3 ballVelocity = balls_V[i];
             Vector3 normalizedVelocity = ballVelocity.normalized;
-            Debug.DrawRay(ballPosition, -normalizedVelocity * 1f, Color.magenta);
-
+            Debug.DrawRay(ballPosition, new Vector3(-normalizedVelocity.x, 0, -normalizedVelocity.z) * 1f, Color.magenta);
+            */
 
             // Checks if the Balls (Spheres) are colliding.
-            Vector3 delta = balls_P[i] - balls_P[id];                  //Tracks the Cut Angle // [i] = CB & [id] = OB, We are taking P here to check their Positions ~Displacement~ around them.
 
-            float mu_b = k_BALL_BALL_F;   // Coefficient of friction
-            float e = k_BALL_E;         // Coefficient of restitution
-            float m = k_BALL_MASS;      // Mass of the ball
-            float r = k_BALL_RADIUS;    // Radius of the ball
+            Vector3 delta = balls_P[i] - balls_P[id];           /// Relative Displacement between balls from its absolute center point
 
-            // Moment of inertia of a perfect sphere s
-            float I = 2f / 5f * m * Mathf.Pow(r, 2f);
-
+            float mu_b = k_BALL_BALL_F;                         /// Coefficient of friction
+            float e = k_BALL_E;                                 /// Coefficient of restitution
+            float m = k_BALL_MASS;                              /// Mass of the ball
             float dist = delta.sqrMagnitude;
-
             
-            float a, b, c, μv;
-            a = 9.951e-3f;
-            b = 0.108f;
-            c = 1.088f;
-            
-            //float term_1 = mu * m * balls_V[i] * CosPhi * (v * SinPhi - r * balls_W[i].z);
-
-            /// CUE BALL DIRECTION (PRE-IMPACT)
+            ///LOG
+            /*
             // Draw a debug line that could represent the normal velocity vector
             Debug.DrawRay(cueBall.transform.position, nine_Ball.transform.position - cueBall.transform.position, Color.red);
+
+            // Draw a line representing the initial velocity vector of the ball
+            Debug.DrawRay(cueBall.transform.position, -new Vector3(balls_V[0].x,0,balls_V[0].z).normalized * 2f, Color.blue);
+            */
 
             if (dist < k_BALL_DIAMETREPESQ)
             {
                 dist = Mathf.Sqrt(dist);
-                Vector3 normal = delta / dist;  //Tracks the Collision
+                Vector3 normal = delta / dist;  //avoid Overlapping at all cost
 
                 // static resolution
 
-                Vector3 res = (k_BALL_DIAMETRE - dist) * normal;                                /// Static resolution is Taking the DIAMETER of the ball (i.e 0.03) and
-                                                                                                /// comparing (`i.e -Negative value`) to the distance (i.e `dist`) --------------------------------------------------------------------------------------------------------> `dist` = `delta.sqrMagnitude` = `Vector3 delta = balls_P[i] - balls_P[id]`; Where `balls_P` is the "position" or "DISPLACEMENT" of the object,
-                                                                                                /// and then multiplied by `normal` which is the Distribution (i.e /Division) of 2 values, in our case: Vector3 normal = delta / dist;                                                          in Kinematics equation SUVAT represented by the letter [S], in Physics Mathematical equations represented by the letter [r]
-                                                                                                /// 
-                                                                                                /// CONCLUSION:
-                                                                                                /// You must pay attention when you should use (normal) and (delta) as in why you should use (normal) and why use (delta)
-                                                                                                /// as:
-                                                                                                /// NORMAL  = Distributes forces [F] between BALLS_ ( some of these forces are already found in Update Velocity()) [Newton's 2nd law of motion is (F = m * a) "The acceleration of an object depends on the mass of the object and the amount of force applied."]
-                                                                                                /// DIST    = Compares distances [S] or [r] between BALLS_
-                                                                                                /// DELTA   = direction
-                                                                                                /// 
-                                                                                                /// Thus, each time you use (normal) you are plugin (m * a) into the equatio.
+                Vector3 res = (k_BALL_DIAMETRE - dist) * normal;
 
                 balls_P[i] += res;
                 balls_P[id] -= res;
                 moved[i] = true;
                 moved[id] = true;
 
-                /*
-                μv = a + b * Mathf.Exp(-c * balls_V[i].magnitude);
-                Debug.Log("Ball_μ: " + μv);
-                */
-
-                //Vector3 cutForce = Vector3.zero;
-                Vector3 angularVelocity = Vector3.Cross(balls_W[id], k_BALL_RADIUS * normal) - Vector3.Cross(balls_W[i], k_BALL_RADIUS * normal);
-                Vector3 relativeVelocity = balls_V[id] - balls_V[i];
-                Vector3 relativeVelocityNormalized = relativeVelocity.normalized;
-                Vector3 frictionForce = -mu_b * angularVelocity;
-                Debug.Log("friction_force: " + frictionForce);
-
-
-                balls_V[i] += frictionForce;
-                balls_V[id] -= frictionForce;
-
-
-                float angleOfImpact = Vector3.SignedAngle(relativeVelocity, normal, Vector3.up) * Mathf.Deg2Rad;
-                float signOfAngle = Mathf.Sign(angleOfImpact);  // Because Unity wont be able to tell when the cut happened from the left or right, we can calculate the cut angle and assig a value for it.
-                Debug.Log(signOfAngle);
-
-
-                float CosPhi = Mathf.Cos(angleOfImpact);
-                float SinPhi = Mathf.Sin(angleOfImpact);
-               
-
-                float cutForceMagnitude = mu_b * signOfAngle; // mu sign will depend on Angle Of Impact, thus wont ball reverse its direction and achieve Gearing Outside English (as a machine gear)
-                Vector3 cutForce = cutForceMagnitude * Vector3.Cross(relativeVelocityNormalized, Vector3.up);
-                balls_V[i] += cutForce; // Apply cut force to ball 'i' i.e the Object ball
-                Debug.Log("CutForceMag_: " + cutForceMagnitude);
-
-                Vector3 angularImpulse = Vector3.Cross(delta, frictionForce + cutForce) / (k_BALL_RADIUS * k_BALL_RADIUS);
-
-                balls_W[i] += angularImpulse;
-                balls_W[id] -= angularImpulse;       
-
-                
-                float relativeNormalVelocity = Vector3.Dot(relativeVelocity, normal);
-                Vector3 normalImpulse = e * relativeNormalVelocity * normal;
-
-                balls_V[i] += normalImpulse;
-                balls_V[id] -= normalImpulse;
-
-
-                float deltaAngularVelocity = Mathf.Abs(balls_W[id].magnitude - balls_W[i].magnitude);
-                float angularVelocityPercentageTransfer = (deltaAngularVelocity / balls_W[i].magnitude) * 100.0f;
-                Debug.Log("<color=yellow>Maximum Spin Transfer Percentage (STP):</color> " + angularVelocityPercentageTransfer.ToString("F2") + "%");
-
-                               
-
-                //float angleOfImpact = Vector3.SignedAngle(relativeVelocity, normal, Vector3.up) * Mathf.Deg2Rad;
-                Debug.Log($"{angleOfImpact * Mathf.Rad2Deg}");
-                           
-
-               
-
-                /// EPISODE 1
-                /// This method of Throw works for both CIT and SIT, However, in here, throw seems to be always at a maximum fixed value
-                /// when in reality it should be less at high speed colisions and maximum at low speeds. [SEE EPISODE 2]
-
-                /*
-                // Calculate relative angular velocity (spin-induced throw) [SIT]
-                Vector3 spinVelocity = Vector3.Cross(balls_W[id], k_BALL_RADIUS * normal) - Vector3.Cross(balls_W[i], k_BALL_RADIUS * normal);
-
-                //Relative Velocity
-                Vector3 relativeVelocity = balls_V[id] - balls_V[i];
-
-                // Calculate relative tangential velocity (cut-induced throw) [CIT] [Right Side of Equation 8]
-                Vector3 tangentialVelocity = relativeVelocity - spinVelocity;
-
-                // Calculate friction force due to tangential velocity
-                Vector3 frictionForce = -k_BALL_BALL_F * tangentialVelocity;
-                
-                // Apply friction force to reduce tangential velocity
-                balls_V[i] += frictionForce;
-                balls_V[id] -= frictionForce;
-
-
-                Vector3 angularImpulse = Vector3.Cross(delta, frictionForce) / (k_BALL_RADIUS * k_BALL_RADIUS);
-                
-                balls_W[i] += angularImpulse;
-                balls_W[id] -= angularImpulse;
-
-                // Calculate coefficient of restitution (bounciness)
-                float e = 0.98f;
-
-                // Calculate relative normal velocity
-                float relativeNormalVelocity = Vector3.Dot(relativeVelocity, normal);
-                float relativeTangentialVelocity = relativeVelocity.magnitude - relativeNormalVelocity;
-                float cutAngle = Mathf.Atan2(relativeTangentialVelocity, relativeNormalVelocity);
-                
-                // Convert cutAngle from radians to degrees
-                float cutAngleInDegrees = cutAngle * Mathf.Rad2Deg;
-                Debug.Log("cutAngle is: " + cutAngleInDegrees + " degrees");            
-                
-                // Apply impulse for normal direction (restitution)
-                Vector3 normalImpulse = e * relativeNormalVelocity * normal;
-                balls_V[i] += normalImpulse;
-                balls_V[id] -= normalImpulse;
-                */
-
-
-
-
-
-
-
-
-
-                /// EPISODE 2
-                /// START OF EP 2
-
-                /// DRAWS A LINE THAT SHOWS THE EXPECTED LINE OF CENTERS DIRECTIONS THE CB AND OB HAS [HINTS FOR THROWS]
-                
-                
-                Vector3 relativeTangentialVelocity = relativeVelocity - Vector3.Dot(relativeVelocity, normal) * normal;
-
-                float v = Vector3.Dot(relativeVelocity, normal);
-                float tv = relativeTangentialVelocity.magnitude;
-
-
-                // Convert the relative normal velocity into a direction vector
-                Vector3 normalVelocityDirection = v * normal.normalized;
-
-                // You can specify the length of the line to draw (e.g., 1 unit)
-                float lineLength = 5f;
-
-                // Calculate the starting point for the line (e.g., at the position of the Nine Ball)
-                Vector3 lineStartPoint = nine_Ball.transform.position;
-
-                // Calculate the end point for the line based on the direction and length
-                Vector3 lineEndPoint = lineStartPoint + normalVelocityDirection * lineLength;
-
-                // Draw the line using Debug.DrawRay
-                Debug.DrawLine(lineStartPoint, lineStartPoint + normalVelocityDirection * lineLength, Color.green, 4f);
-
-                // Draw the line using Debug.DrawRay
-                Debug.DrawLine(lineStartPoint, lineStartPoint - normalVelocityDirection * lineLength, Color.green, 4f);
-
-      
-
-
-                /// DRAW A LINE THAT IS THE TANGENTIAL PATH OF THE CUE BALL POST-COLLISION [HINTS FOR A PERFECT STUN SHOT]
-
-
-                // Calculate the direction of the relative tangential velocity
-                Vector3 tangentialVelocityDirection = relativeTangentialVelocity.normalized;
-
-                // You can specify the length of the line to draw (e.g., 1 unit)
-                float lineLength_CB_PI = 5f;
-
-                // Calculate the starting point for the line (e.g., at the position of the cue ball)
-                Vector3 lineStartPoint_CB_PI = cueBall.transform.position;
-
-                // Calculate the end point for the line based on the direction and length
-                //Vector3 lineEndPoint_CB_PI = lineStartPoint_CB_PI + tangentialVelocityDirection * lineLength_CB_PI;
-
-                // Draw the line using Debug.DrawRay
-                Debug.DrawRay(lineStartPoint_CB_PI, -tangentialVelocityDirection * lineLength_CB_PI, Color.magenta, 10f);
-
-
-
-                /// SOME MINOR GUESSES BASED ON WHAT WE ALREADY HAVE, USING TECHNICAL PROOF PAPERS
-
-
-                // Calculate the angular velocity component in the direction of the collision normal for each ball
-                //float angularVelocityA = Vector3.Dot(relativeAngularVelocity, normal); // For ball A (id)
-                //float angularVelocityB = Vector3.Dot(-relativeAngularVelocity, normal); // For ball B (i)
-
-
-                // Calculate the relative tangential angular velocity
-                //float relativeTangentialAngularVelocity = angularVelocityA - angularVelocityB;
-
-
-                // Moment of inertia of a perfect sphere
-                // float I = 2f / 5f * k_BALL_MASS * Mathf.Pow(k_BALL_RADIUS, 2);
-
-
-                //float Wob_initial = balls_W[i].magnitude; // [Initial Angular Velocity Object Ball]
-
-
-                // Calculate Wob using the conservation of angular momentum
-                //float Wob = (I * balls_W[id].magnitude - I * Wob_initial) / I; // [Final Angular Velocity Object Ball]
-
-
-                // Calculate the maximum post-impact tangential speed of the object ball
-                //float VobTangential = relativeTangentialVelocity.magnitude - (relativeTangentialAngularVelocity + Wob) * r;
-
-
-                //float relativeTangentialVelocity = relativeVelocity.magnitude - relativeNormalVelocity;
-
-
-                // The relative Tangential speed between the balls after impact is give by:
-                // Vector3 relativeTangentialVelocity = (balls_V[i] - balls_W[i] * r) - (balls_V[id] + balls_W[id] * r);
-                // Debug.Log("relativeTangentialVelocity: " + relativeTangentialVelocity + " TV");
-
-                /*
-                // CB to OB cut angle is given by:
-                // float throwAngle = Mathf.Atan(relativeTangentialVelocity.magnitude / relativeNormalVelocity);
-                // float relativeT_N = Mathf.Atan(k_BALL_BALL_F / e);
-
-                //float cutAngle = Mathf.Atan2(relativeTangentialVelocity.magnitude, relativeNormalVelocity);
-                //Debug.Log("IS THIS NUMBER: " + cutAngle + "Radians" + cutAngle * Mathf.Rad2Deg + "Degrees");
-
-
-                //float sinΦ = Mathf.Sin(cutAngle);
-                //float cosΦ = Mathf.Cos(cutAngle);
-                */
-
-
-
-
-                /// THE TOTAL PLOT OF THROW
-                /// Technical Proof TP B.25
-                /// From TP A.14, throw is calculated with the following, where speeds are in units of m/s:
-
-                /*
-                float R = r / m;
-                float a, b, c;
-                a = 9.951e-3f;
-                b = 0.108f;
-                c = 1.088f;
-
-                Vector3 v = balls_V[id];
-                Vector3 w = balls_W[id];
-
-                float μv = a + b * Mathf.Exp(-c * v.magnitude);
-
-                float relativeVelocity_of_V_Wx_Wz_Phi = Mathf.Sqrt(Mathf.Pow(v.magnitude * sinΦ - R * w.z, 2) + Mathf.Pow(R * w.x * cosΦ, 2));
-
-                float termMin = (μv * (relativeVelocity_of_V_Wx_Wz_Phi) * v.magnitude * cosΦ / relativeVelocity_of_V_Wx_Wz_Phi * (1f / 7f)) * (v.magnitude * sinΦ - R * w.z);
-                float term2 = v.magnitude * cosΦ;
-                float throwTheta_V_Wx_Wz_Phi = Mathf.Atan2(termMin, term2);
-                Debug.Log("angle of throwTheta: " + throwTheta_V_Wx_Wz_Phi + " angle");
-
-                Vector3 ThrowAngle = throwTheta_V_Wx_Wz_Phi * normal;
-
-                balls_V[i] += ThrowAngle;
-                balls_V[id] -= ThrowAngle;
-                */
-
-
-                /// FINALLY THIS IS MY FINAL MANUAL WORK ON TRANSCRIBING TECHNICAL PROOF DATA INTO UNITY C# in ORDER TO PLOT AND GATHER DATA.
-
-
-                /// SIT FRICTION / DIRECTION PLOT START
-                /// TP 4.3 (Technical Proof 4.3)
-                /// ENGLISH-INDUCED THROW EFFECTS (SIT = [SIDEPIN-INDUCED-THROW])
-
-                /*
-                // The normal impulse of the OBJECT BALL (`F_OB`) is related to the final object ball speed in the normal direction
-                float F_OB = m * relativeNormalVelocity;
-                Debug.Log("linear impusle and momento NORMAL (S) F'_OB is " + F_OB + "F'");
-
-                // From [linear impulse and momentum] in the tangential direction (mu * m * relativeNormalVelocity) is:
-                float μF_S = k_BALL_BALL_F * F_OB;
-                Debug.Log("linear impulse and momentum TANGENTIAL (μF'_S)" + μF_S + "μ * m * Vn");                            //this measure our maximum impact friction (You might think that at high speeeds the friction should be higher, which is true, this is exactly what this output does!) However
-                                                                                                                              //balls dont stay (or remain) in contact for a long perdiod of time when the colision between them is also higher,
-                                                                                                                              //meaning our frition must be reduced at higher speeds because the balls dont have much time to remain in contact (rubbihng) with each other, therefore, friction is higher at low speeds (Meaning throw is the largest at low speeds)
-
-                // So the final [OBJECT BALL SPEED] in the tangential direction is given by (relativeTangentialSpeed):
-                float relativeTangentialSpeed_OB = mu * relativeNormalVelocity;
-                Debug.Log("(S) OB speed in Tangential direction is" + relativeTangentialSpeed_OB + "Vt(S)");
-
-               
-                // Therefore, the throw angle of SIT is given by:
-                float spinTrhowAngle = Mathf.Atan(relativeTangentialSpeed_OB / relativeNormalVelocity);         //This returns to us our maximum possible friction, very important to have, as this changes with Ball masses.
-                Debug.Log("Spin Throw Angle (θ atan) " + spinTrhowAngle + "atan(μ)");
-                
-
-                // Use this to check if the value of Spin Throw OB is the same:
-                float spinTrhowAngleCheck = Mathf.Atan(relativeTangentialSpeed / relativeNormalVelocity);       //This is Our Dynamic Friction and how its involvement with velocity changes its value (Range from 0.0 to 0.06)  Áctually our maximum possible friction is based on the output of atan(mu) which is 0.0599281f
-                Debug.Log("Spin Throw Angle CHECK DYNAMIC (θ atan) " + spinTrhowAngleCheck + "(μ)");
-
-                /// SIT FRICTION / DIRECTION PLOT END
-
-
-                // THUS
-                // Apply SIT to the object ball
-                float spinThrowMagnitude = spinTrhowAngleCheck * relativeNormalVelocity;
-                Vector3 spinThrow = spinThrowMagnitude * normal;
-
-                // Update the velocities of the object ball
-                //balls_V[i] += spinThrow;
-                //balls_V[id] -= spinThrow;
-                */
-
-
-                /// CIT FRICTION / DIRECTION PLOT START
-                /// TP 4.4 (Technical Proof 4.4)
-                /// RELATIONSHIP BETWEEN THE AMOUNT OF THROW AND CUT ANGLE
-                /*
-                float angleOfImpact = Vector3.SignedAngle(relativeVelocity, normal, Vector3.up) * Mathf.Deg2Rad; // we use .SignedAngle Instead of .Angle to differentiate `+POSITIVE` from `-NEGATIVE`
-                Debug.Log("angleOfImpact ( the angle at which the balls are colliding. ) is " + angleOfImpact + " Radians" + Vector3.Angle(relativeVelocity, normal) + "Degrees");
-
-                // Object ball speed in the normal direction from the coefficient of restitution:
-                float relativeNormalVelocity_OB = e * balls_V[id].magnitude * (angleOfImpact);
-                Debug.Log("OB_V(normal) is: " + relativeNormalVelocity_OB + "V'n");
-
-                // Assuming that all speed in the normal direction is delivered from the cue ball to the object ball, from linear impulse (F_CB) and momentum m * v * cosTHETA is:
-                float Mass_Velocity_CosTheta = m * F_OB / e;
-                Debug.Log(" linear impulse and momento NORMAL (C) F'_OB = : " + Mass_Velocity_CosTheta + " = F'_OB (C)");
-
-                // From linear [impulse and momentum] in the tangent direction (mu * m * relativeNormalVelocity / e) is:
-                float µF_C = μF_S / e;
-                Debug.Log("linear impulse and momentum TANGENTIAL (μF'_C) = : " + µF_C + "µF_C");
-
-                // So
-                float relativeTangentialSpeed_OB_C = relativeTangentialSpeed_OB / e;
-                Debug.Log("(C) OB speed in Tangential direction is" + relativeTangentialSpeed_OB + "Vt(C)");
-
-                
-                // Therefore, the throw angle of CIT is given by:
-                float cutThrowAngle = Mathf.Atan(relativeTangentialSpeed_OB_C / relativeNormalVelocity);
-                //Debug.Log("Cut Throw Angle (θ atan) = : " + cutThrowAngle + "atan(µ/e)");
-                */
-
-                /*
-                //check if the value of Cut Throw OB is the same:
-                float cutThrowAngleCheck = Mathf.Atan((relativeTangentialSpeed / e) / relativeNormalVelocity);
-                Debug.Log("Cut Throw Angle CHECK DYNAMIC (θ atan) = : " + cutThrowAngleCheck + "(µ/e)");
-                */
-                /// CIT FRICTION / DIRECTION PLOT END
-
-                /*
-                // THUS
-                // Apply CIT to the object ball
-                float cutThrowMagnitude = cutThrowAngleCheck * relativeNormalVelocity;
-                Vector3 cutThrow = cutThrowMagnitude * normal;
-                */
-
-                // Update the velocities of the object ball
-                //balls_V[i] += cutThrow;
-                //balls_V[id] += cutThrow;
-
-                /*
-                /// WE CAN THEN COMBINE SIT and CIT USING:
-
-
-                // Combine SIT and CIT effects
-                Vector3 combinedThrow = spinThrow + cutThrow;
-
-                // Update the velocities of the object ball
-                balls_V[i] += combinedThrow;
-                balls_V[id] -= combinedThrow;
-                */
-
-
-
-                /// THEN WE UPDATE THE ANGULAR VELOCITY FRICTION
-                /// 
-                /*
-                // maximum possible spin transfer percentage (STP) is 35.71%:  [SOLUTION EQUATION 8 TP_A 27]
-                float M_STP = 0.3571f;              // Does not depend on COR
-
-
-                // The tangential impulse, in addition to creating throw, transfers spin from the CB to the OB. From angular impulse and momentum principles,
-                float F_Tan_R = (I * balls_W[id].magnitude - I * balls_W[i].magnitude) / I;  // Conservation Moment of Inertia
-                
-                // Therefore, the amount of spin transferred to the OB is:
-                float delta_W = (5f * (1f + e) / 4f) * (balls_V[i].magnitude / r) * spinTrhowAngle;
-                */
-
-
-                /*
-                // Calculate friction force based on the total angular velocity
-                Vector3 frictionForce = -k_BALL_BALL_F * angularVelocitySIT;
-                Debug.Log("Angular friction " + frictionForce + "μ");
-
-                // Apply friction force
-                balls_V[i] += frictionForce;
-                balls_V[id] -= frictionForce;
-
-
-                Vector3 angularImpulse = Vector3.Cross(delta, frictionForce) / (k_BALL_RADIUS * k_BALL_RADIUS);
-                Debug.Log("Angular Impulse V3 " + angularImpulse + " Trhow angle check for both?");
-
-
-                balls_W[i] += angularImpulse;
-                balls_W[id] -= angularImpulse;
-
-
-                // Calculate normal impulse
-                Vector3 normalImpulse = e * relativeNormalVelocity * normal;
-                Debug.Log("IMPULSE " + normalImpulse);
-
-
-                //linear impulse and momentum in the tangent direction:
-                //Vector3 normalImpulse = k_BALL_BALL_F * relativeTangentialVelocity / e;
-                //Debug.Log("IMPULSE " + normalImpulse + " angle");
-
-                // Apply normal impulse
-                balls_V[i] += normalImpulse;
-                balls_V[id] -= normalImpulse;
-                */
-
-
-                //float dot = Vector3.Dot(relativeVelocity, normal);
-
-                //Vector3 cutThrowImpulse = cutThrowFactor * Vector3.Cross(relativeAngularVelocity, normal); //<-- this is inverting the cutting From the Right
-                //Vector3 cutThrowImpulse = cutThrowFactor * Vector3.Cross(normal, relativeAngularVelocity); //<-- this is inverting the cutting From the Left
-                /*
-                balls_V[i] += cutThrowImpulse;
-                balls_V[id] -= cutThrowImpulse;
-                */
-
-                /*
-                balls_V[i] += normalImpulse;
-                balls_V[id] -= normalImpulse;
-                
-                //END OF EP2
-                */
-
-                /// EPISODE 3 SIT ONLY      
-
-                
-                //Vector3 angularVelocity = Vector3.Cross(balls_W[id], k_BALL_RADIUS * normal) - Vector3.Cross(balls_W[i], k_BALL_RADIUS * normal);
-                //Vector3 relativeVelocity = balls_V[id] - balls_V[i];
-                //Vector3 frictionForce = -k_BALL_BALL_F * angularVelocity;
-
-
-                //balls_V[i] += frictionForce;
-                //balls_V[id] -= frictionForce;
-
-
-                // Calculate relative normal velocity
-                //float relativeNormalVelocity = Vector3.Dot(relativeVelocity, normal);
-                //float relativeTangentialVelocity = relativeVelocity.magnitude - relativeNormalVelocity;
-
-
-                // Convert cutAngle from radians to degrees
-                //float cutAngleInDegrees = cutAngle * Mathf.Rad2Deg;
-                //Debug.Log("cutAngle is: " + cutAngleInDegrees + " degrees");
-
-
-                //maximum post-impact tangential speed the object ball can have is:
-                //Vector3 MaxOB = balls_V[i] - (balls_W[i] + balls_W[id]) * k_BALL_RADIUS;
-
-                // Calculate the CIT transfer based on the cut angle
-                //Vector3 CITTransfer = MaxOB * angleOfImpact;
-
-                // Apply CIT to both balls
-                //balls_V[i] += CITTransfer;
-                //balls_V[id] -= CITTransfer;
-
-                //Vector3 angularImpulse = Vector3.Cross(delta, frictionForce) / (k_BALL_RADIUS * k_BALL_RADIUS);
-
-                //balls_W[i] += angularImpulse;
-                //balls_W[id] -= angularImpulse;
-
-                
-                //Vector3 normalImpulse = e * relativeNormalVelocity * normal;
-                //Vector3 normalImpulse = ((1f + e) / 2f) * relativeNormalVelocity * normal;
-
-                //balls_V[i] += normalImpulse;
-                //balls_V[id] -= normalImpulse;
-               
-
-
-                /// LEGACY ELASTIIC
-
-                //float I = 2f / 5f * k_BALL_MASS * Mathf.Pow(k_BALL_RADIUS, 2); // Momentum of Inertia of a perfect shaped sphere
-                /*
+                ///  Dynamic resolution
+                ///  Very simplistic implementation of throw effects, where it mostly Emulates Rather than Simulates, 
+                ///  because UDON is super slow
+                ///  in the meantime this may lead to some bugs.
+                ///  So this is a "playable" W.I.P version.
+
+                float cr = e; 
+
+                Vector3 relativeVelocity = balls_V[i] - balls_V[id];
                 float dot = Vector3.Dot(relativeVelocity, normal);
+                float normalImpulse = (1.0f + cr) * dot / (1f / m + 1f / m);
+
+
+                /// Apply forces in the normal direction
+                balls_V[id] += normalImpulse * normal / m;
+                balls_V[i] -= normalImpulse * normal / m;
+
+
+                Vector3 angularVelocity = Vector3.Cross(balls_W[id], k_BALL_RADIUS * normal) - Vector3.Cross(balls_W[i], k_BALL_RADIUS * normal);
+                Vector3 frictionForce = -mu_b * angularVelocity;
+
+
+                balls_V[i] += frictionForce;
+                balls_V[id] -= frictionForce;
+
                 
-                // Dynamic resolution (Cr is assumed to be (1)+1.0)
+                float angleOfImpact = Vector3.SignedAngle(relativeVelocity, normal, Vector3.up) * Mathf.Deg2Rad;              
+                float epsilon = 0.01f; /// small constant to prevent division by zero
+                float cutForceMagnitude = mu_b * Mathf.Sin(angleOfImpact) / (relativeVelocity.magnitude + epsilon);
+                         
 
-                Vector3 reflection = normal * dot;
-                balls_V[id] -= reflection;
-                balls_V[i] += reflection;
-                */
+                Vector3 cutForce = cutForceMagnitude * Vector3.Cross(relativeVelocity, Vector3.up);
+                balls_V[i] += cutForce;
 
 
-                // Prevent sound spam if it happens
+                Vector3 angularImpulse = Vector3.Cross(delta, cutForce + frictionForce);
+                balls_W[i] += angularImpulse;
+                balls_W[id] -= angularImpulse;
+
+                /// Prevent sound spam if it happens
                 if (balls_V[id].sqrMagnitude > 0 && balls_V[i].sqrMagnitude > 0)
                 {
                     g_ball_current.GetComponent<AudioSource>().PlayOneShot(hitSounds[id % 3], Mathf.Clamp01(normal.magnitude));
@@ -1009,90 +526,29 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
         return isBallMoving;
     }
 
-    private bool updateVelocity(int id, GameObject ball) // Mabel
+    private bool updateVelocity(int id, GameObject ball)
     {
         bool ballMoving = false;
-        float frameGravity = k_GRAVITY * Time.fixedDeltaTime;
+        float frameGravity = k_GRAVITY * k_FIXED_TIME_STEP;
 
-        //float v0;                   // Stores Initial Velocity * attention * it may not be used. as v0 is already handled elsewhere. (using it for Debug purposes in here)
-        //float deceleration = 10f;   // The deceleration rate for spin in rad/sec²
         float mu_sp = k_F_SPIN;     // Coefficient of friction for spin
         float mu_s = k_F_SLIDE;     // Coefficient of friction for sliding
         float mu_r = k_F_ROLL;      // Coefficient of friction for rolling
         float g = k_GRAVITY;        // Gravitational constant
         float R = k_BALL_RADIUS;    // Ball Radius
-        //float m = k_BALL_MASS;
-        float t = Time.fixedDeltaTime;
+        float t = k_FIXED_TIME_STEP;
 
         Vector3 u0;
         Vector3 k_CONTACT_POINT = new Vector3(0.0f, -R, 0.0f);
 
-        // Since Mabel
-        //Vector3 P = balls_P[id];    // r(t) Displacement        [current Displacement]      [Initial Position rB0]
+        //Vector3 P = balls_P[id];  // r(t) Displacement        [current Displacement]      [Initial Position rB0]
         Vector3 V = balls_V[id];    // v(t) Velocity            [current Velocity]          [Initial Velocity vB0]
         Vector3 W = balls_W[id];    // w(t) Angular Velocity    [Current Angular velocity]  [Initial Angular Velocity wB0]
 
-        // Ball Reference Frame Axix V
-        // Vector3 Vi = new Vector3(V.x, 0, 0);
-        // Vctor3 Vj = new Vector3(0, 0, V.z);
-        // Vector3 Vk = new Vector3(0, 0, 0);   //Y must be ZERO, For relative velocity due to a single contact point on the table surface assumption
+        /// The ˆk-component (Y-axis in Ball Frame) MUST be Zero.
 
-        // Ball Reference Frame Axix W
-        // Vector3 Wi = new Vector3(W.x, 0, 0);
-        // Vector3 Wj = new Vector3(0, 0, W.z);
-        // Vector3 Wk = new Vector3(0, W.y, 0); 
-
-        // The ˆk-component (Y-axis in Ball Frame) MUST be Zero.
-         Vector3 VXZ = new Vector3(V.x, 0, V.z); // [Initial Velocity vB0]     [Initial Linear Velocity]    (V = u0) Following Kinematics Equation for velocity;
-                                                 //𝑣 = 𝑢 + 𝑎 𝑡
-
-
-        // float slidingDuration = (2f * u0.magnitude) / (7f * mu_s * g);
-        // float rollingDuration = (w0.magnitude) / (mu_r * g);
-
-        //`B` means, `Inside Ball Frame`
-
-        // Calculate position [Equation 5] our if(balls_P):
-
-        //Vector3 rB = P + V * t - 0.5f * mu_s * g * t * t * Vector3.up;  
-
-        // this position is calculated and changed with Velocity, so we use `if` stataments for `P` (Meaning, when the balls positions are no longer zero, then they are moving, if they are moving then the forces of the variables needs to aid the balls to come into a complete stop again)
-        // the catch is, this Method is not responsable for Displacement calculations, so i put the formula here anyway to help me understand what is happening in the bigger picture.
-
-
-        // Calculate velocity [Equation 6] // this is what we are doing
-        //Vector3 vB = V - mu_s * g * t * Vector3.up;
-
-
-        // Calculate angular velocity on friction [Equation 7 AND 8] 
-        // There are 2 types of angular velocities, the ROLLING and SIPIN, the Rolling uses the same friction `mu_s` while the spin must use its own friction `mu_sp`, this ensures the spin deceleration rate to be consistent within: 5-15 rad/sec2
-        //Vector3 wBParallel = W - (5f * mu_s * g / (2f * R)) * t * Vector3.Cross(Vector3.up, u0);
-        //Vector3 wBPerpendicular = W - (5f * mu_sp * g / (2f * R)) * t * Vector3.up;  
-
-
-        // Lets Caculate Relative Velocity [Equation 4]
-        // Vector3 relativeVelocity = V + Vector3.Cross(Vector3.up, W); // Rˆk × ~w (t)   [ k = y / i = x / j = z] <- Plane Axis, inside the BALL FRAME.
-
-
-        // Update ball's position based on relative velocity [ Already Happening ]
-        //P += relativeVelocity * Time.deltaTime;
-
-
-        // Update ball's rotation based on angular velocity
-        // transform.Rotate(W * Mathf.Rad2Deg * Time.deltaTime); // Convert angular velocity to degrees
-
-        // Update angular velocity w⊥ (vertical component)
-        // float w_perp = W.y -= (5 * mu_sp * g) / (2 * R) * t;
-        // Update relative velocity ~u (Equation 10)
-        // V -= (7 / 2) * mu_s * g * t * u0;
-
-        // Update sliding duration //the relative velocity evolves with time according to
-        // float tau_s = (2 * u0.magnitude) / (7 * mu_s * g);
-
-        // If sliding duration has passed, transition to rolling state
-        // if (time >= tau_s)
-
-        // Vector3 VwithoutY = new Vector3(V.x, 0, V.z);
+        Vector3 VXZ = new Vector3(V.x, 0, V.z);             // [Initial Velocity vB0]     [Initial Linear Velocity]    (V = u0) Following Kinematics Equation for velocity;
+                                                            //𝑣 = 𝑢 + 𝑎 𝑡
 
         // Kinematic equations basic guide [SUVAT]
 
@@ -1109,15 +565,18 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
         // 𝑣² = 𝑢² + 2𝑎s                          s = 𝑣𝑡 + 1/2𝑎𝑡²      𝑡 = 𝑢/𝑎
         // 2s = 𝑣² - 𝑢² = x  [Gives you x]
         // 𝑎  = 2s/x         [Gives you 𝑎] 
-        //Vector3 V = Vector3.zero;
-        //Vector3 W = Vector3.zero;
+        
+        
         if (balls_P[id].y < 0.001 && V.y < 0)
         {
-            // Relative velocity of ball and table at Contact point -> Relative Velocity is 𝑢0, once the player strikes the CB, 𝑢 is no-zero, the ball is moving and its initial velocity is measured (in m/s).
+            /// Relative velocity of ball and table at Contact point -> Relative Velocity is 𝑢0, once the player strikes the CB, 𝑢 is no-zero, the ball is moving and its initial velocity is measured (in m/s).
 
-            u0 = VXZ + Vector3.Cross(k_CONTACT_POINT, W);         // Equation 4
+            u0 = VXZ + Vector3.Cross(k_CONTACT_POINT, W);           /// Equation 4
 
-            float absolute_u0 = u0.magnitude;                   // |v0| the absolute velocity of Relative Velocity
+            float absolute_u0 = u0.magnitude;                       /// |v0| the absolute velocity of Relative Velocity
+
+            ///DEBUG LOG LIST
+            /*
             //u0 = (7f / 2f) * mu_s * g * t * u0;
             //float Ts = (2 * u0.magnitude) / (7 * mu_s * g) * t;
             // Debug.Log("Rolling Velocity Each: x = " + V.x + ", y = " + V.y + ", z = " + V.z);
@@ -1128,16 +587,15 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
             //Debug.Log("|V0| is: " + V.magnitude);
             //Debug.Log("|W0| is: " + W.magnitude);
             //Debug.Log("|Wy| is: " + W.y);
+            */
 
-            //  Equation 11
-            //  |𝑢0| is bellow Time = Rolling
+            ///  Equation 11
+            ///  |𝑢0| is bellow Time = Rolling
             if (absolute_u0 <= 0.1f)
             {
-                //  Equation 13
+                ///  Equation 13
                 V += -mu_r * g * t * VXZ.normalized;
-                
-                //  Equation 8, tracks the |W0| of Y and performs a ball-cloth spin deceleration rate on a CONSTANT,
-                //  which is around: 5-15 rad/sec2 https://billiards.colostate.edu/faq/physics/physical-properties/                                           
+                                               
                 W.x = -V.z * 1f / R;
                     
                 if (0.3f > Mathf.Abs(W.y))
@@ -1146,10 +604,10 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
                 }
                 else                                           
                 {
-                    float w_perp = (5f * mu_sp * g) / (2f * R);
-                    //float deceleration = 10.0f;  // Set the deceleration rate to 10 rad/sec²                    
+                    float w_perp = (5f * mu_sp * g) / (2f * R);                 
                     W.y -= Mathf.Sign(W.y) * w_perp * t;                  
                 }
+                
                 W.z = V.x * 1f / R;
                 
                 //Stopping scenario  
@@ -1163,17 +621,17 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
                     ballMoving = true;
                 }
             }
-            else // |𝑢0 | is bellow DeltaTime = Rolling
+            else /// |𝑢0 | is bellow DeltaTime = Rolling
             {
-                Vector3 nv = u0 / absolute_u0; // Ensure the value returns 0 or 1 or -1 By dividing each initial Vector, with the Sum of all of them combined.      
-                //Debug.Log("|nv| is: " + nv);               
+                Vector3 nv = u0 / absolute_u0; /// Ensure the value returns 0 or 1 or -1 By dividing each initial Vector, with the Sum of all of them combined.      
+                ///Debug.Log("|nv| is: " + nv);               
 
                 V += -mu_s * g * t * nv;
-                
-                // [Equation 7]
-                // Angular Slipping Friction [PARALLEL] (Without K-axis)
-                W += (-5.0f * mu_s * g) / (2.0f * R) * t * Vector3.Cross(Vector3.up, nv); // In parallel, K^ = O with 'Vector3.Up'
-                
+
+                /// [Equation 7]
+                /// Angular Slipping Friction [PARALLEL] (Without K-axis)
+                /// In parallel, K^ = O with 'Vector3.Up'
+                W += (-5.0f * mu_s * g) / (2.0f * R) * t * Vector3.Cross(Vector3.up, nv); 
 
                 ballMoving = true;
             }
@@ -1185,7 +643,7 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
 
         if (balls_P[id].y < 0)
         {
-            V.y = -V.y * K_BOUNCE_FACTOR;  // Once the ball reaches the table, it will bounce. off the slate, //Slate Bounce Integration Attempt, Mabel.
+            V.y = -V.y * K_BOUNCE_FACTOR;  /// Once the ball reaches the table, it will bounce. off the slate, //Slate Bounce Integration Attempt.
             if (V.y < frameGravity)
             {
                 V.y = 0f;
@@ -1194,83 +652,17 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
             balls_P[id].y = 0f;
         }
 
-        V.y -= frameGravity; // Apply Gravity * Time so the airbone balls gets pushed back to the table.
+        V.y -= frameGravity; /// Apply Gravity * Time so the airbone balls gets pushed back to the table.
 
 
         balls_W[id] = W;
         balls_V[id] = V;
 
-        ball.transform.Rotate(this.transform.TransformDirection(W.normalized), W.magnitude * Time.fixedDeltaTime * -Mathf.Rad2Deg, Space.World);
+        ball.transform.Rotate(this.transform.TransformDirection(W.normalized), W.magnitude * k_FIXED_TIME_STEP * -Mathf.Rad2Deg, Space.World);
 
         return ballMoving;
     }
-
-
-        // initial Idea to develop throw, i am putting this here just because it makes sense to the methods name.
-
-        // 1 - First we define a variable that will store the Friction Constant Value of a ball
-
-        // const float k_BALL_BALL_F = 0.08f  https://billiards.colostate.edu/faq/physics/physical-properties/
-
-        // 2 - Next we need to implement a collision detection system to identify when 2 balls come into contact,
-
-        // we have this in a method called `stepOneBall()`
-
-        // 3 - Now a simple implementation could involve checking the distance between the centers of two balls and comparing it to the sum of their radius. (FOR COLISION)
-
-        // 4 - Finally, once a collision is detected, calculate the relative velocity and the relative angular velocity between the two balls. 
-
-        // 5 - PLOT
-
-        // Inside `stepOneball()` we have this below;
-
-        // Vector3 velocityDelta = balls_V[id] - balls_V[i] <- this calculates the Relative Velocity Delta of the balls.
-        // and DOES check IF the distance is less than `k_BALL_DIAMETREPESQ` for a collision to be detected <- (read step 3).
-
-        // lets add: WVDelta = balls_W[id] - balls_W[i]
-
-        // then calculate the frictional Torque of it A.K.A `Throw`:
-        // Vector3 Throw = -k_BALL_BALL_F * WVDelta;
-
-        // This is a simple way to do it, but not accurate yet,
-
-        // Throw, as the name sugest, it is caused by a friction between a Cue Ball and an Object Ball (CB) & (OB) that pushes the (OB) off the expected "line of centers" direction.
-
-        // this is because Throw also depends on the Velocity of the ball (V), to determine the maximum amount of Throw.
-        // (Thats right, the balls doesnt need to be rolling to have friction on them.)
-
-        // this is called CUT-INDUCED THROW or (CIT)
-        // When the Throw is caused by SIDE-SPIN i.e angular velocity, it is called SPIN-INDUCED THROW or (SIT)
-        //  https://www.youtube.com/watch?v=5C7143wIc-M
-
-        // for now, lets apply the torque.
-        // (CB)
-        // ball_W[i] += Throw;
-        // (OB)
-        // ball_W[id] -= Throw;
-
-        // Finally when working with Velocities Implementation anywhere in the code, WE MUST NOT, divide or Multiply anything from its BALL MASS and RADIUS.
-        // Because we already have them stored as a Variable inside Tick_Cue() Method.
-
-        // Equations derived from: http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.89.4627&rep=rep1&type=pdf
-
-    /*
-    private void ModifyAudioProperties(int id, GameObject Ball)
-    {
-        Vector3 V = balls_V[id];
-
-        // Decrease volume and pitch with each bounce
-        audioSource.volume = initialVolume * Mathf.Pow(K_BOUNCE_FACTOR, V.y);
-        audioSource.pitch = initialPitch * Mathf.Pow(K_BOUNCE_FACTOR, V.y);
-    } // We could play a sound of slate for Imersion. (1-1)
-
-    private void ResetAudioProperties()
-    {
-        // Reset volume and pitch when ball comes to rest
-        audioSource.volume = initialVolume;
-        audioSource.pitch = initialPitch;
-    } // We could play a sound of slate for Imersion. (2-2)
-    */
+ 
     // Cue input tracking
 
     Vector3 cue_lpos;
@@ -1335,21 +727,23 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
         return false;
     }
 
-    //h = 7 * k_BALL_RADIUS / 5; h is Height of the contact point at the rail.
-
-    //private float k_SINA = 0f;                  //0.28078832987  SIN(A)
-    //private float k_SINA2 = k_SINA * k_SINA;    //0.07884208619  SIN(A)² <- value of SIN(A) Squared
-    //private float k_COSA = 0f;                  //0.95976971915  COS(A)
-    //private float k_COSA2 = 0f;                 //0.92115791379  COS(A)² <- Value of COS(A) Squared
-    const float k_EP1 = 1.79f;
-    //private float k_A = 21.875f;  //21.875f;      A = (7/(2*m)) 
-    //private float k_B = 6.25f;    //6.25f;        B = (1/m)
-    const float k_F = 1.72909790282f;
-    const float e = 0.85f;
-
+    ///LEGACY
+    /*
+    //const float k_SINA = 0f;                  //0.28078832987  SIN(A)
+    //const float k_SINA2 = k_SINA * k_SINA;    //0.07884208619  SIN(A)² <- value of SIN(A) Squared
+    //const float k_COSA = 0f;                  //0.95976971915  COS(A)
+    //const float k_COSA2 = 0f;                 //0.92115791379  COS(A)² <- Value of COS(A) Squared
+    //const float k_A = 21.875f;  //21.875f;      A = (7/(2*m)) 
+    //const float k_B = 6.25f;    //6.25f;        B = (1/m)
+    //const float k_EP1 = 1.79f;
+    //const float k_F = 1.72909790282f;
+    */
+   
     // Apply cushion bounce
     void _phy_bounce_cushion(int id, Vector3 N)
     {
+        ///LEGACY
+        /*
         // Mathematical expressions derived from: https://billiards.colostate.edu/physics_articles/Mathavan_IMechE_2010.pdf
         //
         // (Note): subscript gamma, u, are used in replacement of Y and Z in these expressions because
@@ -1381,106 +775,99 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
         // Reject bounce if velocity is going the same way as normal
         // this state means we tunneled, but it happens only on the corner
         // vertexes
+        */
+
+         /// Using Han_2005 Model /// ! W.I.P !
 
         Vector3 source_v = balls_V[id];
         if (Vector3.Dot(source_v, N) > 0f)
         {
             //return;
         }
-        else
-        {
-            N = -N;
-        }
 
-        // Rotate V, W to be in the reference frame of cushion
-
-        //Quaternion rq = Quaternion.AngleAxis(Mathf.Atan2(-N.z, -N.x) * Mathf.Rad2Deg, Vector3.up);
-
-
-        float psi = Mathf.Atan2(N.z, N.x) * Mathf.Rad2Deg;                              // Calculate psi (angle in radians)
-        Quaternion rq = Quaternion.AngleAxis(psi, Vector3.up);                          // Create a rotation quaternion rq
+        float psi = Mathf.Atan2(-N.z, -N.x) * Mathf.Rad2Deg;                            /// Calculate psi (angle in radians)
+        Quaternion rq = Quaternion.AngleAxis(psi, Vector3.up);                          /// Create a rotation quaternion rq
 
         Quaternion rb = Quaternion.Inverse(rq);
         Vector3 V = rq * source_v;
         Vector3 W = rq * balls_W[id];
 
-        Vector3 V1; //= Vector3.zero; //Vector3 V1;
-        Vector3 W1; //= Vector3.zero; //Vector3 W1;
+        Vector3 V1 = Vector3.zero; //Vector3 V1;
+        Vector3 W1 = Vector3.zero; //Vector3 W1;
 
-        float θ, phi, h, k_A, k_B, c, e, s, s_x, s_z, mu, I, PY, PX, PZ, P_yE, P_yS;    //Y is Up in Unity
+        float θ, phi, h, k_A, k_B, c, e, s, s_x, s_z, mu, I, PY, PX, PZ, P_yE, P_yS;    /// Y is Up in Unity
 
-        // The angle of Incident [Theta_]
+        /// The angle of Incident [Theta_]
         phi = Mathf.Atan2(V.z, V.x);
         phi = (phi + 2 * Mathf.PI) % (2 * Mathf.PI);
         Debug.Log("<color=cyan>Theta_:</color> " + phi);
 
-        //The friction Coefficient between the ball and rail varies according to the incidence angle [Theta_ (Radians)].
-        mu = 0.471f - 0.241f * phi;                                                   // Dynamic
-        //mu = 0.2f;                                                                      // Const
+        ///The friction Coefficient between the ball and rail varies according to the incidence angle [Theta_ (Radians)].
+
+        mu = 0.471f - 0.241f * phi;                                                     /// Dynamic
+        //mu = 0.16f;                                                                   /// Const
         Debug.Log("<color=yellow>Cushion(μ):</color> " + mu);
 
         ///"h" defines the Height of a cushion, 
         ///sometimes defined as ϵ in other research Papers.. 
         ///(we are doing "h" because better stands fo "height")
 
-        //h = 0.0771525f;                                                               // [measured from the center of the ball to the cushion]  2005  Han Height point of impact
-        h = (7f * k_BALL_RADIUS) / 5f;                                                  // [Measured from table surface to the point of impact]   2010  Mathavan, the height of the contact point at the rail(i.e.I) is h.In both snooker and pool
+        //h = 0.0771525f;                                                               /// [measured from the center of the ball to the cushion]  2005  Han Height point of impact
+        h = (7f * k_BALL_RADIUS) / 5f;                                                  /// [Measured from table surface to the point of impact]   2010  Mathavan, the height of the contact point at the rail(i.e.I) is h.In both snooker and pool
 
-        θ = Mathf.Asin(h / k_BALL_RADIUS - 1f);                                         // θ = height of cushion relative to the ball
-        //θ = Math.Asin((7f * k_BALL_RADIUS) / 5f);
+        θ = Mathf.Asin(h / k_BALL_RADIUS - 1f);                                         /// θ = height of cushion relative to the ball
 
-        float cosθ = Mathf.Cos(θ); // 0.95976971915f; //in use // Mathf.Cos(θ);
-        float sinθ = Mathf.Sin(θ); //0.28078832987f; //in use // Mathf.Sin(θ);
-
-        //phi = Mathf.Atan2(source_v.z, source_v.x) % (2 * Mathf.PI);                   //It was just V instead of V1
-
+        float cosθ = Mathf.Cos(θ); 
+        float sinθ = Mathf.Sin(θ);
         float cosPhi = Mathf.Cos(phi);
 
-        //*is correct* = revised values to match with its necessary Rotation Axis.
+        ///*is correct* = revised values to match with its necessary Rotation Axis.
 
-        s_x = V.x * sinθ - V.y * cosθ + k_BALL_RADIUS * W.z;                            // s_x is correct
-        s_z = ( -V.z - k_BALL_RADIUS * W.y * cosθ + k_BALL_RADIUS * W.x * sinθ);        //s_z is correct
+        s_x = V.x * sinθ - V.y * cosθ + k_BALL_RADIUS * W.z;                            /// s_x is correct
+        s_z = ( -V.z - k_BALL_RADIUS * W.y * cosθ + k_BALL_RADIUS * W.x * sinθ);        /// s_z is correct
 
-        //c = V.x * cosθ; // 2D Assumption
-        c = V.x * cosθ - V.y * sinθ; // 3D Assumption
-        e = 0.85f;                                                                      // Const 
-        //e = (0.39f + 0.257f * V.magnitude - 0.044f * source_v.magnitude);             // Dynamic
+        c = V.x * cosθ; // 2D Assumption
+        //c = V.x * cosθ - V.y * sinθ; // 3D Assumption
+        e = 0.85f;                                                                      /// Const   (Constrained and Provides consistent results)
+        //e = (0.39f + 0.257f * V.magnitude - 0.044f * source_v.magnitude);             /// Dynamic (Han equation, seems to work best on a higher update rate)
 
-        // [Equation 16]
-        ///I = 2 * k_BALL_MASS * Mathf.Pow(k_BALL_RADIUS, 2) / 5;                       // C# INT
+        /// [Equation 16]
+        ///I = 2 * k_BALL_MASS * Mathf.Pow(k_BALL_RADIUS, 2) / 5;                       /// C# INT
 
-        I = 2f / 5f * k_BALL_MASS * Mathf.Pow(k_BALL_RADIUS, 2);                        // Unity Sintax C# FLOAT <- to avoid confusion, A and B are using the same order.
-        k_A = (7f / (2f * k_BALL_MASS));                                                // A is Correct 
-        k_B = (1f / k_BALL_MASS);                                                       // B is Correct
+        I = 2f / 5f * k_BALL_MASS * Mathf.Pow(k_BALL_RADIUS, 2);                        /// Unity Sintax C# FLOAT <- to avoid confusion, A and B are using the same order.
+        k_A = (7f / (2f * k_BALL_MASS));                                                /// A is Correct 
+        k_B = (1f / k_BALL_MASS);                                                       /// B is Correct
 
         // [Equations 17 & 20]
         /// P_zE and P_zS (Remember, Z is up, so we write to Unity's "Y" here.
          
-        P_yE = ((1f + e) * c) / k_B;                                                    // P_yE is Correct
-        P_yS = (Mathf.Sqrt(Mathf.Pow(s_x, 2) + Mathf.Pow(s_z, 2)) / k_A);               // P_yS is Correct (In case of Anomaly, do: Mathf.Sqrt(s_x * s_x + s_z * s_z) instead;
+        P_yE = ((1f + e) * c) / k_B;                                                    /// P_yE is Correct
+        P_yS = (Mathf.Sqrt(Mathf.Pow(s_x, 2) + Mathf.Pow(s_z, 2)) / k_A);               /// P_yS is Correct (In case of Anomaly, do: Mathf.Sqrt(s_x * s_x + s_z * s_z) instead;
 
         if (P_yS <= P_yE)
         {
             // Sliding and sticking case 1-1                                                   1-1
-            PX = -s_x / k_A * sinθ - (1f + e) * c / k_B * cosθ;                          // PX is Correct
-            PZ =  s_z / k_A;                                                             // PZ is correct
-            PY =  s_x / k_A * cosθ - (1f + e) * c / k_B * sinθ;                          // PY is correct     
+            PX = -s_x / k_A * sinθ - (1f + e) * c / k_B * cosθ;                          /// PX is Correct
+            PZ =  s_z / k_A;                                                             /// PZ is correct
+            PY =  s_x / k_A * cosθ - (1f + e) * c / k_B * sinθ;                          /// PY is correct     
         }
         else
         {
             // Forward Sliding Case 1-2                                                        1-2
-            PX = -mu * (1f + e) * c / k_B * cosPhi * sinθ - (1f + e) * c / k_B * cosθ;   // PX is Correct
-            PZ =  mu * (1f + e) * c / k_B * sinθ;                                        // PZ is Correct
-            PY =  mu * (1f + e) * c / k_B * cosPhi * cosθ - (1f + e) * c / k_B * sinθ;   // PY is Correct
+            PX = -mu * (1f + e) * c / k_B * cosPhi * sinθ - (1f + e) * c / k_B * cosθ;   /// PX is Correct
+            PZ =  mu * (1f + e) * c / k_B * sinθ;                                        /// PZ is Correct
+            PY =  mu * (1f + e) * c / k_B * cosPhi * cosθ - (1f + e) * c / k_B * sinθ;   /// PY is Correct
         }
+        float k = (s_z) / (2 * k_BALL_MASS * k_A);
 
-        // Update Velocity                                                               // Update Velocity is Corret
+        // Update Velocity                                                               /// Update Velocity is Corret
         V1.x = V.x += PX / k_BALL_MASS;
         V1.z = V.z += PZ / k_BALL_MASS;
-        V1.y = V.y += PY / k_BALL_MASS;
+        ///V1.y = V.y += PY / k_BALL_MASS; // not yet
 
         // Update Angular Velocity
-        W1.x = W.x += -k_BALL_RADIUS / I * PZ * sinθ;
+        W1.x = k * sinθ;
+        //W1.x = W.x += -k_BALL_RADIUS / I * PZ * sinθ;
         W1.z = W.z += k_BALL_RADIUS / I * (PX * sinθ - PY * cosθ);
         W1.y = W.y += k_BALL_RADIUS / I * PZ * cosθ;
 
@@ -2042,17 +1429,19 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
 
     private void applyPhysics(float V0)
     {
-
+        
+        
         GameObject cuetip = table.activeCue._GetCuetip();
 
         Vector3 q = transform_Surface.InverseTransformDirection(cuetip.transform.forward); // direction of cue in surface space
-        Vector3 o = balls[0].transform.localPosition; // location of ball in surface
+        Vector3 o = balls_P[0];
+        o.y = 0; // location of ball in surface
 
         Vector3 j = -Vector3.ProjectOnPlane(q, transform_Surface.up); // project cue direction onto table surface, gives us j
         Vector3 k = transform_Surface.up;
-        Vector3 i = Vector3.Cross(j, k);
+        Vector3 iVector = Vector3.Cross(j, k);
 
-        Plane jkPlane = new Plane(i, o);
+        Plane jkPlane = new Plane(iVector, o);
 
         Vector3 Q = RaySphere_output; // point of impact in surface space
 
@@ -2084,8 +1473,8 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
 
         // https://billiards.colostate.edu/physics_articles/Alciatore_pool_physics_article.pdf
         float alpha = -Mathf.Atan(
-           (5f / 2f * a / k_BALL_RADIUS * Mathf.Sqrt(1f - Mathf.Pow(a / k_BALL_RADIUS, 2))) /
-           (1 + k_BALL_MASS / m_e + 5f / 2f * (1f - Mathf.Pow(a / k_BALL_RADIUS, 2)))
+            (5f / 2f * a / k_BALL_RADIUS * Mathf.Sqrt(1f - Mathf.Pow(a / k_BALL_RADIUS, 2))) /
+            (1 + k_BALL_MASS / m_e + 5f / 2f * (1f - Mathf.Pow(a / k_BALL_RADIUS, 2)))
         ) * 180 / Mathf.PI;
 
         // rewrite to the axis we expect
@@ -2100,20 +1489,27 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
             table._Log("prevented scooping");
         }
         else if (v.y < 0)
-        {   /*
+        {
             // the ball must not be under the cue after one time step
-            float k_MIN_HORIZONTAL_VEL = (k_BALL_RADIUS - c) / Time.fixedDeltaTime;
+            float k_MIN_HORIZONTAL_VEL = (k_BALL_RADIUS - c) / k_FIXED_TIME_STEP;
             if (v.z < k_MIN_HORIZONTAL_VEL)
             {
                 // not enough strength to be a jump shot
                 v.y = 0;
                 table._Log("not enough strength for jump shot (" + k_MIN_HORIZONTAL_VEL + " vs " + v.z + ")");
             }
-            */
-
+            else
             {
                 // dampen y velocity because the table will eat a lot of energy (we're driving the ball straight into it)
                 v.y = -v.y * K_BOUNCE_FACTOR; //0.35f
+                if (v.y < k_GRAVITY * k_FIXED_TIME_STEP)
+                {
+                    v.y = 0f;
+                }
+                else
+                {
+                    table._TriggerJumpShot();
+                }
                 table._Log("dampening to " + v.y);
             }
         }
@@ -2129,280 +1525,7 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
         // done
         balls_V[0] = v;
         balls_W[0] = w;
+        
     }
 
-
-    
-    public float Theta;
-    public float cosPhi;
-    public float sinPhi;
-    public float CutAngle;
-    public float throwAngleDegrees;
-    public float throwDegrees;
-
-    void CalculateThrowAngle(float speed, int id, uint sn_pocketed, bool[] moved)
-    {
-        uint ball_bit = 0x1U << id;
-        for (int i = id + 1; i < 16; i++)
-        {
-
-            /// Everything with an Underscore `_` is related to the [Object ball], and everything without is related to the [Cue Ball].
-            /// 
-            /// Every equation here is from paper with purpose for debug and plot, in the paper we have Greek Letters, and although they may not be consistent with other papers, 
-            /// i have placed notes to help guide you [Since i am writting this for me in the time being], i will only write descriptive Variables once what i done in paper is consistent with the code.
-            /// so To keep it simple: [assuming you know essential vocabulary from the world of Billiards]
-            /// 
-            /// φ = Cut Angle
-            /// θ = Throw Angle
-            /// μ = Friction
-            /// 
-            /// Those are the only Greek Leters we have.
-
-
-            float V_t;   //tangential direction OB [After Impact], Throw Angle θ, And the Cosine and Sine of the Cut Angle.
-            float μ = 0.06f;
-            float e = 0.92f;            // Replace with the desired restitution coefficient
-            float m = 1.0f;             // mass of the object
-            float R = k_BALL_RADIUS;    // radius of the object
-            //float v = 5.0f;           // velocity magnitude [ Already Defined Down Below, under the /// V & W section = Line 2228 ]
-
-           
-            /// Normal [Colision DETECTION]
-            Vector3 delta = balls_P[id] - balls_P[i];
-            float dist = delta.sqrMagnitude;
-            dist = Mathf.Sqrt(dist);
-            Vector3 normal = delta / dist;
-
-            /// V & W
-            Vector3 relativeVelocity = balls_V[id] - balls_V[i];
-            Vector3 relativeAngularVelocity = balls_W[id] - balls_W[i];
-
-            float Vmag = Vector3.Dot(relativeVelocity, normal);                                             // Calculate velocity magnitude [Vmag]  (Note, this is written the same as "V_n"    - Pay attention to context in paper = Magnitude;    =   is a scalar quantity that represents the size or "amount" of a vector or any other mathematical quantity,
-            float V_n = Vector3.Dot(relativeVelocity, normal);                                              // Calculate Normal direction   [V_n]   (Note, this is written the same as "Vmag"   - Pay attention to context in paper = Velocity;     =   [Velocity] is a vector quantity that includes both the speed(Magnitude) of an object and its direction of motion "->". = It tells you how fast an object is moving and in which direction.  [Velocity can be positive, negative, or zero.]
-            float Fn = ((1 + e) / 2) * m * Vmag;                                                            // Normal Impulse               [Fn]
-            CutAngle = Vector3.SignedAngle(relativeVelocity, normal, Vector3.up) * Mathf.Deg2Rad;     // Return Cut Angle + Sign      [CA]
-            cosPhi = Mathf.Cos(CutAngle);
-            sinPhi = Mathf.Sin(CutAngle);
-
-
-            /// PLOT FOR SIT - [Simplified] https://billiards.colostate.edu/technical_proofs/TP_4-3.pdf
-
-            Fn = m * V_n;                                       // The normal [linear] impulse (F' [Fn]) is related to the final object ball speed in the normal direction V'n [V_n]:
-
-            /// m * V_t = μ * Fn = μ * Fn;                      /// From linear impulse and momentum in the tangential direction
-
-            V_t = μ * V_n;                                      // So the final object ball speed in the tangential direction is given by [Vt = μVn]
-
-            //Therefore, the throw angle is given by:
-            //Theta = Mathf.Atan(V_t / V_n);  // = atan(μ)
-
-            //Theta = Mathf.Atan(μ);       
-
-            /// END
-
-
-
-
-            /// PLOT FOR CIT [Simplified] https://billiards.colostate.edu/technical_proofs/TP_4-4.pdf
-
-            V_n = e * Vmag * cosPhi;                              // Object ball speed in the normal direction from the coefficient of restitution:
-
-
-            /// Assuming that all speed in the normal direction is delivered from the cue ball to the object ball, This means any ball on the table that has the greatest Magnitude in velocity; thus, transfering the momentum Impact, into the other ball.
-
-            // Fn = m * Vmag * cosφ = m * V_n / e;      <-  // From [linear] impulse & momentum in the:  * Normal   direction *; 
-
-            // m * V_t = μ * Fn = μ * m * V_n / e;      <-  // From [linear] impulse & momentum in the:  * Tangent  direction *:
-
-            
-            /// so
-
-            V_t = μ * V_n / e;
-
-            //Therefore, the throw angle is given by:
-            Theta = Mathf.Atan(V_t / V_n);  // = atan(μ/e)
-
-            //Theta = Mathf.Atan(μ / e);
-
-            //
-
-
-
-
-            /// SIT AND CIT COMBINED [Complex] https://billiards.colostate.edu/technical_proofs/new/TP_A-14.pdf
-            /// This is where it gets fancy, the paper now uses the letter "B" to define: "the velocity of the point of contact between the cue ball and the object ball" 
-            /// 
-            /// and it is written as "Vb->" (With an arrow "->" that sits on top of the Variable, which indicates its a "Vector Direction" (A.K.A a Velocity with a Direction Vector)
-            /// 
-            /// This Direction Vector could be our Normal Direction, which is a dot product from where both balls colide, however, lets interpret this reading again: "the velocity of the point of contact between"
-            /// 
-            /// In our UpdateVelocity() Method, we do "the velocity of the point of contact between Ball-TO-Table" as: u0 = VXZ + Vector3.Cross(k_CONTACT_POINT, W);
-            /// which in paper is given by "C" and we used "Vector3 u0;" where "u0" Defines the Initial Velocity of the ball into the table, which is beggins as "Sliding"
-            /// 
-            /// so:
-            /// 
-            /// "Vector Direction" = "Normal Direction" = "V_n" Right?
-            /// Yes and No...
-            /// 
-            /// We can basically do the same exact formula we use for Ball-TO-Table, in Ball-TO-Ball.
-            /// so:
-            /// 
-            /// Equation 1 from TP_A-14 is:
-
-            GameObject cueBall = balls[id];                             // balls[id] is the cue ball
-            GameObject objectBall = balls[i];                           // balls[i] is the object ball  [This might be inverted, but its an easy fix]
-
-            Vector3 centerOf_CB = cueBall.transform.position;
-            Vector3 centerOf_OB = objectBall.transform.position;
-
-            Vector3 CB_To_OB = centerOf_OB - centerOf_CB;
-
-            Vector3 R_bo = CB_To_OB;
-
-            Vector3 V_contact_Point_between_the_CB_and_OB;
-            
-            V_contact_Point_between_the_CB_and_OB = relativeVelocity + Vector3.Cross(relativeAngularVelocity, R_bo);    //the velocity of [on] the point of contact "B" between the cue ball and the object ball, at impact is:
-
-
-            /// Expressing this vector in tangential and normal components
-
-            Vector3 normalVector = R_bo.normalized;                     // Normal Vector
-            Vector3 tangentVector = Vector3.Cross(normalVector, R_bo);  // Tangent Vector
-
-            float V_normal = Vector3.Dot(V_contact_Point_between_the_CB_and_OB, normalVector);      // Normal Component [V_n]
-            float V_tangent = Vector3.Dot(V_contact_Point_between_the_CB_and_OB, tangentVector);    // Tangential Component [V_t]
-
-
-            /// Now, we have V_normal and V_tangent, which represent the normal and tangential components of the [velocity at the contact point between the CB and OB]
-            /// Therefore, the relative "sliding" velocity vector for the point of contact between the cue ball and object ball can be expressed as:
-            
-            Vector3 relativeSlidingVelocity = V_tangent * tangentVector + V_normal * normalVector;
-
-
-            /// "because the `V_normal` component, which creates the impact forces, does not contribute to the relative sliding. The friction force on the object ball acts in the direction of the sliding velocity vector:"
-            /// we can focus solely on the tangential component. In that case, the relative sliding velocity vector is just the tangential component:
-
-            Vector3 relativeSlidingVelocity_W_O_N = V_tangent * tangentVector;  /// This vector represents the sliding motion between the cue ball and the object ball at the point of contact,
-                                                                                /// (W_O_N) = With-out-Normal                                       /// without considering the impact forces by the normal component.
-                                                                                /// It describes how the cue ball is moving tangentially relative to the object ball at that specific point during the collision.
-
-
-            
-            
-            /// the normal impulse between the cue ball and object ball, assuming a perfectly elastic collision, is:
-            
-            
-            float mass_cueball = k_BALL_MASS;       // 
-            float mass_objectball = k_BALL_MASS;    // This allow us to plot what happens with different masses, which is pretty cool.
-
-
-            float reducedMass = (mass_cueball * mass_objectball) / (mass_cueball + mass_objectball);    // Calculate the reduced mass
-
-
-            float Fn_Impulse_Normal = 2 * reducedMass * V_normal;                                       // Calculate the normal impulse [Fn]
-
-
-            float Ft_Impulse_Max = μ * Fn_Impulse_Normal;                                               // Calculate the maximum possible frictional impulse.
-
- 
-            float Ft_Impulse = μ * Fn_Impulse_Normal;                                                   // Calculate the tangential impulse
-
-           
-            float V_tangent_after = V_tangent - Ft_Impulse / reducedMass;                               // Calculate the relative tangential speed after impact
-
-            
-            float V_tangent_after_max = V_tangent;                                                      // Calculate the maximum post-impact tangential speed
-
-
-            float Ft_Impulse_Max_F = V_tangent * reducedMass;                                           // Calculate the maximum possible friction impulse based on the relative speed constraint
-
-            
-            
-
-            /// we can now determine the post-impact object ball tangential speed based on which effect is the most limiting(friction or kinematics):
-
-            float V_tangent_after_friction = V_tangent - Ft_Impulse_Max / reducedMass;                  // Calculate the post-impact object ball tangential speed based on the [maximum possible friction impulse]:
-
-            float V_tangent_after_kinematics = V_tangent;                                               // Calculate the post-impact object ball tangential speed based on the [relative speed kinematics constraint]:
-
-            float postImpactTangentialSpeed;
-
-            // Compare the two values and choose the lower one as the post-impact tangential speed:
-            if (V_tangent_after_friction < V_tangent_after_kinematics)
-            {
-                postImpactTangentialSpeed = V_tangent_after_friction;
-            }
-            else
-            {
-                postImpactTangentialSpeed = V_tangent_after_kinematics;
-            }
-
-
-            
-            float V_normal_after = (Fn_Impulse_Normal / mass_objectball) + V_normal;                    // Calculate the normal component of the post-impact object ball velocity
-
-            
-            float throwAngleRad = Mathf.Atan2(V_normal_after, V_tangent_after);                         // Calculate the object ball's throw angle in radians
-
-            
-            float throwAngleDegrees = throwAngleRad * Mathf.Rad2Deg;                                    // Convert the angle to degrees if needed
-
-
-            /*
-            /// However these might not be taking the Angular Velocity into account
-            /// So from now on we can write it manually like this just to confirm:
-            
-            float Fn_Impulse_Normal = m * Vmag * cosφ;
-
-            float Pow_1 = Mathf.Pow(Vmag * sinφ - R * balls_W[i].z, 2);
-            float Pow_2 = Mathf.Pow(R * balls_W[i].x * cosφ, 2);
-
-            float term_1 = μ * m * Vmag * cosφ * (Vmag * sinφ - R * balls_W[i].z);
-            float term_2 = Mathf.Sqrt(Pow_1 + Pow_2);
-
-            float Ft_Impulse_Max = term_1 / term_2;
-            */
-
-
-        }
-
-
-            
-
-    }
-   
-    /*
-    public float minSpeed = 1.0f;
-    public float maxSpeed = 10.0f;
-    public int numDataPoints = 100;
-
-    void CalculateAndStoreData(float id)
-    {
-        float[] speeds = new float[numDataPoints];
-        float[] throwAngles = new float[numDataPoints];
-        float[] percentEnglishValues = new float[numDataPoints];
-
-        for (int i = 0; i < numDataPoints; i++)
-        {
-            float speed = Mathf.Lerp(minSpeed, maxSpeed, (float)i / (numDataPoints - 1));
-            // Calculate throwAngle and percentEnglish for each speed
-            // Store them in the respective arrays
-            speeds[i] = speed;
-            throwAngles[i] = CalculateThrowAngle(speed); // You need to implement this method
-            percentEnglishValues[i] = CalculatePercentEnglish(speed); // You need to implement this method
-        }
-    }
-
-    void OnDrawGizmosSelected()
-    {
-        CalculateAndStoreData();
-
-        for (int i = 0; i < numDataPoints - 1; i++)
-        {
-            Vector3 startPoint = new Vector3(speeds[i], throwAngles[i], 0);
-            Vector3 endPoint = new Vector3(speeds[i + 1], throwAngles[i + 1], 0);
-            Gizmos.DrawLine(startPoint, endPoint);
-        }
-    }
-    */
 }
