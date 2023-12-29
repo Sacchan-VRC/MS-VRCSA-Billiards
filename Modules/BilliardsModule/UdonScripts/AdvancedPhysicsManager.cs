@@ -9,7 +9,7 @@ using VRC.Udon;
 [UdonBehaviourSyncMode(BehaviourSyncMode.NoVariableSync)]
 public class AdvancedPhysicsManager : UdonSharpBehaviour
 {
-    public string PHYSICSNAME = "<color=#FFD700>Advanced W.I.P</color>";
+    public string PHYSICSNAME = "<color=#FFD700>Advanced V1</color>";
 #if HT_QUEST
    private  float k_MAX_DELTA =  0.05f; // Private Const Float 0.05f max time to process per frame on quest (~4)
 #else
@@ -260,7 +260,7 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
             balls_P[0] += deltaPos;
             moved[0] = deltaPos != Vector3.zero;
 
-            ballsMoving |= stepOneBall(0, sn_pocketed, moved);
+            ballsMoving |= stepOneBall(0, sn_pocketed, moved, new Vector3(0, 0, 0));
         }
 
         // Run main simulation / inter-ball collision
@@ -276,7 +276,7 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
                 balls_P[i] += deltaPos;
                 moved[i] = deltaPos != Vector3.zero;
 
-                ballsMoving |= stepOneBall(i, sn_pocketed, moved);
+                ballsMoving |= stepOneBall(i, sn_pocketed, moved, new Vector3(0, 0, 0));
             }
         }
         table._EndPerf(table.PERF_PHYSICS_BALL);
@@ -402,19 +402,24 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
 
         return originalDelta;
     }
-   
+
     // Advance simulation 1 step for ball id
-    private bool stepOneBall(int id, uint sn_pocketed, bool[] moved)
+    private bool stepOneBall(int id, uint sn_pocketed, bool[] moved, Vector3 normal)
     {
         GameObject g_ball_current = balls[id];
-       
-        /// LOG DEPENDENCIES
-        /*
         GameObject cueBall = balls[0];
         GameObject nine_Ball = balls[9];
-        */
+
 
         bool isBallMoving = false;
+
+
+        // ballDebugVisualizer(sn_pocketed, normal, id);
+
+
+        // Draw a debug line that could represent the normal velocity vector
+        // Debug.DrawRay(cueBall.transform.position, nine_Ball.transform.position - cueBall.transform.position, Color.red);
+
 
         // no point updating velocity if ball isn't moving
         if (balls_V[id] != Vector3.zero || balls_W[id] != Vector3.zero)
@@ -422,98 +427,55 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
             isBallMoving = updateVelocity(id, g_ball_current);
         }
 
+
         moved[id] |= isBallMoving;
+
 
         // check for collisions. a non-moving ball might be collided by a moving one
         uint ball_bit = 0x1U << id;
         for (int i = id + 1; i < 16; i++)
         {
+
             ball_bit <<= 1;
-            
+
+
             if ((ball_bit & sn_pocketed) != 0U)
                 continue;
 
-            /// DRAWS DIRECTION VECTOR RAY
-            /*
-            GameObject ball = balls[i];
-            Vector3 ballPosition = ball.transform.position;
-            Vector3 ballVelocity = balls_V[i];
-            Vector3 normalizedVelocity = ballVelocity.normalized;
-            Debug.DrawRay(ballPosition, new Vector3(-normalizedVelocity.x, 0, -normalizedVelocity.z) * 1f, Color.magenta);
-            */
 
-            // Checks if the Balls (Spheres) are colliding.
-
-            Vector3 delta = balls_P[i] - balls_P[id];           /// Relative Displacement between balls from its absolute center point
-
-            float mu_b = k_BALL_BALL_F;                         /// Coefficient of friction
-            float e = k_BALL_E;                                 /// Coefficient of restitution
-            float m = k_BALL_MASS;                              /// Mass of the ball
+            Vector3 delta = balls_P[i] - balls_P[id];
             float dist = delta.sqrMagnitude;
-            
-            ///LOG
-            /*
-            // Draw a debug line that could represent the normal velocity vector
-            Debug.DrawRay(cueBall.transform.position, nine_Ball.transform.position - cueBall.transform.position, Color.red);
 
-            // Draw a line representing the initial velocity vector of the ball
-            Debug.DrawRay(cueBall.transform.position, -new Vector3(balls_V[0].x,0,balls_V[0].z).normalized * 2f, Color.blue);
-            */
 
-            if (dist < k_BALL_DIAMETREPESQ)
+            if (dist < k_BALL_DIAMETREPESQ) //k_BALL_DIAMETER_SQ
             {
                 dist = Mathf.Sqrt(dist);
-                Vector3 normal = delta / dist;  //avoid Overlapping at all cost
+                normal = delta / dist;
 
-                // static resolution
-
-                Vector3 res = (k_BALL_DIAMETRE - dist) * normal;
-
-                balls_P[i] += res;
-                balls_P[id] -= res;
+                // Static resolution
+                Vector3 resolution = (k_BALL_DIAMETRE - dist) * normal;
+                balls_P[i] += resolution;
+                balls_P[id] -= resolution;
                 moved[i] = true;
                 moved[id] = true;
 
-                ///  Dynamic resolution
-                ///  Very simplistic implementation of throw effects, where it mostly Emulates Rather than Simulates, 
-                ///  because UDON is super slow
-                ///  in the meantime this may lead to some bugs.
-                ///  So this is a "playable" W.I.P version.
 
-                float cr = e; 
-
-                Vector3 relativeVelocity = balls_V[i] - balls_V[id];
-                float dot = Vector3.Dot(relativeVelocity, normal);
-                float normalImpulse = (1.0f + cr) * dot / (1f / m + 1f / m);
+                // Handle collision effects
+                HandleCollision(i, id, normal, 0, delta);
 
 
-                /// Apply forces in the normal direction
-                balls_V[id] += normalImpulse * normal / m;
-                balls_V[i] -= normalImpulse * normal / m;
+                /// DEBUG VISUALIZATION BLOCK
 
 
-                Vector3 angularVelocity = Vector3.Cross(balls_W[id], k_BALL_RADIUS * normal) - Vector3.Cross(balls_W[i], k_BALL_RADIUS * normal);
-                Vector3 frictionForce = -mu_b * angularVelocity;
+                Vector3 relativeVelocity = balls_V[id] - balls_V[i];
+                float v = Vector3.Dot(relativeVelocity, normal);
 
 
-                balls_V[i] += frictionForce;
-                balls_V[id] -= frictionForce;
-
-                
-                float angleOfImpact = Vector3.SignedAngle(relativeVelocity, normal, Vector3.up) * Mathf.Deg2Rad;              
-                float epsilon = 0.01f; /// small constant to prevent division by zero
-                float cutForceMagnitude = mu_b * Mathf.Sin(angleOfImpact) / (relativeVelocity.magnitude + epsilon);
-                         
-
-                Vector3 cutForce = cutForceMagnitude * Vector3.Cross(relativeVelocity, Vector3.up);
-                balls_V[i] += cutForce;
+                Vector3 normalVelocityDirection = v * normal.normalized;
+                Debug.DrawLine(balls[9].transform.position, balls[9].transform.position - normalVelocityDirection * 5f, Color.blue, 4f);
 
 
-                Vector3 angularImpulse = Vector3.Cross(delta, cutForce + frictionForce);
-                balls_W[i] += angularImpulse;
-                balls_W[id] -= angularImpulse;
-
-                /// Prevent sound spam if it happens
+                // Prevent sound spam if it happens
                 if (balls_V[id].sqrMagnitude > 0 && balls_V[i].sqrMagnitude > 0)
                 {
                     g_ball_current.GetComponent<AudioSource>().PlayOneShot(hitSounds[id % 3], Mathf.Clamp01(normal.magnitude));
@@ -525,6 +487,194 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
 
         return isBallMoving;
     }
+
+    void HandleCollision(int i, int id, Vector3 normal, float e, Vector3 delta)
+    {
+
+        // Moment of inertia of a perfect sphere
+        float I = 2f / 5f * k_BALL_MASS * Mathf.Pow(k_BALL_RADIUS, 2f);
+
+        // Relative velocity
+        Vector3 relativeVelocity = balls_V[id] - balls_V[i];
+
+        // Relative Angulat velocity
+        Vector3 relativeAngularVelocity = balls_W[id] - balls_W[i];
+
+        e = 0.9187755f;
+
+
+        /// Tagential Impulses caused by friction is [Vt = µVn / e] 
+        /// which leads to a simple formula of to get the throw angle [Throw Angle = atan(Vt/Vn)] which is [atan(µ/e)]
+        /// (µ)friction and COR vary with speed and cut angle as [Vn] carry the value of (e) and [Vt] carry the value (µ), hence: atan(µ/e)
+
+
+        ///NORMAL IMPULSE WITH COR
+
+        // Calculate normal impulse (F') // Relative Velocity Along the Normal. [DOT]
+        float alongNormal = Vector3.Dot(relativeVelocity, normal);
+
+        /// Impulse along the normal [Vn]
+        float impulse = (1f + e) * alongNormal / (1f / k_BALL_MASS + 1f / k_BALL_MASS);
+        //impulse = ((1 + e)/2) * alongNormal * k_BALL_MASS; /// Simplified (Fn' = 1+e/2 * mv)
+
+        // Apply impulses to update velocities
+        balls_V[i] += impulse * normal / k_BALL_MASS;
+        balls_V[id] -= impulse * normal / k_BALL_MASS;
+
+
+        /// Can also be written as
+        /*
+        float COR = (1f + e);
+        float alongNormal = Vector3.Dot(relativeVelocity, normal);  // numerator [dot]
+        float denominator_mass = ( k_BALL_MASS +  k_BALL_MASS );    // denominator
+ 
+        float j = COR * alongNormal / denominator_mass;
+
+        Vector3 impulse = j * normal;
+
+        balls_V[i] += impulse * k_BALL_MASS;
+        balls_V[id] -= impulse * k_BALL_MASS;
+        */
+        /// ^ however, it needs attention to the rest of the code below for tangential calculation,
+        /// because J is the <impulse> in scalar value, while <'impulse'> is in Vector3 multiplied by the normal.
+
+
+        /// PREPARING VARIABLES FOR TORQUE CAUSED BY TANGENTIAL IMPULSE TO INDUCE SPIN.
+
+        // the positions of the balls from their absolute center, and the contact point.
+        Vector3 ballPosition1 = balls_P[i];
+        Vector3 ballPosition2 = balls_P[id];
+        Vector3 contactPoint = balls_P[id] + k_BALL_RADIUS * normal;
+
+        // Calculate lever arms
+        Vector3 r1 = contactPoint - ballPosition1;
+        Vector3 r2 = contactPoint - ballPosition2;
+
+        ///
+
+
+        /// NORMAL IMPULSE WITH FRICTION (A.K.A TANGENTIAL IMPULSE)
+
+        // Calculate tangential impulse (Ft) // Tangent Vector
+        Vector3 tangent = relativeVelocity - alongNormal * normal;
+
+        // Adjust tangent to include relative angular velocity
+        tangent -= Vector3.Cross((relativeAngularVelocity * 0.03571f), r2 - r1);
+
+        float staticFriction = (0.03f); // Friction Constant / Static (This value should be equal or higher than the Dynamic Friction
+        float dynamicFriction = (0.06f / relativeVelocity.magnitude); // Friction Dynamic.. /// NOW OBSOLETE
+
+
+        /// (friction of BALL A + firction of BALL B / 2) Assumes both balls have equal surface roughness at all times. 
+        /// You can tune this value on the reference float above. or simplify this float as SF = 0.3f if you dont plan to randomize each ball roughness at start or as game progresses.
+        /// this formula follows the idea (which can be improved, and implemented) to emulate real life dynamics such as cling, skid or kick) between ball roughness surfaces as game develops, 
+        /// chalk marks the balls and referees needs to clean the ball when a player solicitates to do so.
+        /// so its here in case i forgot and only god knows.
+
+        //float SF = (staticFriction + staticFriction) / 2f;
+        //float DF = (dynamicFriction + dynamicFriction) / 2f;
+
+
+        if (Mathf.Approximately(tangent.magnitude, Vector3.zero.magnitude))
+        {
+            return;
+        }
+        else
+        {
+            tangent = tangent.normalized;
+        }
+
+
+        // Impulse along the Tangent Resolution [DOT]
+        float impulseTangent = (-Vector3.Dot(relativeVelocity, tangent) / (1f / k_BALL_MASS + 1f / k_BALL_MASS)); //+ (-Vector3.Dot(relativeVelocity, tangent) / (1f / I + 1f / I));
+        Vector3 frictionImpulse = Vector3.zero;
+
+
+        ///Coulomb's law
+        if (Mathf.Abs(tangent.magnitude) <= impulse * staticFriction)
+        {
+            frictionImpulse = impulseTangent * tangent;
+        }
+        else
+        {
+            frictionImpulse = -impulse * tangent * dynamicFriction; // Angle between normal and tangent //
+        }
+
+
+        // Calculate torque using lever arms and friction impulse
+        Vector3 torque1 = Vector3.Cross(r1, frictionImpulse);
+        Vector3 torque2 = Vector3.Cross(r2, -frictionImpulse);
+
+
+        // Apply impulses to update velocities
+        balls_V[i] -= frictionImpulse / k_BALL_MASS;
+        balls_V[id] += frictionImpulse / k_BALL_MASS;
+
+
+        //2
+        //balls_V[i] -= new Vector3(angleBetweenNormalAndTangent, angleBetweenNormalAndTangent, angleBetweenNormalAndTangent) * k_BALL_MASS;
+        //balls_V[id] += new Vector3(angleBetweenNormalAndTangent, angleBetweenNormalAndTangent, angleBetweenNormalAndTangent) * k_BALL_MASS;
+
+
+        // Update angular velocity
+        balls_W[i] += torque1 / I;
+        balls_W[id] -= torque2 / I;
+
+
+        /// DEBUG LIST
+
+
+        // Cal cut angle and print   
+        float cutAngle = Mathf.Acos(alongNormal / tangent.magnitude) * Mathf.Rad2Deg;
+        Debug.Log("<color=cyan>Cut Angle ϕ:=</color> " + Vector3.SignedAngle(relativeVelocity, normal, Vector3.up));
+
+        // Cal Throw Angle (Between Vt and Vn) [Must use their Dot Products]
+        //float angleBetweenNormalAndTangent = Mathf.Atan(impulseTangent / alongNormal); // Already declared
+        float angleBetweenNormalAndTangent = Mathf.Atan2(tangent.magnitude, alongNormal);
+
+        // Debug log for the angle
+        //Debug.Log("<color=yellow>Angle between normal and tangent = [Throw angle tan(θ)]:=</color> " + (angleBetweenNormalAndTangent * Mathf.Rad2Deg));
+        // Debug log for the angle as a factor of speed
+        //Debug.Log("<color=green>Angle between normal and tangent = [Throw angle tan(θ)]:=</color> " + (angleBetweenNormalAndTangent * Mathf.Rad2Deg) / relativeVelocity.magnitude);
+
+        // Debug log for torque values
+        Debug.Log("Torque 1: " + torque1);
+        Debug.Log("Torque 2: " + torque2);
+
+    }
+
+    /// DEBUG
+    void ballDebugVisualizer(uint sn_pocketed, Vector3 normal, int id)
+    {
+        for (int i = id; i < 16; i++)
+        {
+            // Skip if the ball is pocketed
+            if (((0x1U << i) & sn_pocketed) != 0U)
+                continue;
+
+            Vector3 relativeVelocity = balls_V[i] - balls_V[id];
+            float alongNormal = Vector3.Dot(relativeVelocity, normal);
+            Vector3 velocityDirection = alongNormal * normal;
+
+            Vector3 ballCenter = balls_P[i]; // Absolute center of the ball
+
+            Debug.DrawRay(balls_P[0], balls_V[0] + velocityDirection.normalized * 8f, Color.blue);
+            Debug.DrawRay(balls_P[9], balls_V[9] + velocityDirection.normalized * 8f, Color.green);
+
+            //Debug.DrawLine(balls_P[0], balls_P[0] + velocityDirection.normalized * 8f, Color.blue, 2f);
+
+            // Draw red lines from the center of the current ball to the center of every other ball
+            for (int j = 0; j < 16; j++)
+            {
+                if (i != j && ((0x1U << j) & sn_pocketed) == 0U) // Skip the same ball and pocketed balls
+                {
+                    //Debug.DrawRay(ballCenter, balls_P[j] - ballCenter, Color.red);
+
+                }
+            }
+        }
+    }
+    ///
 
     private bool updateVelocity(int id, GameObject ball)
     {
