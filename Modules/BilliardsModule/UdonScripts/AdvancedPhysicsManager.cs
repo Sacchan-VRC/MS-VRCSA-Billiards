@@ -9,7 +9,7 @@ using VRC.Udon;
 [UdonBehaviourSyncMode(BehaviourSyncMode.NoVariableSync)]
 public class AdvancedPhysicsManager : UdonSharpBehaviour
 {
-    public string PHYSICSNAME = "<color=#FFD700>Advanced V1</color>";
+    public string PHYSICSNAME = "<color=#FFD700>Advanced V0.1</color>";
 #if HT_QUEST
    private  float k_MAX_DELTA =  0.05f; // Private Const Float 0.05f max time to process per frame on quest (~4)
 #else
@@ -561,18 +561,8 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
         // Adjust tangent to include relative angular velocity
         tangent -= Vector3.Cross((relativeAngularVelocity * 0.03571f), r2 - r1);
 
-        float staticFriction = (0.03f); // Friction Constant / Static (This value should be equal or higher than the Dynamic Friction
-        float dynamicFriction = (0.06f / relativeVelocity.magnitude); // Friction Dynamic.. /// NOW OBSOLETE
-
-
-        /// (friction of BALL A + firction of BALL B / 2) Assumes both balls have equal surface roughness at all times. 
-        /// You can tune this value on the reference float above. or simplify this float as SF = 0.3f if you dont plan to randomize each ball roughness at start or as game progresses.
-        /// this formula follows the idea (which can be improved, and implemented) to emulate real life dynamics such as cling, skid or kick) between ball roughness surfaces as game develops, 
-        /// chalk marks the balls and referees needs to clean the ball when a player solicitates to do so.
-        /// so its here in case i forgot and only god knows.
-
-        //float SF = (staticFriction + staticFriction) / 2f;
-        //float DF = (dynamicFriction + dynamicFriction) / 2f;
+        float staticFriction = (0.03f); // Friction Constant / Static
+        float dynamicFriction = (0.06f / relativeVelocity.magnitude); // Friction Dynamic
 
 
         if (Mathf.Approximately(tangent.magnitude, Vector3.zero.magnitude))
@@ -605,16 +595,9 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
         Vector3 torque1 = Vector3.Cross(r1, frictionImpulse);
         Vector3 torque2 = Vector3.Cross(r2, -frictionImpulse);
 
-
         // Apply impulses to update velocities
         balls_V[i] -= frictionImpulse / k_BALL_MASS;
         balls_V[id] += frictionImpulse / k_BALL_MASS;
-
-
-        //2
-        //balls_V[i] -= new Vector3(angleBetweenNormalAndTangent, angleBetweenNormalAndTangent, angleBetweenNormalAndTangent) * k_BALL_MASS;
-        //balls_V[id] += new Vector3(angleBetweenNormalAndTangent, angleBetweenNormalAndTangent, angleBetweenNormalAndTangent) * k_BALL_MASS;
-
 
         // Update angular velocity
         balls_W[i] += torque1 / I;
