@@ -1054,10 +1054,10 @@ public class BilliardsModule : UdonSharpBehaviour
 
         _LogInfo($"onRemoteFoulStateChanged foulState={foulStateSynced}");
         foulStateLocal = foulStateSynced;
-
+        bool myTurn = isMyTurn();
         if (isSnooker6Red)//enable SnookerUndo button if foul
         {
-            if (fourBallCueBallLocal > 0 && foulStateLocal > 0)
+            if (fourBallCueBallLocal > 0 && foulStateLocal > 0 && myTurn)
             {
                 menuManager._EnableSnookerUndoMenu();
             }
@@ -1067,7 +1067,7 @@ public class BilliardsModule : UdonSharpBehaviour
             }
         }
 
-        if (!isMyTurn() || foulStateLocal == 0)
+        if (!myTurn || foulStateLocal == 0)
         {
             isReposition = false;
             setFoulPickupEnabled(false);
