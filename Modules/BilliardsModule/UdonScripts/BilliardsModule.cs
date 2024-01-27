@@ -618,7 +618,7 @@ public class BilliardsModule : UdonSharpBehaviour
         onRemoteFourBallScoresUpdated(networkingManager.fourBallScoresSynced);
         onRemoteFoulStateChanged(networkingManager.foulStateSynced);
         onRemoteIsTableOpenChanged(networkingManager.isTableOpenSynced, networkingManager.teamColorSynced, joinedDuringMatch);
-        onRemoteTurnStateChanged(networkingManager.turnStateSynced, joinedDuringMatch);
+        onRemoteTurnStateChanged(networkingManager.turnStateSynced, joinedDuringMatch || foulStateLocal == 6 /* snookerundo */);
         onRemotePreviewWinningTeamChanged(networkingManager.previewWinningTeamSynced);
         onRemoteColorTurnChanged(networkingManager.colorTurnSynced);
 
@@ -1003,14 +1003,21 @@ public class BilliardsModule : UdonSharpBehaviour
     private void onRemoteFourBallCueBallChanged(uint fourBallCueBallSynced, bool forceUpdate)
     {
         if (!gameLive) return;
-        if (!forceUpdate && fourBallCueBallLocal == fourBallCueBallSynced) return;
+        bool valueUnchanged = fourBallCueBallLocal == fourBallCueBallSynced;
+        if (!forceUpdate)
+        {
+            if (valueUnchanged)
+            {
+                return;
+            }
+            else _LogInfo($"onRemoteFourBallCueBallChanged cueBall={fourBallCueBallSynced}");
+        }
         if (isSnooker6Red)//reusing this variable for the number of fouls/repeated shots in a row in snooker
         {
             fourBallCueBallLocal = fourBallCueBallSynced;
         }
         if (!is4Ball) return;
 
-        _LogInfo($"onRemoteFourBallCueBallChanged cueBall={fourBallCueBallSynced}");
         fourBallCueBallLocal = fourBallCueBallSynced;
 
         graphicsManager._UpdateFourBallCueBallTextures(fourBallCueBallLocal);
@@ -1020,9 +1027,15 @@ public class BilliardsModule : UdonSharpBehaviour
     {
         if (!gameLive) return;
 
-        if (!forceUpdate && (teamColorLocal == teamColorSynced && isTableOpenLocal == isTableOpenSynced)) return;
-
-        _LogInfo($"onRemoteIsTableOpenChanged isTableOpen={isTableOpenSynced} teamColor={teamColorSynced}");
+        bool valueUnchanged = (teamColorLocal == teamColorSynced && isTableOpenLocal == isTableOpenSynced);
+        if (!forceUpdate)
+        {
+            if (valueUnchanged)
+            {
+                return;
+            }
+            else _LogInfo($"onRemoteIsTableOpenChanged isTableOpen={isTableOpenSynced} teamColor={teamColorSynced}");
+        }
         isTableOpenLocal = isTableOpenSynced;
         teamColorLocal = teamColorSynced;
 
@@ -1159,13 +1172,19 @@ public class BilliardsModule : UdonSharpBehaviour
         auto_colliderBaseVFX.SetActive(true);
     }
 
-    private void onRemoteTurnStateChanged(byte turnStateSynced, bool forecUpdate)
+    private void onRemoteTurnStateChanged(byte turnStateSynced, bool forceUpdate)
     {
         if (!gameLive) return;
 
-        if (!forecUpdate && turnStateSynced == turnStateLocal) return;
-
-        _LogInfo($"onRemoteTurnStateChanged newState={turnStateSynced}");
+        bool valueUnchanged = turnStateSynced == turnStateLocal;
+        if (!forceUpdate)
+        {
+            if (valueUnchanged)
+            {
+                return;
+            }
+            else _LogInfo($"onRemoteTurnStateChanged newState={turnStateSynced}");
+        }
         turnStateLocal = turnStateSynced;
 
         if (turnStateLocal == 0 || turnStateLocal == 2)

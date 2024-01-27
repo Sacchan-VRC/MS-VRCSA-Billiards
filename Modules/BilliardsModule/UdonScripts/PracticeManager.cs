@@ -175,7 +175,7 @@ public class PracticeManager : UdonSharpBehaviour
         object[] curState = (object[])history[currentPtr];
         //set the values we don't want to reset
         state[2] = curState[2];//scores
-        state[5] = (uint)0;//foulstate
+        state[5] = (uint)6;//foulstate
         state[6] = false;//tableisopen
         state[8] = curState[8];//fourBallCueBall
 

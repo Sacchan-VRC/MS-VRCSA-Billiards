@@ -36,7 +36,8 @@ public class NetworkingManager : UdonSharpBehaviour
     // when the timer for the current shot started, driven by the player who trigger the transition
     [UdonSynced] [NonSerialized] public int timerStartSynced;
 
-    // the current reposition state (0 is reposition not allowed, 1 is reposition in kitchen, 2 is reposition anywhere, 3 is reposition in snooker D, 4 is a foul with no reposition, 5 is foul with no reposition and snookered (free ball))
+    // the current reposition state (0 is reposition not allowed, 1 is reposition in kitchen, 2 is reposition anywhere, 3 is reposition in snooker D,
+    //4 is a foul with no reposition, 5 is foul with no reposition and snookered (free ball)) 6 is after SnookerUndo was used
     [UdonSynced] [NonSerialized] public byte foulStateSynced;
 
     // whether or not the table is open or not (i.e. no suit decided yet)
