@@ -2170,10 +2170,12 @@ public class BilliardsModule : UdonSharpBehaviour
         {
             // Update for desktop
             desktopManager._AllowShoot();
+            menuManager._EnableSkipTurnMenu();
         }
         else
         {
             desktopManager._DenyShoot();
+            menuManager._DisableSkipTurnMenu();
         }
 
         if (timerLocal > 0)
@@ -2185,6 +2187,7 @@ public class BilliardsModule : UdonSharpBehaviour
 
     public void _SkipTurn()
     {
+        if (!isMyTurn()) { return; }
         onLocalTurnFoul(false, false);
     }
 

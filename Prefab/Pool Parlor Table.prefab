@@ -1194,6 +1194,7 @@ MonoBehaviour:
   menuLobby: {fileID: 7968319346810229479}
   menuInGame: {fileID: 4276348882300069908}
   menuSnookerUndo: {fileID: 5148047751816547939}
+  menuSkipTurn: {fileID: 4585084899771578675}
   lobbyNames:
   - {fileID: 4958409249380584462}
   - {fileID: 6170420159243369706}
@@ -6597,8 +6598,6 @@ MonoBehaviour:
     SerializationNodes: []
   _udonSharpBackingUdonBehaviour: {fileID: 3671293032783138245}
   PHYSICSNAME: <color=#FFD700>Mabel</color>
-  k_BALL_BALL_F: 0.03
-  k_BALL_E: 0.94
   hitSounds:
   - {fileID: 8300000, guid: c5c3277a589929d49be99bc2f100aae1, type: 3}
   - {fileID: 8300000, guid: e55c033e7d8b29e409baf5343b67bead, type: 3}
@@ -6611,12 +6610,6 @@ MonoBehaviour:
   k_pR: {x: 0, y: 0, z: 0}
   RaySphere_output: {x: 0, y: 0, z: 0}
   inV0: 0
-  Theta: 0
-  cosPhi: 0
-  sinPhi: 0
-  CutAngle: 0
-  throwAngleDegrees: 0
-  throwDegrees: 0
 --- !u!114 &3671293032783138245
 MonoBehaviour:
   m_ObjectHideFlags: 0

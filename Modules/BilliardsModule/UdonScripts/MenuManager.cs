@@ -16,6 +16,7 @@ public class MenuManager : UdonSharpBehaviour
     [SerializeField] private GameObject menuLobby;
     [SerializeField] private GameObject menuInGame;
     [SerializeField] private GameObject menuSnookerUndo;
+    [SerializeField] private GameObject menuSkipTurn;
     [SerializeField] private TextMeshProUGUI[] lobbyNames;
 
     [SerializeField] private TextMeshProUGUI gameModeDisplay;
@@ -445,6 +446,15 @@ public class MenuManager : UdonSharpBehaviour
         menuInGame.SetActive(false);
     }
 
+    public void _EnableSkipTurnMenu()
+    {
+        menuSkipTurn.SetActive(true);
+    }
+
+    public void _DisableSkipTurnMenu()
+    {
+        menuSkipTurn.SetActive(false);
+    }
     public void _EnableSnookerUndoMenu()
     {
         menuSnookerUndo.SetActive(true);
