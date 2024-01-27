@@ -168,7 +168,7 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
                     table.devhit.transform.localPosition = RaySphere_output;
 
                     Vector3 q = transform_Surface.InverseTransformDirection(cuetip.transform.forward); // direction of cue in surface space
-                    Vector3 o = balls[0].transform.localPosition; // location of ball in surface
+                    Vector3 o = balls_P[0]; o.y = 0;// location of ball in surface
 
                     Vector3 j = -Vector3.ProjectOnPlane(q, transform_Surface.up); // project cue direction onto table surface, gives us j
                     Vector3 k = transform_Surface.up;
