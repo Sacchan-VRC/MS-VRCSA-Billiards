@@ -46,22 +46,22 @@ public class BilliardsModule : UdonSharpBehaviour
     [NonSerialized] public MeshRenderer[] tableMRs;
 
     // table colors
-    [SerializeField] [HideInInspector] public Color k_colour_foul;        // v1.6: ( 1.2, 0.0, 0.0, 1.0 )
-    [SerializeField] [HideInInspector] public Color k_colour_default;     // v1.6: ( 1.0, 1.0, 1.0, 1.0 )
-    [SerializeField] [HideInInspector] public Color k_colour_off = new Color(0.01f, 0.01f, 0.01f, 1.0f);
+    [SerializeField][HideInInspector] public Color k_colour_foul;        // v1.6: ( 1.2, 0.0, 0.0, 1.0 )
+    [SerializeField][HideInInspector] public Color k_colour_default;     // v1.6: ( 1.0, 1.0, 1.0, 1.0 )
+    [SerializeField][HideInInspector] public Color k_colour_off = new Color(0.01f, 0.01f, 0.01f, 1.0f);
 
     // 8/9 ball
-    [SerializeField] [HideInInspector] public Color k_teamColour_spots;   // v1.6: ( 0.00, 0.75, 1.75, 1.0 )
-    [SerializeField] [HideInInspector] public Color k_teamColour_stripes; // v1.6: ( 1.75, 0.25, 0.00, 1.0 )
+    [SerializeField][HideInInspector] public Color k_teamColour_spots;   // v1.6: ( 0.00, 0.75, 1.75, 1.0 )
+    [SerializeField][HideInInspector] public Color k_teamColour_stripes; // v1.6: ( 1.75, 0.25, 0.00, 1.0 )
 
     // 4 ball
-    [SerializeField] [HideInInspector] public Color k_colour4Ball_team_0; // v1.6: ( )
-    [SerializeField] [HideInInspector] public Color k_colour4Ball_team_1; // v1.6: ( 2.0, 1.0, 0.0, 1.0 )
+    [SerializeField][HideInInspector] public Color k_colour4Ball_team_0; // v1.6: ( )
+    [SerializeField][HideInInspector] public Color k_colour4Ball_team_1; // v1.6: ( 2.0, 1.0, 0.0, 1.0 )
 
     // fabrics
-    [SerializeField] [HideInInspector] public Color k_fabricColour_8ball; // v1.6: ( 0.3, 0.3, 0.3, 1.0 )
-    [SerializeField] [HideInInspector] public Color k_fabricColour_9ball; // v1.6: ( 0.1, 0.6, 1.0, 1.0 )
-    [SerializeField] [HideInInspector] public Color k_fabricColour_4ball; // v1.6: ( 0.15, 0.75, 0.3, 1.0 )
+    [SerializeField][HideInInspector] public Color k_fabricColour_8ball; // v1.6: ( 0.3, 0.3, 0.3, 1.0 )
+    [SerializeField][HideInInspector] public Color k_fabricColour_9ball; // v1.6: ( 0.1, 0.6, 1.0, 1.0 )
+    [SerializeField][HideInInspector] public Color k_fabricColour_4ball; // v1.6: ( 0.15, 0.75, 0.3, 1.0 )
 
     // cue guideline
     private readonly Color k_aimColour_aim = new Color(0.7f, 0.7f, 0.7f, 1.0f);
@@ -616,7 +616,7 @@ public class BilliardsModule : UdonSharpBehaviour
         onRemoteFourBallCueBallChanged(networkingManager.fourBallCueBallSynced, joinedDuringMatch);
         onRemoteBallsPocketedChanged(networkingManager.ballsPocketedSynced);
         onRemoteFourBallScoresUpdated(networkingManager.fourBallScoresSynced);
-        onRemoteFoulStateChanged(networkingManager.foulStateSynced, joinedDuringMatch);
+        onRemoteFoulStateChanged(networkingManager.foulStateSynced);
         onRemoteIsTableOpenChanged(networkingManager.isTableOpenSynced, networkingManager.teamColorSynced, joinedDuringMatch);
         onRemoteTurnStateChanged(networkingManager.turnStateSynced, joinedDuringMatch);
         onRemotePreviewWinningTeamChanged(networkingManager.previewWinningTeamSynced);
@@ -1045,11 +1045,12 @@ public class BilliardsModule : UdonSharpBehaviour
         colorTurnLocal = ColorTurnSynced;
     }
 
-    private void onRemoteFoulStateChanged(uint foulStateSynced, bool forceUpdate)
+    private void onRemoteFoulStateChanged(uint foulStateSynced)
     {
         if (!gameLive) return;
 
-        if (!forceUpdate && foulStateLocal == foulStateSynced) return;
+        // if (foulStateLocal == foulStateSynced) return;
+        // should not escape because it can stay the same turn to turn while whos turn it is changes
 
         _LogInfo($"onRemoteFoulStateChanged foulState={foulStateSynced}");
         foulStateLocal = foulStateSynced;
@@ -1076,6 +1077,7 @@ public class BilliardsModule : UdonSharpBehaviour
         if (foulStateLocal > 0 && foulStateLocal < 4)
         {
             isReposition = true;
+
             switch (foulStateLocal)
             {
                 case 1://kitchen
@@ -1579,7 +1581,7 @@ public class BilliardsModule : UdonSharpBehaviour
 
                 //freeball rules
                 bool redOnTableNext = sixRedCheckIfRedOnTable(ballsPocketedLocal, false);
-                if (redOnTableNext)
+                if (redOnTableNext && !isScratch)
                 {
                     nextTurnSnookered = SixRedCheckSnookered(ballsPocketedLocal);
                     if (foulStateLocal == 5)
