@@ -618,7 +618,7 @@ public class BilliardsModule : UdonSharpBehaviour
         onRemoteFourBallScoresUpdated(networkingManager.fourBallScoresSynced);
         onRemoteFoulStateChanged(networkingManager.foulStateSynced);
         onRemoteIsTableOpenChanged(networkingManager.isTableOpenSynced, networkingManager.teamColorSynced, joinedDuringMatch);
-        onRemoteTurnStateChanged(networkingManager.turnStateSynced, joinedDuringMatch || foulStateLocal == 6 /* snookerundo */);
+        onRemoteTurnStateChanged(networkingManager.turnStateSynced);
         onRemotePreviewWinningTeamChanged(networkingManager.previewWinningTeamSynced);
         onRemoteColorTurnChanged(networkingManager.colorTurnSynced);
 
@@ -1174,18 +1174,14 @@ public class BilliardsModule : UdonSharpBehaviour
         auto_colliderBaseVFX.SetActive(true);
     }
 
-    private void onRemoteTurnStateChanged(byte turnStateSynced, bool forceUpdate)
+    private void onRemoteTurnStateChanged(byte turnStateSynced)
     {
         if (!gameLive) return;
 
-        bool valueUnchanged = turnStateSynced == turnStateLocal;
-        if (!forceUpdate)
+        // should not escape because it can stay the same turn to turn while whos turn it is changes (especially with Undo/SnookerUndo)
+        if (turnStateSynced != turnStateLocal)
         {
-            if (valueUnchanged)
-            {
-                return;
-            }
-            else _LogInfo($"onRemoteTurnStateChanged newState={turnStateSynced}");
+            _LogInfo($"onRemoteFoulStateChanged foulState={turnStateSynced}");
         }
         turnStateLocal = turnStateSynced;
 
