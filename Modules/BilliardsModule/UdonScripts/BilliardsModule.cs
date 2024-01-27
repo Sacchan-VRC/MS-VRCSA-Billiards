@@ -2166,10 +2166,7 @@ public class BilliardsModule : UdonSharpBehaviour
 
     public void _SkipTurn()
     {
-        if (isPracticeMode || (tournamentRefereeLocal != -1 && _IsLocalPlayerReferee()))
-        {
-            onLocalTurnFoul(false, false);
-        }
+        onLocalTurnFoul(false, false);
     }
 
     public void _Update9BallMarker()
