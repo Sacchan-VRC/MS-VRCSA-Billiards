@@ -1062,10 +1062,12 @@ public class BilliardsModule : UdonSharpBehaviour
     {
         if (!gameLive) return;
 
-        // if (foulStateLocal == foulStateSynced) return;
-        // should not escape because it can stay the same turn to turn while whos turn it is changes
+        // should not escape because it can stay the same turn to turn while whos turn it is changes (especially with Undo/SnookerUndo)
+        if (foulStateLocal != foulStateSynced)
+        {
+            _LogInfo($"onRemoteFoulStateChanged foulState={foulStateSynced}");
+        }
 
-        _LogInfo($"onRemoteFoulStateChanged foulState={foulStateSynced}");
         foulStateLocal = foulStateSynced;
         bool myTurn = isMyTurn();
         if (isSnooker6Red)//enable SnookerUndo button if foul
