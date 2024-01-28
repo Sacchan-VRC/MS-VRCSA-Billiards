@@ -180,6 +180,7 @@ public class MenuManager : UdonSharpBehaviour
     public void StartButton()
     {
         table._TriggerLobbyOpen();
+        JoinOrange();
     }
     public void JoinOrange()
     {

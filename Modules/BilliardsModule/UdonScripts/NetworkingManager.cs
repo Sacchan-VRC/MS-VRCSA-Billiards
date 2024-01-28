@@ -10,89 +10,89 @@ public class NetworkingManager : UdonSharpBehaviour
     private const int MAX_BALLS = 16;
 
     // the current packet id - this value should increment monotonically, once per network update
-    [UdonSynced] [NonSerialized] public int packetIdSynced;
+    [UdonSynced][NonSerialized] public int packetIdSynced;
 
     // players in the game - this field should only be updated by the host, stored in the zeroth position
-    [UdonSynced] [NonSerialized] public int[] playerIDsSynced = { -1, -1, -1, -1 };
+    [UdonSynced][NonSerialized] public int[] playerIDsSynced = { -1, -1, -1, -1 };
 
     // ball positions
-    [UdonSynced] [NonSerialized] public Vector3[] ballsPSynced = new Vector3[MAX_BALLS];
+    [UdonSynced][NonSerialized] public Vector3[] ballsPSynced = new Vector3[MAX_BALLS];
 
     // cue ball linear velocity
-    [UdonSynced] [NonSerialized] public Vector3 cueBallVSynced;
+    [UdonSynced][NonSerialized] public Vector3 cueBallVSynced;
 
     // cue ball angular velocity
-    [UdonSynced] [NonSerialized] public Vector3 cueBallWSynced;
+    [UdonSynced][NonSerialized] public Vector3 cueBallWSynced;
 
     // the current state id - this value should increment monotonically, with each id representing a distinct state that's worth snapshotting
-    [UdonSynced] [NonSerialized] public int stateIdSynced;
+    [UdonSynced][NonSerialized] public int stateIdSynced;
 
     // bitmask of pocketed balls
-    [UdonSynced] [NonSerialized] public uint ballsPocketedSynced;
+    [UdonSynced][NonSerialized] public uint ballsPocketedSynced;
 
     // the current team which is playing
-    [UdonSynced] [NonSerialized] public byte teamIdSynced;
+    [UdonSynced][NonSerialized] public byte teamIdSynced;
 
     // when the timer for the current shot started, driven by the player who trigger the transition
-    [UdonSynced] [NonSerialized] public int timerStartSynced;
+    [UdonSynced][NonSerialized] public int timerStartSynced;
 
     // the current reposition state (0 is reposition not allowed, 1 is reposition in kitchen, 2 is reposition anywhere, 3 is reposition in snooker D,
     //4 is a foul with no reposition, 5 is foul with no reposition and snookered (free ball)) 6 is after SnookerUndo was used
-    [UdonSynced] [NonSerialized] public byte foulStateSynced;
+    [UdonSynced][NonSerialized] public byte foulStateSynced;
 
     // whether or not the table is open or not (i.e. no suit decided yet)
-    [UdonSynced] [NonSerialized] public bool isTableOpenSynced;
+    [UdonSynced][NonSerialized] public bool isTableOpenSynced;
 
     // which suit each team has picked - xor with teamId to find the suit (0 is solids, 1 is stripes)
-    [UdonSynced] [NonSerialized] public byte teamColorSynced;
+    [UdonSynced][NonSerialized] public byte teamColorSynced;
 
     // which team won, only used if gameState is 3. (0 is team 0, 1 is team 1, 2 is force reset)
-    [UdonSynced] [NonSerialized] public byte winningTeamSynced;
+    [UdonSynced][NonSerialized] public byte winningTeamSynced;
 
     // which team may have won, used during tournaments
-    [UdonSynced] [NonSerialized] public byte previewWinningTeamSynced;
+    [UdonSynced][NonSerialized] public byte previewWinningTeamSynced;
 
     // the current game state (0 is no lobby, 1 is lobby created, 2 is game started, 3 is game finished)
-    [UdonSynced] [NonSerialized] public byte gameStateSynced;
+    [UdonSynced][NonSerialized] public byte gameStateSynced;
 
     // the current turn state (0 is shooting, 1 is simulating, 2 is ran out of time (auto transition to 0), 3 is selecting 4 ball mode)
-    [UdonSynced] [NonSerialized] public byte turnStateSynced;
+    [UdonSynced][NonSerialized] public byte turnStateSynced;
 
     // the current gamemode (0 is 8ball, 1 is 9ball, 2 is jp4b, 3 is kr4b, 4 is Snooker6Red)
-    [UdonSynced] [NonSerialized] public byte gameModeSynced;
+    [UdonSynced][NonSerialized] public byte gameModeSynced;
 
     // the timer for the current game in seconds
-    [UdonSynced] [NonSerialized] public uint timerSynced;
+    [UdonSynced][NonSerialized] public uint timerSynced;
 
     // table being used
-    [UdonSynced] [NonSerialized] public byte tableModelSynced;
+    [UdonSynced][NonSerialized] public byte tableModelSynced;
 
     // physics being used
-    [UdonSynced] [NonSerialized] public byte physicsSynced;
+    [UdonSynced][NonSerialized] public byte physicsSynced;
 
     // whether or not the current game is played with teams
-    [UdonSynced] [NonSerialized] public bool teamsSynced;
+    [UdonSynced][NonSerialized] public bool teamsSynced;
 
     // whether or not the guideline will be shown
-    [UdonSynced] [NonSerialized] public bool noGuidelineSynced;
+    [UdonSynced][NonSerialized] public bool noGuidelineSynced;
 
     // whether or not the cue can be locked
-    [UdonSynced] [NonSerialized] public bool noLockingSynced;
+    [UdonSynced][NonSerialized] public bool noLockingSynced;
 
     // scores if game state is 2 or 3 (4ball)
-    [UdonSynced] [NonSerialized] public int[] fourBallScoresSynced = new int[2];
+    [UdonSynced][NonSerialized] public int[] fourBallScoresSynced = new int[2];
 
     // the currently active four ball cue ball (0 is white, 1 is yellow) // also used in Snooker to track how many fouls/repeated shots have occurred in a row
-    [UdonSynced] [NonSerialized] public byte fourBallCueBallSynced;
+    [UdonSynced][NonSerialized] public byte fourBallCueBallSynced;
 
     // whether this update is urgent and should interrupt any local simulations (0 is no, 1 is interrupt, 2 is interrupt and halt)
-    [UdonSynced] [NonSerialized] public byte isUrgentSynced;
+    [UdonSynced][NonSerialized] public byte isUrgentSynced;
 
     // the current tournament referee
-    [UdonSynced] [NonSerialized] public int tournamentRefereeSynced = -1;
+    [UdonSynced][NonSerialized] public int tournamentRefereeSynced = -1;
 
     // 6RedSnooker: currently a turn where a color should be pocketed
-    [UdonSynced] [NonSerialized] public bool colorTurnSynced;
+    [UdonSynced][NonSerialized] public bool colorTurnSynced;
 
     [SerializeField] private PlayerSlot playerSlot;
     private BilliardsModule table;
@@ -386,7 +386,6 @@ public class NetworkingManager : UdonSharpBehaviour
         {
             playerIDsSynced[i] = -1;
         }
-        playerIDsSynced[0] = Networking.LocalPlayer.playerId;
 
         bufferMessages(false);
     }

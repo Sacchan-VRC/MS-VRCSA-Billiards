@@ -500,6 +500,10 @@ public class BilliardsModule : UdonSharpBehaviour
             playerIDsLocal[localPlayerId] = Networking.LocalPlayer.playerId;
             menuManager._RefreshLobbyOpen();
             menuManager._RefreshPlayerList();
+            if (!gameLive)
+            {
+                menuManager._EnableLobbyMenu();
+            }
         }
         else
         {
@@ -518,6 +522,7 @@ public class BilliardsModule : UdonSharpBehaviour
         localTeamId = 0;
         menuManager._RefreshLobbyOpen();
         menuManager._RefreshPlayerList();
+        menuManager._DisableLobbyMenu();
     }
 
     public void _TriggerGameReset()
@@ -789,7 +794,6 @@ public class BilliardsModule : UdonSharpBehaviour
         menuManager._RefreshPlayerList();
 
         menuManager._EnableMenuJoinLeave();
-        menuManager._EnableLobbyMenu();
         menuManager._DisableStartMenu();
 
         if (callbacks != null) callbacks.SendCustomEvent("_OnLobbyOpened");
