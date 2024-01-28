@@ -94,22 +94,26 @@ public class CueController : UdonSharpBehaviour
         authorizedOwners = newOwners;
     }
 
-    public void _Enable(bool shouldReset)
+    public void _Enable()
     {
-        if (shouldReset && Array.IndexOf(authorizedOwners, Networking.LocalPlayer.playerId) != -1) resetPosition();
-
         primaryController._Show();
     }
 
-    public void _Disable(bool shouldReset)
+    public void _Disable()
     {
         primaryController._Hide();
         secondaryController._Hide();
 
         lagPrimaryPosition = origPrimaryPosition;
         lagSecondaryPosition = origSecondaryPosition;
-        
-        if (shouldReset && Array.IndexOf(authorizedOwners, Networking.LocalPlayer.playerId) != -1) resetPosition();
+    }
+
+    public void _ResetCuePosition()
+    {
+        if (Networking.LocalPlayer.IsOwner(gameObject))
+        {
+            resetPosition();
+        }
     }
 
     private void FixedUpdate()
@@ -240,8 +244,6 @@ public class CueController : UdonSharpBehaviour
 
     private void resetPosition()
     {
-        takeOwnership();
-
         primary.transform.position = origPrimaryPosition;
         primary.transform.localRotation = Quaternion.identity;
         secondary.transform.position = origSecondaryPosition;
@@ -251,7 +253,7 @@ public class CueController : UdonSharpBehaviour
         body.transform.position = origPrimaryPosition;
         body.transform.LookAt(origSecondaryPosition);
     }
-    
+
     public bool _IsOwnershipTransferAllowed(GameObject what, VRCPlayerApi requester, VRCPlayerApi newOwner)
     {
         if (requester.playerId != newOwner.playerId) return false;

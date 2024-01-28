@@ -735,14 +735,19 @@ public class BilliardsModule : UdonSharpBehaviour
 
         cueControllers[0]._SetAuthorizedOwners(new int[] { playerIDsLocal[0], playerIDsLocal[2] });
         cueControllers[1]._SetAuthorizedOwners(new int[] { playerIDsLocal[1], playerIDsLocal[3] });
+        if (playerIDsLocal[0] == -1 && playerIDsLocal[2] == -1)
+        {
+            cueControllers[0]._ResetCuePosition();
+        }
+        if (playerIDsLocal[1] == -1 && playerIDsLocal[3] == -1)
+        {
+            cueControllers[1]._ResetCuePosition();
+        }
 
         menuManager._RefreshLobbyOpen();
         menuManager._RefreshPlayerList();
 
-        if (gameLive)
-        {
-            applyCueAccess(false);
-        }
+        applyCueAccess();
 
         graphicsManager._SetScorecardPlayers(playerIDsLocal);
 
@@ -828,7 +833,7 @@ public class BilliardsModule : UdonSharpBehaviour
 
         graphicsManager._OnGameStarted();
         desktopManager._OnGameStarted();
-        applyCueAccess(false);
+        applyCueAccess();
         practiceManager._Clear();
         repositionManager._OnGameStarted();
         tableModels[tableModelLocal]._OnGameStarted();
@@ -941,7 +946,7 @@ public class BilliardsModule : UdonSharpBehaviour
         // Remove any access rights
         localPlayerId = -1;
         localTeamId = 0;
-        applyCueAccess(true);
+        applyCueAccess();
 
         lobbyOpen = false;
 
@@ -2114,24 +2119,24 @@ public class BilliardsModule : UdonSharpBehaviour
         }
     }
 
-    private void applyCueAccess(bool gameOver)
+    private void applyCueAccess()
     {
         if (localPlayerId == -1)
         {
-            cueControllers[0]._Disable(gameOver);
-            cueControllers[1]._Disable(gameOver);
+            cueControllers[0]._Disable();
+            cueControllers[1]._Disable();
             return;
         }
 
         if (localTeamId == 0)
         {
-            cueControllers[0]._Enable(gameOver);
-            cueControllers[1]._Disable(gameOver);
+            cueControllers[0]._Enable();
+            cueControllers[1]._Disable();
         }
         else
         {
-            cueControllers[1]._Enable(gameOver);
-            cueControllers[0]._Disable(gameOver);
+            cueControllers[1]._Enable();
+            cueControllers[0]._Disable();
         }
     }
 
