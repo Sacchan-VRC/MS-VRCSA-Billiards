@@ -85,7 +85,7 @@ public class PracticeManager : UdonSharpBehaviour
 
     public void _Undo()
     {
-        int newPtr = pop();
+        int newPtr = pop(false);
         if (newPtr == -1)
         {
             table._IndicateError();
@@ -101,7 +101,7 @@ public class PracticeManager : UdonSharpBehaviour
         if (table.foulStateLocal == 0 || table.fourBallCueBallLocal == 0) { return; }
         if (!table.isMyTurn()) { return; }
 
-        int newPtr = pop();
+        int newPtr = pop(true);
         if (newPtr == -1)
         {
             table._IndicateError();
@@ -139,7 +139,7 @@ public class PracticeManager : UdonSharpBehaviour
         return -1;
     }
 
-    private int pop()
+    private int pop(bool snookerUndo)
     {
         int newPtr = currentPtr;
 
@@ -153,8 +153,15 @@ public class PracticeManager : UdonSharpBehaviour
             newPtr--;
 
             if (history[newPtr] == null) continue;
-
             object[] state = (object[])history[newPtr];
+            if (snookerUndo)
+            {
+                // repositioining the ball counts as a step, so we need to go back to the last step when it wasn't our turn
+                if ((byte)state[4] == (byte)table.localTeamId)
+                {
+                    continue;
+                }
+            }
             if ((byte)state[9] == 0 || (byte)state[9] == 2)
             {
                 return newPtr;
