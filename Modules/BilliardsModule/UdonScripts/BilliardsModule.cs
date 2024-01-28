@@ -925,7 +925,10 @@ public class BilliardsModule : UdonSharpBehaviour
 
             isTableOpenLocal = true;
             _LogWarn("game reset");
-            graphicsManager._OnGameReset();
+            if (gameLive)
+            {
+                graphicsManager._OnGameReset();
+            }
         }
         else
         {
