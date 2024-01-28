@@ -378,7 +378,6 @@ public class BilliardsModule : UdonSharpBehaviour
 
     public void _TriggerGameModeChanged(uint newGameMode)
     {
-        Debug.Log("4ball_1");
         networkingManager._OnGameModeChanged(newGameMode);
     }
 
@@ -593,7 +592,6 @@ public class BilliardsModule : UdonSharpBehaviour
     public void _OnRemoteDeserialization()
     {
         _LogInfo("processing latest remote state (packet=" + networkingManager.packetIdSynced + ", state=" + networkingManager.stateIdSynced + ")");
-        Debug.Log("[BilliardsModule] latest game state is " + networkingManager._EncodeGameState());
 
         // propagate game settings first
         onRemoteGlobalSettingsUpdated(
@@ -644,7 +642,6 @@ public class BilliardsModule : UdonSharpBehaviour
             currentPhysicsManager.SendCustomEvent("_InitConstants");
             menuManager._RefreshPhysics();
         }
-        Debug.Log("onRemoteGlobalSettingsUpdated");
         if (tableModelLocal != tableModelSynced)
         {
             setTableModel(tableModelSynced, true);
@@ -718,7 +715,7 @@ public class BilliardsModule : UdonSharpBehaviour
 
     private bool onRemotePlayersChanged(int[] playerIDsSynced)
     {
-        int myOldSlot = _GetlayerSlot(Networking.LocalPlayer, playerIDsCached);
+        int myOldSlot = _GetPlayerSlot(Networking.LocalPlayer, playerIDsCached);
 
         if (intArrayEquals(playerIDsCached, playerIDsSynced)) return false;
         Array.Copy(playerIDsSynced, playerIDsCached, playerIDsCached.Length);
@@ -749,7 +746,7 @@ public class BilliardsModule : UdonSharpBehaviour
 
         graphicsManager._SetScorecardPlayers(playerIDsLocal);
 
-        int myNewSlot = _GetlayerSlot(Networking.LocalPlayer, playerIDsLocal);
+        int myNewSlot = _GetPlayerSlot(Networking.LocalPlayer, playerIDsLocal);
         bool amPlayer = myNewSlot != -1;
         enablePracticeControls(amPlayer && gameLive);
 
@@ -2154,7 +2151,7 @@ public class BilliardsModule : UdonSharpBehaviour
     {
         bool isOurTurnVar = isMyTurn();
 
-        bool amPlayer = _GetlayerSlot(Networking.LocalPlayer, playerIDsLocal) != -1;
+        bool amPlayer = _GetPlayerSlot(Networking.LocalPlayer, playerIDsLocal) != -1;
         enablePracticeControls(amPlayer || (tournamentRefereeLocal != -1 && _IsLocalPlayerReferee()));
 
         if (is9Ball)
@@ -2414,6 +2411,7 @@ public class BilliardsModule : UdonSharpBehaviour
         return 0;
     }
 
+#if UNITY_EDITOR
     public void DBG_DrawBallMask(uint ballMask)
     {
         for (int i = 0; i < 16; i++)
@@ -2437,6 +2435,7 @@ public class BilliardsModule : UdonSharpBehaviour
         else
         { Debug.Log("Red ball can NOT be seen"); }
     }
+#endif
 
     int[] blockingBalls_objVisible = new int[32];
     int blockingBalls_objVisible_len;
@@ -2835,7 +2834,7 @@ public class BilliardsModule : UdonSharpBehaviour
         return player.playerId == tournamentRefereeLocal || _IsModerator(player);
     }
 
-    public int _GetlayerSlot(VRCPlayerApi who, int[] playerlist)
+    public int _GetPlayerSlot(VRCPlayerApi who, int[] playerlist)
     {
         if (who == null) return -1;
 
