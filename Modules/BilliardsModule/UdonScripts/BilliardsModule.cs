@@ -492,12 +492,9 @@ public class BilliardsModule : UdonSharpBehaviour
 
         _LogInfo("joining team " + teamId);
 
-        localPlayerId = networkingManager._OnJoinTeam(teamId);
-        if (localPlayerId != -1)
+        int newteam = networkingManager._OnJoinTeam(teamId);
+        if (newteam != -1)
         {
-            localTeamId = (uint)(localPlayerId & 0x1u);
-
-            playerIDsLocal[localPlayerId] = Networking.LocalPlayer.playerId;
             menuManager._RefreshLobbyOpen();
             menuManager._RefreshPlayerList();
             if (!gameLive)

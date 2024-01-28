@@ -165,7 +165,6 @@ public class MenuManager : UdonSharpBehaviour
 
     public void _RefreshLobbyOpen()
     {
-        bool isNormalPlayer = table.localPlayerId != 0;
         _RefreshToggleSettings();
     }
 

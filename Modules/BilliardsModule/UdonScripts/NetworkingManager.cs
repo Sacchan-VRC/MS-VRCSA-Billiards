@@ -123,14 +123,13 @@ public class NetworkingManager : UdonSharpBehaviour
     {
         if (gameStateSynced == 0) return; // we don't process player registrations if the lobby isn't open
 
-        if (!Networking.LocalPlayer.IsOwner(gameObject)) return; // only the host processes player registrations
+        if (!Networking.LocalPlayer.IsOwner(gameObject)) return; // only the owner processes player registrations
 
         VRCPlayerApi slotOwner = Networking.GetOwner(slot.gameObject);
         if (slotOwner == null) return;
         int slotOwnerID = slotOwner.playerId;
 
         bool changedSlot = false;
-        int prevslot = -1;
         int numPlayersPrev = 0;
         for (int i = 0; i < MAX_PLAYERS; i++)
         {
@@ -148,8 +147,6 @@ public class NetworkingManager : UdonSharpBehaviour
             }
         }
 
-        int numPlayersRemaining = 0;
-
         // if we're deregistering a player, always allow
         if (slot.leave)
         {
@@ -160,17 +157,11 @@ public class NetworkingManager : UdonSharpBehaviour
             // otherwise, only allow registration if not already registered
             playerIDsSynced[slot.slot] = slotOwner.playerId;
         }
-        for (int i = 0; i < MAX_PLAYERS; i++)
-        {
-            if (playerIDsSynced[i] != -1)
-            {
-                numPlayersRemaining++;
-            }
-        }
 
-        if (numPlayersPrev != numPlayersRemaining || changedSlot)
+        int numPlayers = CountPlayers();
+        if (numPlayersPrev != numPlayers || changedSlot)
         {
-            if (numPlayersRemaining == 0)
+            if (numPlayers == 0)
             {
                 if (!table.gameLive)
                 {
@@ -481,6 +472,10 @@ public class NetworkingManager : UdonSharpBehaviour
             for (int i = 2; i < 4; i++)
             {
                 playerIDsSynced[i] = -1;
+                if (CountPlayers() == 0)
+                {
+                    gameStateSynced = 0;
+                }
             }
         }
 
@@ -541,10 +536,27 @@ public class NetworkingManager : UdonSharpBehaviour
                 playerIDsSynced[i] = -1;
             }
         }
+        int numPlayers = CountPlayers();
+        if (numPlayers == 0 && !table.gameLive)
+        {
+            gameStateSynced = 0;
+        }
         if (playerRemoved)
         {
             bufferMessages(false);
         }
+    }
+    int CountPlayers()
+    {
+        int result = 0;
+        for (int i = 0; i < MAX_PLAYERS; i++)
+        {
+            if (playerIDsSynced[i] != -1)
+            {
+                result++;
+            }
+        }
+        return result;
     }
 
     public void _ForceLoadFromState
