@@ -51,8 +51,8 @@ public class DesktopManager : UdonSharpBehaviour
     public void _Init(BilliardsModule table_)
     {
         table = table_;
-        cursorClampX = table.k_TABLE_WIDTH;
-        cursorClampZ = table.k_TABLE_HEIGHT;
+        cursorClampX = table.k_TABLE_WIDTH + .3f;
+        cursorClampZ = table.k_TABLE_HEIGHT + .3f;
     }
 
     public void _OnGameStarted()
@@ -171,7 +171,7 @@ public class DesktopManager : UdonSharpBehaviour
                     worldPos.y = currentRepositioner.transform.position.y;
                     currentRepositioner.transform.position = worldPos;
                 }
-                
+
                 if (!Input.GetKey(KeyCode.Mouse0))
                 {
                     isRepositioning = false;
@@ -351,9 +351,9 @@ public class DesktopManager : UdonSharpBehaviour
         {
             table._TriggerOnPlayerPrepareShoot();
         }
-        
-        cursorClampX = table.k_TABLE_WIDTH;
-        cursorClampZ = table.k_TABLE_HEIGHT;
+
+        cursorClampX = table.k_TABLE_WIDTH + .3f;
+        cursorClampZ = table.k_TABLE_HEIGHT + .3f;
     }
 
     private void exitUI()
