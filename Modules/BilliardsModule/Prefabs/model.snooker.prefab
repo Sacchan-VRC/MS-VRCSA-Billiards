@@ -2754,6 +2754,8 @@ MonoBehaviour:
   baulkLine: 0.7367
   blackSpotFromR: 0.324
   semiCircleRadius: 0.2921
+  CueOrange: {fileID: 3490835628016806087}
+  CueBlue: {fileID: 3064140435133851898}
 --- !u!1 &8330194590017120880
 GameObject:
   m_ObjectHideFlags: 0

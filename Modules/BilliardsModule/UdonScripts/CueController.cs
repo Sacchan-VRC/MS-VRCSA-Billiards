@@ -47,6 +47,8 @@ public class CueController : UdonSharpBehaviour
 
     private int[] authorizedOwners;
 
+    [NonSerialized] public bool TeamBlue;
+
     private void Start()
     {
         primaryController = primary.GetComponent<CueGripPrimary>();
@@ -114,6 +116,29 @@ public class CueController : UdonSharpBehaviour
         {
             resetPosition();
         }
+    }
+    public void _RefreshTable()
+    {
+        Vector3 newpos;
+        if (TeamBlue)
+        {
+            newpos = table.tableModels[table.tableModelLocal].CueBlue.position;
+        }
+        else
+        {
+            newpos = table.tableModels[table.tableModelLocal].CueOrange.position;
+        }
+        primary.transform.localRotation = Quaternion.identity;
+        secondary.transform.localRotation = Quaternion.identity;
+        desktop.transform.localRotation = Quaternion.identity;
+        origPrimaryPosition = newpos;
+        primary.transform.position = origPrimaryPosition;
+        origSecondaryPosition = primary.transform.TransformPoint(secondaryOffset);
+        secondary.transform.position = origSecondaryPosition;
+        lagSecondaryPosition = origSecondaryPosition;
+        lagPrimaryPosition = origPrimaryPosition;
+        desktop.transform.position = origPrimaryPosition;
+        body.transform.position = origPrimaryPosition;
     }
 
     private void FixedUpdate()

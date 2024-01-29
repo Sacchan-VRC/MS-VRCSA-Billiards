@@ -251,6 +251,8 @@ public class BilliardsModule : UdonSharpBehaviour
 
         resetCachedData();
 
+        cueControllers[1].TeamBlue = true;
+
         currentPhysicsManager = PhysicsManagers[0];
 
         for (int i = 0; i < balls.Length; i++)
@@ -1951,7 +1953,8 @@ public class BilliardsModule : UdonSharpBehaviour
         setTransform(table_base.Find(".NAME_0"), score_info_root.Find("player0-name").gameObject.GetComponent<RectTransform>(), 1F / 200F);
         setTransform(table_base.Find(".NAME_1"), score_info_root.Find("player1-name").gameObject.GetComponent<RectTransform>(), 1F / 200F);
 
-        // todo: reposition cues
+        cueControllers[0]._RefreshTable();
+        cueControllers[1]._RefreshTable();
 
         tableModels[tableModelLocal]._setTable(gameModeLocal);
 

@@ -40,6 +40,9 @@ public class ModelData : UdonSharpBehaviour
     [SerializeField] public float baulkLine = 0.7367f;
     [SerializeField] public float blackSpotFromR = 0.324f;
     [SerializeField] public float semiCircleRadius = 0.2921f;
+    [Header("Cue Positions:")]
+    [SerializeField] public Transform CueOrange;
+    [SerializeField] public Transform CueBlue;
 
     public void _Init()
     {
