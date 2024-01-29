@@ -13,10 +13,13 @@ public class GraphicsManager : UdonSharpBehaviour
     [SerializeField] GameObject fourBallPoint;
     [SerializeField] Mesh fourBallMeshPlus;
     [SerializeField] Mesh fourBallMeshMinus;
+    [Header("Snooker")]
+    [SerializeField] TextMeshProUGUI BlueScore;
+    [SerializeField] TextMeshProUGUI OrangeScore;
 
     [Header("Text")]
     [SerializeField] GameObject scorecardHolder;
-    [SerializeField] Text[] playerNames;
+    [SerializeField] TextMeshProUGUI[] playerNames;
 
     [SerializeField] TextMeshPro winnerText;
 
@@ -230,24 +233,20 @@ public class GraphicsManager : UdonSharpBehaviour
 
         if (players[2] == -1 || !table.teamsLocal)
         {
-            playerNames[0].fontSize = 13;
-            playerNames[0].text = _FormatName(VRCPlayerApi.GetPlayerById(players[0]));
+            playerNames[0].text = "<size=13>" + _FormatName(VRCPlayerApi.GetPlayerById(players[0]));
         }
         else
         {
-            playerNames[0].fontSize = 7;
-            playerNames[0].text = _FormatName(VRCPlayerApi.GetPlayerById(players[0])) + "\n" + _FormatName(VRCPlayerApi.GetPlayerById(players[2]));
+            playerNames[0].text = "<size=7>" + _FormatName(VRCPlayerApi.GetPlayerById(players[0])) + "\n" + _FormatName(VRCPlayerApi.GetPlayerById(players[2]));
         }
 
         if (players[3] == -1 || !table.teamsLocal)
         {
-            playerNames[1].fontSize = 13;
-            playerNames[1].text = _FormatName(VRCPlayerApi.GetPlayerById(players[1]));
+            playerNames[1].text = "<size=13>" + _FormatName(VRCPlayerApi.GetPlayerById(players[1]));
         }
         else
         {
-            playerNames[1].fontSize = 7;
-            playerNames[1].text = _FormatName(VRCPlayerApi.GetPlayerById(players[1])) + "\n" + _FormatName(VRCPlayerApi.GetPlayerById(players[3]));
+            playerNames[1].text = "<size=7>" + _FormatName(VRCPlayerApi.GetPlayerById(players[1])) + "\n" + _FormatName(VRCPlayerApi.GetPlayerById(players[3]));
         }
     }
 
@@ -609,6 +608,16 @@ int uniform_cue_colour;
         if (table.gameModeLocal == uint.MaxValue) { return; }
         scorecard.SetInt("_GameMode", (int)table.gameModeLocal);
         scorecard.SetInt("_SolidsMode", 0);
+        if (table.isSnooker6Red)
+        {
+            OrangeScore.gameObject.SetActive(true);
+            BlueScore.gameObject.SetActive(true);
+        }
+        else
+        {
+            OrangeScore.gameObject.SetActive(false);
+            BlueScore.gameObject.SetActive(false);
+        }
 
         _UpdateTableColorScheme();
         _UpdateTeamColor(0);
@@ -684,6 +693,8 @@ int uniform_cue_colour;
         scorecardHolder.SetActive(false);
         table.marker9ball.SetActive(false);
         fourBallPoint.SetActive(false);
+        OrangeScore.gameObject.SetActive(false);
+        BlueScore.gameObject.SetActive(false);
         _HideTimers();
 
         winnerText.text = "";
@@ -721,6 +732,11 @@ int uniform_cue_colour;
             scorecardColors[0] = table.k_colour4Ball_team_0;
             scorecardColors[1] = table.k_colour4Ball_team_1;
             scorecard.SetColorArray("_Colors", scorecardColors);
+        }
+        else if (table.isSnooker6Red)
+        {
+            OrangeScore.text = table.fbScoresLocal[0].ToString();
+            BlueScore.text = table.fbScoresLocal[1].ToString();
         }
         else
         {
