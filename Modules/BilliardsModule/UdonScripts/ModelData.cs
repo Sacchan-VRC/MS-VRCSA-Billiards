@@ -43,6 +43,7 @@ public class ModelData : UdonSharpBehaviour
     [Header("Cue Positions:")]
     [SerializeField] public Transform CueOrange;
     [SerializeField] public Transform CueBlue;
+    [SerializeField] public float DesktopUIScaleFactor = 1.08f;
 
     public void _Init()
     {

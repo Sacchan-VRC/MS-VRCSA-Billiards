@@ -47,12 +47,16 @@ public class DesktopManager : UdonSharpBehaviour
     private float cursorClampX;
     private float cursorClampZ;
 
+    private Vector3 rootStartScale;
+    private float cameraStartScale;
 
     public void _Init(BilliardsModule table_)
     {
         table = table_;
         cursorClampX = table.k_TABLE_WIDTH + .3f;
         cursorClampZ = table.k_TABLE_HEIGHT + .3f;
+        rootStartScale = root.transform.localScale;
+        cameraStartScale = root.GetComponentInChildren<Camera>().orthographicSize;
     }
 
     public void _OnGameStarted()
@@ -70,6 +74,13 @@ public class DesktopManager : UdonSharpBehaviour
     {
         holdingCue = false;
         exitUI();
+    }
+
+    public void _RefreshTable()
+    {
+        Camera desktopCamera = root.GetComponentInChildren<Camera>();
+        desktopCamera.orthographicSize = cameraStartScale * table.tableModels[table.tableModelLocal].DesktopUIScaleFactor;
+        root.transform.localScale = rootStartScale * table.tableModels[table.tableModelLocal].DesktopUIScaleFactor;
     }
 
     public void _Tick()

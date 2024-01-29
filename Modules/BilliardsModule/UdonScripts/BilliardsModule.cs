@@ -1956,6 +1956,8 @@ public class BilliardsModule : UdonSharpBehaviour
         cueControllers[0]._RefreshTable();
         cueControllers[1]._RefreshTable();
 
+        desktopManager._RefreshTable();
+
         tableModels[tableModelLocal]._setTable(gameModeLocal);
 
         guideline.gameObject.transform.Find("guide_display").GetComponent<MeshRenderer>().material.SetVector("_Dims", new Vector4(tableModels[tableModelLocal].tableWidth, tableModels[tableModelLocal].tableHeight, 0, 0));

@@ -2756,6 +2756,7 @@ MonoBehaviour:
   semiCircleRadius: 0.2921
   CueOrange: {fileID: 3490835628016806087}
   CueBlue: {fileID: 3064140435133851898}
+  DesktopUIScaleFactor: 1.4
 --- !u!1 &8330194590017120880
 GameObject:
   m_ObjectHideFlags: 0
