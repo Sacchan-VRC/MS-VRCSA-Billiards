@@ -202,7 +202,7 @@ public class BilliardsModule : UdonSharpBehaviour
     private int firstHit = 0;
     private int secondHit = 0;
     private int thirdHit = 0;
-    private bool jumpShot;
+    private bool jumpShotFoul;
 
     private bool fbMadePoint = false;
     private bool fbMadeFoul = false;
@@ -1164,7 +1164,9 @@ public class BilliardsModule : UdonSharpBehaviour
         fbMadeFoul = false;
         ballBounced_9Ball = false;
         ballsPocketedOrig = ballsPocketedLocal;
-        jumpShot = false;
+        jumpShotFoul = false;
+        currentPhysicsManager.SendCustomEvent("_ResetJumpShotVariables");
+
         numBallsPocketedThisTurn = 0;
         if (Networking.LocalPlayer.playerId == ownerID)
         {
@@ -1369,10 +1371,7 @@ public class BilliardsModule : UdonSharpBehaviour
         ballsW[id] = Vector3.zero;
     }
 
-    public void _TriggerJumpShot()
-    {
-        jumpShot = true;
-    }
+    public void _TriggerJumpShotFoul() { jumpShotFoul = true; }
 
     public void _TriggerSimulationEnded(bool forceScratch)
     {
@@ -1496,10 +1495,10 @@ public class BilliardsModule : UdonSharpBehaviour
                 isOpponentSink = false;
                 deferLossCondition = false;
                 foulCondition = false;
-                if (jumpShot)
+                if (jumpShotFoul)
                 {
-                    foulCondition = jumpShot;
-                    _LogInfo("6RED: Foul: Jumpshot");
+                    foulCondition = jumpShotFoul;
+                    _LogInfo("6RED: Foul: Jumped over a ball");
                 }
 
                 int nextcolor = sixRedFindLowestUnpocketedColor(ballsPocketedOrig);

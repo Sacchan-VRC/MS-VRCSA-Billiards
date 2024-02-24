@@ -16,8 +16,7 @@ public class StandardPhysicsManager : UdonSharpBehaviour
 #endif
     private const float k_FIXED_TIME_STEP = 1 / 80f;      // time step in seconds per iteration
     private float k_BALL_DSQRPE = 0.003598f;            // ball diameter squared plus epsilon // this is actually minus epsilon?
-    private float k_BALL_DIAMETREPE = 0.06001f;         // width of ball
-    private float k_BALL_DIAMETREPESQ = 0.0036012001f;  // width of ball
+    private float k_BALL_DIAMETRESQ = 0.0036f;          // width of ball
     private float k_BALL_DIAMETRE = 0.06f;              // width of ball
     private float k_BALL_RADIUS = 0.03f;
     private float k_BALL_1OR = 33.3333333333f;          // 1 over ball radius
@@ -60,6 +59,8 @@ public class StandardPhysicsManager : UdonSharpBehaviour
     float k_CUSHION_RADIUS;
     private Vector3 k_vE;
     private Vector3 k_vF;
+
+    private bool jumpShotFlewOver, cueBallHasCollided;
 
     private void Start()
     {
@@ -348,6 +349,32 @@ public class StandardPhysicsManager : UdonSharpBehaviour
 
         if (table.is4Ball) return;
 
+        if (table.isSnooker6Red)
+        {
+            if (!cueBallHasCollided && balls_P[0].y > 0)
+            {
+                ball_bit = 0x1U;
+                Vector2 cueBallPos = new Vector2(balls_P[0].x, balls_P[0].z);
+                bool flewOverThisFrame = false;
+                for (int i = 1; i < 16; i++)
+                {
+                    ball_bit <<= 1;
+                    if ((ball_bit & sn_pocketed) > 0U) continue; //skip checking pocketed balls
+                    Vector2 compareBallPos = new Vector2(balls_P[i].x, balls_P[i].z);
+                    if (Vector2.Distance(cueBallPos, compareBallPos) < k_BALL_DIAMETRE)
+                    {
+                        jumpShotFlewOver = true;
+                        flewOverThisFrame = true;
+                    }
+                }
+                if (jumpShotFlewOver && !flewOverThisFrame)
+                {
+                    table_._TriggerJumpShotFoul();
+                    jumpShotFlewOver = false;//prevent this from being called again
+                }
+            }
+        }
+
         ball_bit = 0x1U;
 
         // Run triggers
@@ -367,6 +394,9 @@ public class StandardPhysicsManager : UdonSharpBehaviour
         table._EndPerf(table.PERF_PHYSICS_POCKET);
     }
 
+    // ( Since v0.2.0a ) Check if we can predict a collision before move update happens to improve accuracy
+    // This function predicts if the cue ball is about to hit another ball, and if it is, it teleports it
+    // to the surface of that ball, instead of letting it clip into that ball
     private Vector3 calculateDeltaPosition(uint sn_pocketed)
     {
         // Get what will be the next position
@@ -385,7 +415,6 @@ public class StandardPhysicsManager : UdonSharpBehaviour
         // Loop balls look for collisions
         uint ball_bit = 0x1U;
 
-        // Loop balls look for collisions
         for (int i = 1; i < 16; i++)
         {
             ball_bit <<= 1;
@@ -395,11 +424,11 @@ public class StandardPhysicsManager : UdonSharpBehaviour
 
             h = balls_P[i] - balls_P[0];
             lf = Vector3.Dot(norm, h);
-            if (lf < 0f) continue;
+            if (lf < 0f) continue; // discard balls that are behind the movement direction
 
-            s = k_BALL_DSQRPE - Vector3.Dot(h, h) + lf * lf;
-
-            if (s < 0.0f)
+            s = k_BALL_DSQRPE - Vector3.Dot(h, h) + lf * lf; // I assume this checks if predicted new position is inside another ball
+                                                             // why dot product with the same values????
+            if (s < 0.0f) // and skips if it isn't
                 continue;
 
             if (lf < minlf)
@@ -451,7 +480,7 @@ public class StandardPhysicsManager : UdonSharpBehaviour
             Vector3 delta = balls_P[i] - balls_P[id];
             float dist = delta.sqrMagnitude;
 
-            if (dist < k_BALL_DIAMETREPESQ)
+            if (dist < k_BALL_DIAMETRESQ)
             {
                 dist = Mathf.Sqrt(dist);
                 Vector3 normal = delta / dist;
@@ -469,6 +498,7 @@ public class StandardPhysicsManager : UdonSharpBehaviour
 
                 // Dynamic resolution (Cr is assumed to be (1)+1.0)
 
+                Vector3 cueBallVelPrev = balls_V[0];
                 Vector3 reflection = normal * dot;
                 balls_V[id] -= reflection;
                 balls_V[i] += reflection;
@@ -478,7 +508,26 @@ public class StandardPhysicsManager : UdonSharpBehaviour
                 {
                     g_ball_current.GetComponent<AudioSource>().PlayOneShot(hitSounds[id % 3], Mathf.Clamp01(reflection.magnitude));
                 }
+                if (table_.isSnooker6Red)
+                {
+                    if (!cueBallHasCollided && id == 0 && balls_P[0].y > 0)
+                    {
+                        // In snooker it's a foul if the cue ball jumps over the object ball even if it hits it in the process
+                        // check if cue ball is moving faster in the direction of the movement of the object ball to determine if it's going to go over it.
+                        // there may be unknown problems with this implementation.
+                        float velDot = Vector3.Dot(Vector3.ProjectOnPlane(balls_V[i], Vector3.up), Vector3.ProjectOnPlane(balls_V[id], Vector3.up));
 
+                        Vector3 flattenedCueBallVelPrev = cueBallVelPrev;
+                        flattenedCueBallVelPrev.y = 0;
+                        // detect if ball landed on top of the far side of the ball, which means by definition you went over it (this case is not covered by the velDot check)
+                        bool dotBehind = Vector3.Dot(flattenedCueBallVelPrev, delta) < 0;
+                        if (velDot > 1 || dotBehind)
+                        {
+                            table_._TriggerJumpShotFoul();
+                        }
+                        cueBallHasCollided = true;
+                    }
+                }
                 table._TriggerCollision(id, i);
             }
         }
@@ -611,6 +660,11 @@ public class StandardPhysicsManager : UdonSharpBehaviour
         ball.transform.Rotate(this.transform.TransformDirection(W.normalized), W.magnitude * k_FIXED_TIME_STEP * -Mathf.Rad2Deg, Space.World);
 
         return ballMoving;
+    }
+
+    public void _ResetJumpShotVariables()
+    {
+        jumpShotFlewOver = cueBallHasCollided = false;
     }
 
     private void ModifyAudioProperties(int id, GameObject Ball)
@@ -947,10 +1001,9 @@ public class StandardPhysicsManager : UdonSharpBehaviour
         k_FACING_ANGLE_SIDE = table.k_FACING_ANGLE_SIDE;
         k_BALL_RADIUS = table.k_BALL_RADIUS;
         k_BALL_DIAMETRE = k_BALL_RADIUS * 2;
-        float epsilon = 0.0000001f; // ??
-        k_BALL_DSQRPE = k_BALL_DIAMETRE * k_BALL_DIAMETRE - epsilon;
-        k_BALL_DIAMETREPE = k_BALL_DIAMETRE + epsilon;
-        k_BALL_DIAMETREPESQ = k_BALL_DIAMETREPE * k_BALL_DIAMETREPE;
+        float epsilon = 0.000002f; // ??
+        k_BALL_DIAMETRESQ = k_BALL_DIAMETRE * k_BALL_DIAMETRE;
+        k_BALL_DSQRPE = k_BALL_DIAMETRESQ - epsilon;
         k_BALL_1OR = 1 / k_BALL_RADIUS;
         k_BALL_DSQR = k_BALL_DIAMETRE * k_BALL_DIAMETRE;
         k_BALL_RSQR = k_BALL_RADIUS * k_BALL_RADIUS;
@@ -1508,10 +1561,6 @@ public class StandardPhysicsManager : UdonSharpBehaviour
                 if (v.y < k_GRAVITY * k_FIXED_TIME_STEP)
                 {
                     v.y = 0f;
-                }
-                else
-                {
-                    table._TriggerJumpShot();
                 }
                 table._Log("dampening to " + v.y);
             }

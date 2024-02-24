@@ -17,8 +17,7 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
 #endif
     private const float k_FIXED_TIME_STEP = 1 / 80f;    // time step in seconds per iteration
     private float k_BALL_DSQRPE = 0.003598f;            // ball diameter squared plus epsilon // this is actually minus epsilon?
-    private float k_BALL_DIAMETREPE = 0.06001f;         // width of ball
-    private float k_BALL_DIAMETREPESQ = 0.0036012001f;  // width of ball
+    private float k_BALL_DIAMETRESQ = 0.0036f;          // width of ball
     private float k_BALL_DIAMETRE = 0.06f;              // width of ball
     private float k_BALL_RADIUS = 0.03f;
     private float k_BALL_1OR = 33.3333333333f;          // 1 over ball radius
@@ -64,6 +63,8 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
     float k_CUSHION_RADIUS;
     private Vector3 k_vE;
     private Vector3 k_vF;
+
+    private bool jumpShotFlewOver, cueBallHasCollided;
 
     [NonSerialized] public BilliardsModule table_;
     public void _Init()
@@ -313,7 +314,7 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
             }
         }
         table._EndPerf(table.PERF_PHYSICS_CUSHION);
-        
+
         bool outOfBounds = false;
         if ((sn_pocketed & 0x01u) == 0x00u)
         {
@@ -324,8 +325,34 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
                 outOfBounds = true;
             }
         }
-        
+
         if (table.is4Ball) return;
+
+        if (table.isSnooker6Red)
+        {
+            if (!cueBallHasCollided && balls_P[0].y > 0)
+            {
+                ball_bit = 0x1U;
+                Vector2 cueBallPos = new Vector2(balls_P[0].x, balls_P[0].z);
+                bool flewOverThisFrame = false;
+                for (int i = 1; i < 16; i++)
+                {
+                    ball_bit <<= 1;
+                    if ((ball_bit & sn_pocketed) > 0U) continue; //skip checking pocketed balls
+                    Vector2 compareBallPos = new Vector2(balls_P[i].x, balls_P[i].z);
+                    if (Vector2.Distance(cueBallPos, compareBallPos) < k_BALL_DIAMETRE)
+                    {
+                        jumpShotFlewOver = true;
+                        flewOverThisFrame = true;
+                    }
+                }
+                if (jumpShotFlewOver && !flewOverThisFrame)
+                {
+                    table_._TriggerJumpShotFoul();
+                    jumpShotFlewOver = false;//prevent this from being called again
+                }
+            }
+        }
 
         ball_bit = 0x1U;
 
@@ -346,6 +373,9 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
         table._EndPerf(table.PERF_PHYSICS_POCKET);
     }
 
+    // ( Since v0.2.0a ) Check if we can predict a collision before move update happens to improve accuracy
+    // This function predicts if the cue ball is about to hit another ball, and if it is, it teleports it
+    // to the surface of that ball, instead of letting it clip into that ball
     private Vector3 calculateDeltaPosition(uint sn_pocketed)
     {
         // Get what will be the next position
@@ -364,7 +394,6 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
         // Loop balls look for collisions
         uint ball_bit = 0x1U;
 
-        // Loop balls look for collisions
         for (int i = 1; i < 16; i++)
         {
             ball_bit <<= 1;
@@ -374,11 +403,11 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
 
             h = balls_P[i] - balls_P[0];
             lf = Vector3.Dot(norm, h);
-            if (lf < 0f) continue;
+            if (lf < 0f) continue; // discard balls that are behind the movement direction
 
-            s = k_BALL_DSQRPE - Vector3.Dot(h, h) + lf * lf;
-
-            if (s < 0.0f)
+            s = k_BALL_DSQRPE - Vector3.Dot(h, h) + lf * lf; // I assume this checks if predicted new position is inside another ball
+                                                             // why dot product with the same values????
+            if (s < 0.0f) // and skips if it isn't
                 continue;
 
             if (lf < minlf)
@@ -446,8 +475,7 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
             Vector3 delta = balls_P[i] - balls_P[id];
             float dist = delta.sqrMagnitude;
 
-
-            if (dist < k_BALL_DIAMETREPESQ) //k_BALL_DIAMETER_SQ
+            if (dist < k_BALL_DIAMETRESQ)
             {
                 dist = Mathf.Sqrt(dist);
                 normal = delta / dist;
@@ -459,7 +487,7 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
                 moved[i] = true;
                 moved[id] = true;
 
-
+                Vector3 cueBallVelPrev = balls_V[0];
                 // Handle collision effects
                 HandleCollision(i, id, normal, 0, delta);
 
@@ -480,7 +508,26 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
                 {
                     g_ball_current.GetComponent<AudioSource>().PlayOneShot(hitSounds[id % 3], Mathf.Clamp01(normal.magnitude));
                 }
+                if (table_.isSnooker6Red)
+                {
+                    if (!cueBallHasCollided && id == 0 && balls_P[0].y > 0)
+                    {
+                        // In snooker it's a foul if the cue ball jumps over the object ball even if it hits it in the process
+                        // check if cue ball is moving faster in the direction of the movement of the object ball to determine if it's going to go over it.
+                        // there may be unknown problems with this implementation.
+                        float velDot = Vector3.Dot(Vector3.ProjectOnPlane(balls_V[i], Vector3.up), Vector3.ProjectOnPlane(balls_V[id], Vector3.up));
 
+                        Vector3 flattenedCueBallVelPrev = cueBallVelPrev;
+                        flattenedCueBallVelPrev.y = 0;
+                        // detect if ball landed on top of the far side of the ball, which means by definition you went over it (this case is not covered by the velDot check)
+                        bool dotBehind = Vector3.Dot(flattenedCueBallVelPrev, delta) < 0;
+                        if (velDot > 1 || dotBehind)
+                        {
+                            table_._TriggerJumpShotFoul();
+                        }
+                        cueBallHasCollided = true;
+                    }
+                }
                 table._TriggerCollision(id, i);
             }
         }
@@ -609,7 +656,7 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
 
         // Cal cut angle and print   
         float cutAngle = Mathf.Acos(alongNormal / tangent.magnitude) * Mathf.Rad2Deg;
-        Debug.Log("<color=cyan>Cut Angle ϕ:=</color> " + Vector3.SignedAngle(relativeVelocity, normal, Vector3.up));
+        // Debug.Log("<color=cyan>Cut Angle ϕ:=</color> " + Vector3.SignedAngle(relativeVelocity, normal, Vector3.up));
 
         // Cal Throw Angle (Between Vt and Vn) [Must use their Dot Products]
         //float angleBetweenNormalAndTangent = Mathf.Atan(impulseTangent / alongNormal); // Already declared
@@ -621,8 +668,8 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
         //Debug.Log("<color=green>Angle between normal and tangent = [Throw angle tan(θ)]:=</color> " + (angleBetweenNormalAndTangent * Mathf.Rad2Deg) / relativeVelocity.magnitude);
 
         // Debug log for torque values
-        Debug.Log("Torque 1: " + torque1);
-        Debug.Log("Torque 2: " + torque2);
+        // Debug.Log("Torque 1: " + torque1);
+        // Debug.Log("Torque 2: " + torque2);
 
     }
 
@@ -698,8 +745,8 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
         // 𝑣² = 𝑢² + 2𝑎s                          s = 𝑣𝑡 + 1/2𝑎𝑡²      𝑡 = 𝑢/𝑎
         // 2s = 𝑣² - 𝑢² = x  [Gives you x]
         // 𝑎  = 2s/x         [Gives you 𝑎] 
-        
-        
+
+
         if (balls_P[id].y < 0.001 && V.y < 0)
         {
             /// Relative velocity of ball and table at Contact point -> Relative Velocity is 𝑢0, once the player strikes the CB, 𝑢 is no-zero, the ball is moving and its initial velocity is measured (in m/s).
@@ -728,26 +775,26 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
             {
                 ///  Equation 13
                 V += -mu_r * g * t * VXZ.normalized;
-                                               
+
                 W.x = -V.z * 1f / R;
-                    
+
                 if (0.3f > Mathf.Abs(W.y))
-                {        
+                {
                     W.y = 0.0f;
                 }
-                else                                           
+                else
                 {
-                    float w_perp = (5f * mu_sp * g) / (2f * R);                 
-                    W.y -= Mathf.Sign(W.y) * w_perp * t;                  
+                    float w_perp = (5f * mu_sp * g) / (2f * R);
+                    W.y -= Mathf.Sign(W.y) * w_perp * t;
                 }
-                
+
                 W.z = V.x * 1f / R;
-                
+
                 //Stopping scenario  
                 if (VXZ.sqrMagnitude < 0.0001f && W.magnitude < 0.04f)
                 {
                     W = Vector3.zero;
-                    V = Vector3.zero;   
+                    V = Vector3.zero;
                 }
                 else
                 {
@@ -757,14 +804,14 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
             else /// |𝑢0 | is bellow DeltaTime = Rolling
             {
                 Vector3 nv = u0 / absolute_u0; /// Ensure the value returns 0 or 1 or -1 By dividing each initial Vector, with the Sum of all of them combined.      
-                ///Debug.Log("|nv| is: " + nv);               
+                                               ///Debug.Log("|nv| is: " + nv);               
 
                 V += -mu_s * g * t * nv;
 
                 /// [Equation 7]
                 /// Angular Slipping Friction [PARALLEL] (Without K-axis)
                 /// In parallel, K^ = O with 'Vector3.Up'
-                W += (-5.0f * mu_s * g) / (2.0f * R) * t * Vector3.Cross(Vector3.up, nv); 
+                W += (-5.0f * mu_s * g) / (2.0f * R) * t * Vector3.Cross(Vector3.up, nv);
 
                 ballMoving = true;
             }
@@ -795,7 +842,12 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
 
         return ballMoving;
     }
- 
+
+    public void _ResetJumpShotVariables()
+    {
+        jumpShotFlewOver = cueBallHasCollided = false;
+    }
+
     // Cue input tracking
 
     Vector3 cue_lpos;
@@ -871,7 +923,7 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
     //const float k_EP1 = 1.79f;
     //const float k_F = 1.72909790282f;
     */
-   
+
     // Apply cushion bounce
     void _phy_bounce_cushion(int id, Vector3 N)
     {
@@ -910,7 +962,7 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
         // vertexes
         */
 
-         /// Using Han_2005 Model /// ! W.I.P !
+        /// Using Han_2005 Model /// ! W.I.P !
 
         Vector3 source_v = balls_V[id];
         if (Vector3.Dot(source_v, N) > 0f)
@@ -933,13 +985,13 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
         /// The angle of Incident [Theta_]
         phi = Mathf.Atan2(V.z, V.x);
         phi = (phi + 2 * Mathf.PI) % (2 * Mathf.PI);
-        Debug.Log("<color=cyan>Theta_:</color> " + phi);
+        // Debug.Log("<color=cyan>Theta_:</color> " + phi);
 
         ///The friction Coefficient between the ball and rail varies according to the incidence angle [Theta_ (Radians)].
 
         mu = 0.471f - 0.241f * phi;                                                     /// Dynamic
         //mu = 0.16f;                                                                   /// Const
-        Debug.Log("<color=yellow>Cushion(μ):</color> " + mu);
+        // Debug.Log("<color=yellow>Cushion(μ):</color> " + mu);
 
         ///"h" defines the Height of a cushion, 
         ///sometimes defined as ϵ in other research Papers.. 
@@ -950,14 +1002,14 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
 
         θ = Mathf.Asin(h / k_BALL_RADIUS - 1f);                                         /// θ = height of cushion relative to the ball
 
-        float cosθ = Mathf.Cos(θ); 
+        float cosθ = Mathf.Cos(θ);
         float sinθ = Mathf.Sin(θ);
         float cosPhi = Mathf.Cos(phi);
 
         ///*is correct* = revised values to match with its necessary Rotation Axis.
 
         s_x = V.x * sinθ - V.y * cosθ + k_BALL_RADIUS * W.z;                            /// s_x is correct
-        s_z = ( -V.z - k_BALL_RADIUS * W.y * cosθ + k_BALL_RADIUS * W.x * sinθ);        /// s_z is correct
+        s_z = (-V.z - k_BALL_RADIUS * W.y * cosθ + k_BALL_RADIUS * W.x * sinθ);        /// s_z is correct
 
         c = V.x * cosθ; // 2D Assumption
         //c = V.x * cosθ - V.y * sinθ; // 3D Assumption
@@ -973,7 +1025,7 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
 
         // [Equations 17 & 20]
         /// P_zE and P_zS (Remember, Z is up, so we write to Unity's "Y" here.
-         
+
         P_yE = ((1f + e) * c) / k_B;                                                    /// P_yE is Correct
         P_yS = (Mathf.Sqrt(Mathf.Pow(s_x, 2) + Mathf.Pow(s_z, 2)) / k_A);               /// P_yS is Correct (In case of Anomaly, do: Mathf.Sqrt(s_x * s_x + s_z * s_z) instead;
 
@@ -981,15 +1033,15 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
         {
             // Sliding and sticking case 1-1                                                   1-1
             PX = -s_x / k_A * sinθ - (1f + e) * c / k_B * cosθ;                          /// PX is Correct
-            PZ =  s_z / k_A;                                                             /// PZ is correct
-            PY =  s_x / k_A * cosθ - (1f + e) * c / k_B * sinθ;                          /// PY is correct     
+            PZ = s_z / k_A;                                                             /// PZ is correct
+            PY = s_x / k_A * cosθ - (1f + e) * c / k_B * sinθ;                          /// PY is correct     
         }
         else
         {
             // Forward Sliding Case 1-2                                                        1-2
             PX = -mu * (1f + e) * c / k_B * cosPhi * sinθ - (1f + e) * c / k_B * cosθ;   /// PX is Correct
-            PZ =  mu * (1f + e) * c / k_B * sinθ;                                        /// PZ is Correct
-            PY =  mu * (1f + e) * c / k_B * cosPhi * cosθ - (1f + e) * c / k_B * sinθ;   /// PY is Correct
+            PZ = mu * (1f + e) * c / k_B * sinθ;                                        /// PZ is Correct
+            PY = mu * (1f + e) * c / k_B * cosPhi * cosθ - (1f + e) * c / k_B * sinθ;   /// PY is Correct
         }
         float k = (s_z) / (2 * k_BALL_MASS * k_A);
 
@@ -1063,10 +1115,9 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
         k_FACING_ANGLE_SIDE = table.k_FACING_ANGLE_SIDE;
         k_BALL_RADIUS = table.k_BALL_RADIUS;
         k_BALL_DIAMETRE = k_BALL_RADIUS * 2;
-        float epsilon = 0.0000001f; // ??
-        k_BALL_DSQRPE = k_BALL_DIAMETRE * k_BALL_DIAMETRE - epsilon;
-        k_BALL_DIAMETREPE = k_BALL_DIAMETRE + epsilon;
-        k_BALL_DIAMETREPESQ = k_BALL_DIAMETREPE * k_BALL_DIAMETREPE;
+        float epsilon = 0.000002f; // ??
+        k_BALL_DIAMETRESQ = k_BALL_DIAMETRE * k_BALL_DIAMETRE;
+        k_BALL_DSQRPE = k_BALL_DIAMETRESQ - epsilon;
         k_BALL_1OR = 1 / k_BALL_RADIUS;
         k_BALL_DSQR = k_BALL_DIAMETRE * k_BALL_DIAMETRE;
         k_BALL_RSQR = k_BALL_RADIUS * k_BALL_RADIUS;
@@ -1180,32 +1231,24 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
 
         if ((absA - k_vE).sqrMagnitude < k_INNER_RADIUS_SQ)
         {
-            balls_V[id] = Vector3.zero;
-            balls_W[id] = Vector3.zero;
             table._TriggerPocketBall(id);
             return;
         }
 
         if ((absA - k_vF).sqrMagnitude < k_INNER_RADIUS_SQ)
         {
-            balls_V[id] = Vector3.zero;
-            balls_W[id] = Vector3.zero;
             table._TriggerPocketBall(id);
             return;
         }
 
         if (absA.z > k_vF.z)
         {
-            balls_V[id] = Vector3.zero;
-            balls_W[id] = Vector3.zero;
             table._TriggerPocketBall(id);
             return;
         }
 
         if (absA.z > -absA.x + k_vE.x + k_vE.z)
         {
-            balls_V[id] = Vector3.zero;
-            balls_W[id] = Vector3.zero;
             table._TriggerPocketBall(id);
             return;
         }
@@ -1562,8 +1605,6 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
 
     private void applyPhysics(float V0)
     {
-        
-        
         GameObject cuetip = table.activeCue._GetCuetip();
 
         Vector3 q = transform_Surface.InverseTransformDirection(cuetip.transform.forward); // direction of cue in surface space
@@ -1639,10 +1680,6 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
                 {
                     v.y = 0f;
                 }
-                else
-                {
-                    table._TriggerJumpShot();
-                }
                 table._Log("dampening to " + v.y);
             }
         }
@@ -1658,7 +1695,7 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
         // done
         balls_V[0] = v;
         balls_W[0] = w;
-        
+
     }
 
 }
