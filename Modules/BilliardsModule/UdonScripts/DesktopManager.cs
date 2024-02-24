@@ -1,5 +1,6 @@
 ﻿
 using Metaphira.Modules.CameraOverride;
+using Microsoft.SqlServer.Server;
 using UdonSharp;
 using UnityEngine;
 using VRC.SDKBase;
@@ -38,6 +39,7 @@ public class DesktopManager : UdonSharpBehaviour
     private Vector3 initialShotDirection;
     private float initialPower;
     Vector3 initialCursorPosition;
+    float OneOSF;
 
     private Vector3 spin;
     private float jumpAngle;
@@ -79,8 +81,10 @@ public class DesktopManager : UdonSharpBehaviour
     public void _RefreshTable()
     {
         Camera desktopCamera = root.GetComponentInChildren<Camera>();
-        desktopCamera.orthographicSize = cameraStartScale * table.tableModels[table.tableModelLocal].DesktopUIScaleFactor;
-        root.transform.localScale = rootStartScale * table.tableModels[table.tableModelLocal].DesktopUIScaleFactor;
+        float SF = table.tableModels[table.tableModelLocal].DesktopUIScaleFactor;
+        desktopCamera.orthographicSize = cameraStartScale * SF;
+        root.transform.localScale = rootStartScale * SF;
+        OneOSF = 1 / SF;
     }
 
     public void _Tick()
@@ -251,7 +255,7 @@ public class DesktopManager : UdonSharpBehaviour
             }
         }
 
-        cursorIndicator.transform.localPosition = cursor;
+        cursorIndicator.transform.localPosition = cursor * (1 / table.tableModels[table.tableModelLocal].DesktopUIScaleFactor);
         powerIndicator.transform.localScale = new Vector3(1.0f - (power * 2.0f), 1.0f, 1.0f);
 
         bool hitCtrlNow = Input.GetKeyDown(KeyCode.LeftControl) || Input.GetKeyDown(KeyCode.RightControl);
@@ -383,6 +387,8 @@ public class DesktopManager : UdonSharpBehaviour
         isShooting = false;
         cursor = initialCursorPosition;
         cursorIndicator.SetActive(true);
+        cursorClampX = table.k_TABLE_WIDTH + .3f;
+        cursorClampZ = table.k_TABLE_HEIGHT + .3f;
     }
 
     private void resetShootState()
