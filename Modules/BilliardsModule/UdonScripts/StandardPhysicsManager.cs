@@ -706,7 +706,7 @@ public class StandardPhysicsManager : UdonSharpBehaviour
 
     private bool isCueBallTouching()
     {
-        if (table.is8Ball) // 8 ball
+        if (table.is8Ball || table.isSnooker6Red)
         {
             // Check all
             for (int i = 1; i < 16; i++)
