@@ -93,7 +93,7 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
 
         if (!table.isLocalSimulationRunning) return;
 
-        float newAccumulatedTime = Mathf.Clamp(accumulatedTime + k_FIXED_TIME_STEP, 0, Time.deltaTime);
+        float newAccumulatedTime = Mathf.Clamp(accumulatedTime + Time.fixedDeltaTime, 0, k_MAX_DELTA);
         while (newAccumulatedTime >= k_FIXED_TIME_STEP)
         {
             table._BeginPerf(table.PERF_PHYSICS_MAIN);
