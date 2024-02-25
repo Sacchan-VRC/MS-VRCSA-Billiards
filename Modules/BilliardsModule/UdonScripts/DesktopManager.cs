@@ -319,6 +319,7 @@ public class DesktopManager : UdonSharpBehaviour
     private void renderCuePosition(Vector3 dir)
     {
         CueController cue = table.activeCue;
+        cue.UpdateDesktopPosition(); // otherwise it spazzes out if FPS > FixedUpdate rate
 
         float a = spin.x * k_BALL_RADIUS;
         float b = spin.z * k_BALL_RADIUS;

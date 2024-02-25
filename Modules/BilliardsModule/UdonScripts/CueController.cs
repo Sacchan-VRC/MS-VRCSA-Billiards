@@ -140,7 +140,11 @@ public class CueController : UdonSharpBehaviour
         desktop.transform.position = origPrimaryPosition;
         body.transform.position = origPrimaryPosition;
     }
-
+    public void UpdateDesktopPosition()
+    {
+        desktop.transform.position = body.transform.position;
+        desktop.transform.rotation = body.transform.rotation;
+    }
     private void FixedUpdate()
     {
         if (primaryHolding)
@@ -185,8 +189,7 @@ public class CueController : UdonSharpBehaviour
                     body.transform.position = primaryLockPos + primaryLockDir * distance;
                 }
 
-                desktop.transform.position = body.transform.position;
-                desktop.transform.rotation = body.transform.rotation;
+                UpdateDesktopPosition();
             }
             else
             {
@@ -240,9 +243,9 @@ public class CueController : UdonSharpBehaviour
         // we can't remove this because this directly affects physics
         // must occur at the end after we've finished updating the transform's position
         // otherwise vrchat will try to change it because it's a pickup
-        lagPrimaryPosition = Vector3.Lerp(lagPrimaryPosition, primary.transform.position, Time.fixedDeltaTime * 16.0f);
+        lagPrimaryPosition = Vector3.Lerp(lagPrimaryPosition, primary.transform.position, 1 - Mathf.Pow(0.5f, Time.fixedDeltaTime * 24.0f));
         if (!secondaryLocked)
-            lagSecondaryPosition = Vector3.Lerp(lagSecondaryPosition, secondary.transform.position, Time.fixedDeltaTime * 16.0f);
+            lagSecondaryPosition = Vector3.Lerp(lagSecondaryPosition, secondary.transform.position, 1 - Mathf.Pow(0.5f, Time.fixedDeltaTime * 24.0f));
     }
 
     private Vector3 clamp(Vector3 input, float minX, float maxX, float minY, float maxY, float minZ, float maxZ)
@@ -336,8 +339,7 @@ public class CueController : UdonSharpBehaviour
         // reset secondary offset
         resetSecondaryOffset();
         // update desktop marker
-        desktop.transform.position = body.transform.position;
-        desktop.transform.rotation = body.transform.rotation;
+        UpdateDesktopPosition();
 
         table._OnDropCue();
     }
