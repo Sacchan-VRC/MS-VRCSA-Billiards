@@ -757,7 +757,6 @@ public class StandardPhysicsManager : UdonSharpBehaviour
     //private float k_A = 21.875f;  //21.875f;      A = (7/(2*m)) 
     //private float k_B = 6.25f;    //6.25f;        B = (1/m)
     const float k_F = 1.72909790282f;
-    private float e = 0.85f;
 
     // Apply cushion bounce
     void _phy_bounce_cushion(int id, Vector3 N)
@@ -798,10 +797,6 @@ public class StandardPhysicsManager : UdonSharpBehaviour
         {
             return;
         }
-        else
-        {
-            N = -N; // Invert the normal vector
-        }
 
         // Rotate V, W to be in the reference frame of cushion
         Quaternion rq = Quaternion.AngleAxis(Mathf.Atan2(-N.z, -N.x) * Mathf.Rad2Deg, Vector3.up);
@@ -809,142 +804,47 @@ public class StandardPhysicsManager : UdonSharpBehaviour
         Vector3 V = rq * source_v;
         Vector3 W = rq * balls_W[id];
 
-        Vector3 V1 = Vector3.zero; //Vector3 V1;
-        Vector3 W1 = Vector3.zero; //Vector3 W1;
-        //Vector3 rvw_R = balls_P[id];
+        Vector3 V1; //= Vector3.zero; //Vector3 V1;
+        Vector3 W1; //= Vector3.zero; //Vector3 W1;
 
-        float θ, phi, psi, h, k, k_A, k_B, k_SINA, k_SINA2, k_COSA, k_COSA2, c, s, s_x, s_z, mu, I, PY, PX, PZ, P_yE, P_yS; //Y is Up in Unity
+        float θ, h, k, k_A, k_B, c, s_x, s_z; //Y is Up in Unity
 
-        // Before i turn some of these to CONST FLOAT, i need to evaluate their FLOAT, i.e you are going see all of them inside here.
+        const float e = 0.7f;
 
+        k_A = (7f / (2f * k_BALL_MASS));
+        k_B = (1f / k_BALL_MASS);
 
         //"h" defines the Height of a cushion, sometimes defined as ϵ in other research Papers.. (we are doing "h" because better stands fo "H"eight)
-        h = 7f * k_BALL_RADIUS / 5f;
+
+        //h = 7f * k_BALL_RADIUS / 5f;
+        //h = k_BALL_DIAMETRE * 0.65f;
 
         //THETA θ = The Angle Torque the ball has to the slate from the height of the cushion Depends on height of cushion relative to the ball
-        θ = Mathf.Asin(h / k_BALL_RADIUS - 1f); //-1
-        float cosθ = Mathf.Cos(θ); // in use
-        float sinθ = Mathf.Sin(θ); // in use
 
-        //psi = Mathf.Atan2(N.z, N.x) * Mathf.Rad2Deg;
-        //psi = Mathf.PI / 0f;
+        //θ = Mathf.Asin(h / k_BALL_RADIUS - 1f); //-1
+        const float cosθ = 0.95976971915f; //Mathf.Cos(θ); // in use
+        const float sinθ = 0.28078832987f; //Mathf.Sin(θ); // in use
 
-        // Construct the rotation matrix
-        //Matrix4x4 rotationMatrix = Matrix4x4.Rotate(Quaternion.Euler(0, 0, psi));
+        const float sinθ2 = sinθ * sinθ;
+        const float cosθ2 = cosθ * cosθ;
 
-        phi = Mathf.Atan2(V1.z, V1.x) % (2 * Mathf.PI);  //It was just V instead of V1
-        float cosPhi = Mathf.Cos(phi);
+        V1.x = -V.x * ((((2.0f / 7.0f) * sinθ2) * cosθ2) + (1 + e)) - (((2.0f / 7.0f) * k_BALL_RADIUS) * sinθ) * W.z;
+        V1.z = (5.0f / 7.0f) * V.z + ((2.0f / 7.0f) * k_BALL_RADIUS) * (W.x * sinθ - W.y * cosθ) - V.z;
+        V1.y = 0.0f;
 
-        mu = k_F_SLIDE_C;
+        s_x = V.x * sinθ + W.z;
+        s_z = -V.z - W.y * cosθ + W.x * sinθ;
 
-        //Below are Cadidates to remain CONST FLOATS later (we are working with baked values here to help hint us with perfomance loss and calculate of % cost.)
+        k = s_z * (5f / 7f);
 
-        //SINE is associated the Y value (But in Unity Y is UP, so we use Z instead)
-        //k_SINA = 0.28078832987f;
-        //k_SINA2 = k_SINA * k_SINA;
+        c = V.x * cosθ;
 
-        //COSINE is associated with the X value
-        //k_COSA = 0.95976971915f;     
-        //k_COSA2 = k_COSA * k_COSA;
+        W1.x = k * sinθ;
+        W1.z = (5.0f / (2.0f * k_BALL_MASS)) * (-s_x / k_A + ((sinθ * c * 1.79f) / k_B) * (cosθ - sinθ)); ;
+        W1.y = k * cosθ;
 
-        // (Legacy)
-        //V1.x = -V.x * ((2.0f / 7.0f) * k_SINA2 + (1 + e) * k_COSA2) - ((2.0f / 7.0f) * k_BALL_RADIUS * W.z * k_SINA);
-        //V1.z = ((5.0f / 7.0f) * V.z + (2.0f / 7.0f) * k_BALL_RADIUS * (W.x * k_SINA - W.y * k_COSA)); //- V.z;
-        //V1.y = 0.0f; 
-
-        // (baked Leagcy):
-        //V1.x = -V.x * k_F - 0.00240675711f * W.z;
-        //V1.z = 0.71428571428f * V.z + 0.00857142857f * (W.x * k_SINA - W.y * k_COSA) - V.z;
-        //V1.y = 0.0f;
-
-        // (Han 2005 Model PDF, "Neko Mabel" C# Transcribed from "ekiefl" Numpy (Python)
-
-        /* Numpy Matrix 3x3 Reference, The first Number [] is P,V or W and the Second Number [] is Axis.
-        Ball_P  [0,0] P.X [0.1] = P.y [0.2] = P.z
-        Balls_V [1,0] V.x [1.1] = V.y [1.2] = V.z  Remeber, this is straight from Source, so everything you see in Z-axis needs to be put in Y-Axis and Vice Versa, for the sake of Unity.
-        Balls.W [2,0] W.x [2.1] = W.y [2.2] = W.z
-
-        rvw_R[1] = Equivalent to Vector3 V1.
-
-        */
-
-        //*is correct* = revised values to match with its necessary Rotation Axis.
-
-        //s_x = V.x * k_SINA - V.y * k_COSA + W.z;
-        // (baked): y component not used:
-        s_x = V.x * sinθ - V.y * cosθ + k_BALL_RADIUS * W.z; // s_x is correct
-        s_z = (
-            -V.z
-            - k_BALL_RADIUS * W.y * cosθ
-            + k_BALL_RADIUS * W.x * sinθ); //s_z is correct
-
-        c = V.x * cosθ; // "c" 2D Assumption, is Correct
-
-        //Eqs 16
-        //I = 2 * k_BALL_MASS * Mathf.Pow(k_BALL_RADIUS, 2) / 5;    // C# INT
-        I = 2f / 5f * k_BALL_MASS * Mathf.Pow(k_BALL_RADIUS, 2);    // Unity Sintax C# FLOAT <- to avoid confusion, A and B are using the same order.
-        k_A = (7f / (2f * k_BALL_MASS));    // A is Correct 
-        k_B = (1f / k_BALL_MASS);           // B is Correct
-
-
-        //Eqs 17 & 20
-        //P_zE and P_zS (Remember, Z is up, so we write to Unity's "Y" here.
-        P_yE = ((1f + e) * c) / k_B;                                       // P_yE is Correct
-        P_yS = (Mathf.Sqrt(Mathf.Pow(s_x, 2) + Mathf.Pow(s_z, 2)) / k_A);   // P_yS is Correct (In case of Anomaly, do: Mathf.Sqrt(s_x * s_x + s_z * s_z) instead;
-
-        if (P_yS <= P_yE)
-        {
-            // Sliding and sticking case 1-1                                       1-1
-            PX = -s_x / k_A * sinθ - (1 + e) * c / k_B * cosθ;       // PX is Correct
-            PZ = s_z / k_A;                                             // PZ is correct
-            PY = s_x / k_A * cosθ - (1 + e) * c / k_B * sinθ;       // PY is correct
-        }
-        else
-        {
-            // Forward Sliding Case 1-2                                            1-2
-            PX = -mu * (1 + e) * c / k_B * cosPhi * sinθ - (              // PX is Correct
-                1 + e
-            ) * c / k_B * cosθ;
-            PZ = mu * (1 + e) * c / k_B * sinθ;                           // PZ is Correct
-            PY = mu * (1 + e) * c / k_B * cosPhi * cosθ - (               // PY is Correct
-                1 + e
-            ) * c / k_B * sinθ;
-        }
-        k = (s_z) / (2 * k_BALL_MASS * k_A);
-
-        // Update Velocity                                  // Update Velocity is Corret
-        V1.x = V.x += PX / k_BALL_MASS;
-        V1.z = V.z += PZ / k_BALL_MASS;
-        V1.y = V.y += PY / k_BALL_MASS;
-        //Currently, we dont have a Ball-Table (Slate) Interaction, the torque applied to the Table wont make the ball hop into the air, Lets not look at it for now.
-
-        // Update Angular Velocity
-        W1.x = W.x += -k_BALL_RADIUS / I * PZ * sinθ;
-        W1.z = W.z += k_BALL_RADIUS / I * (PX * sinθ - PY * cosθ);
-        W1.y = W.y += k_BALL_RADIUS / I * PZ * cosθ;
-
-        /*
-        // (baked):
-        //k = s_z * 0.71428571428f;
-
-        //c = V.x * k_COSA - V.y * k_COSA;
-        // (baked): y component not used
-
-        W1.x = k * k_SINA;
-
-        //W1.z = (5.0f / (2.0f * k_BALL_MASS)) * PX; //(-s_x / k_A + ((k_SINA * c * k_EP1) / k_B) * (k_COSA - k_SINA)); //5/2
-        // (baked):
-        W1.z = (5.0f / (2.0f * k_BALL_MASS)) * (-s_x * 0.04571428571f + c * 0.0546021744f);
-        
-        W1.y = k * k_COSA;
-        */
-
-        // Apply the rotation to the vector
-        //Vector3 rvw = rotationMatrix.MultiplyPoint3x4(rvw_R);
-
-        // Change back to Table Reference Frame (Unrotate result)
-        balls_V[id] = rb * V1;
-        balls_W[id] = rb * W1;
+        balls_V[id] += rb * V1;
+        balls_W[id] += rb * W1;
 
         table._TriggerBounceCushion(id, N);
     }

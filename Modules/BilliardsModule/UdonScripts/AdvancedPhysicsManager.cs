@@ -945,8 +945,6 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
     // Apply cushion bounce
     void _phy_bounce_cushion(int id, Vector3 N)
     {
-        ///LEGACY
-        /*
         // Mathematical expressions derived from: https://billiards.colostate.edu/physics_articles/Mathavan_IMechE_2010.pdf
         //
         // (Note): subscript gamma, u, are used in replacement of Y and Z in these expressions because
@@ -978,105 +976,59 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
         // Reject bounce if velocity is going the same way as normal
         // this state means we tunneled, but it happens only on the corner
         // vertexes
-        */
-
-        /// Using Han_2005 Model /// ! W.I.P !
-
         Vector3 source_v = balls_V[id];
-        if (Vector3.Dot(source_v, N) > 0f)
+        if (Vector3.Dot(source_v, N) > 0.0f)
         {
-            //return;
+            return;
         }
 
-        float psi = Mathf.Atan2(-N.z, -N.x) * Mathf.Rad2Deg;                            /// Calculate psi (angle in radians)
-        Quaternion rq = Quaternion.AngleAxis(psi, Vector3.up);                          /// Create a rotation quaternion rq
-
+        // Rotate V, W to be in the reference frame of cushion
+        Quaternion rq = Quaternion.AngleAxis(Mathf.Atan2(-N.z, -N.x) * Mathf.Rad2Deg, Vector3.up);
         Quaternion rb = Quaternion.Inverse(rq);
         Vector3 V = rq * source_v;
         Vector3 W = rq * balls_W[id];
 
-        Vector3 V1 = Vector3.zero; //Vector3 V1;
-        Vector3 W1 = Vector3.zero; //Vector3 W1;
+        Vector3 V1; //= Vector3.zero; //Vector3 V1;
+        Vector3 W1; //= Vector3.zero; //Vector3 W1;
 
-        float θ, phi, h, k_A, k_B, c, e, s, s_x, s_z, mu, I, PY, PX, PZ, P_yE, P_yS;    /// Y is Up in Unity
+        float θ, h, k, k_A, k_B, c, s_x, s_z; //Y is Up in Unity
 
-        /// The angle of Incident [Theta_]
-        phi = Mathf.Atan2(V.z, V.x);
-        phi = (phi + 2 * Mathf.PI) % (2 * Mathf.PI);
-        // Debug.Log("<color=cyan>Theta_:</color> " + phi);
+        const float e = 0.7f;
 
-        ///The friction Coefficient between the ball and rail varies according to the incidence angle [Theta_ (Radians)].
+        k_A = (7f / (2f * k_BALL_MASS));
+        k_B = (1f / k_BALL_MASS);
 
-        mu = 0.471f - 0.241f * phi;                                                     /// Dynamic
-        //mu = 0.16f;                                                                   /// Const
-        // Debug.Log("<color=yellow>Cushion(μ):</color> " + mu);
+        //"h" defines the Height of a cushion, sometimes defined as ϵ in other research Papers.. (we are doing "h" because better stands fo "H"eight)
 
-        ///"h" defines the Height of a cushion, 
-        ///sometimes defined as ϵ in other research Papers.. 
-        ///(we are doing "h" because better stands fo "height")
+        //h = 7f * k_BALL_RADIUS / 5f;
+        //h = k_BALL_DIAMETRE * 0.65f;
 
-        //h = 0.0771525f;                                                               /// [measured from the center of the ball to the cushion]  2005  Han Height point of impact
-        h = (7f * k_BALL_RADIUS) / 5f;                                                  /// [Measured from table surface to the point of impact]   2010  Mathavan, the height of the contact point at the rail(i.e.I) is h.In both snooker and pool
+        //THETA θ = The Angle Torque the ball has to the slate from the height of the cushion Depends on height of cushion relative to the ball
 
-        θ = Mathf.Asin(h / k_BALL_RADIUS - 1f);                                         /// θ = height of cushion relative to the ball
+        //θ = Mathf.Asin(h / k_BALL_RADIUS - 1f); //-1
+        const float cosθ = 0.95976971915f; //Mathf.Cos(θ); // in use
+        const float sinθ = 0.28078832987f; //Mathf.Sin(θ); // in use
 
-        float cosθ = Mathf.Cos(θ);
-        float sinθ = Mathf.Sin(θ);
-        float cosPhi = Mathf.Cos(phi);
+        const float sinθ2 = sinθ * sinθ;
+        const float cosθ2 = cosθ * cosθ;
 
-        ///*is correct* = revised values to match with its necessary Rotation Axis.
+        V1.x = -V.x * ((((2.0f / 7.0f) * sinθ2) * cosθ2) + (1 + e)) - (((2.0f / 7.0f) * k_BALL_RADIUS) * sinθ) * W.z;
+        V1.z = (5.0f / 7.0f) * V.z + ((2.0f / 7.0f) * k_BALL_RADIUS) * (W.x * sinθ - W.y * cosθ) - V.z;
+        V1.y = 0.0f;
 
-        s_x = V.x * sinθ - V.y * cosθ + k_BALL_RADIUS * W.z;                            /// s_x is correct
-        s_z = (-V.z - k_BALL_RADIUS * W.y * cosθ + k_BALL_RADIUS * W.x * sinθ);        /// s_z is correct
+        s_x = V.x * sinθ + W.z;
+        s_z = -V.z - W.y * cosθ + W.x * sinθ;
 
-        c = V.x * cosθ; // 2D Assumption
-        //c = V.x * cosθ - V.y * sinθ; // 3D Assumption
-        e = 0.85f;                                                                      /// Const   (Constrained and Provides consistent results)
-        //e = (0.39f + 0.257f * V.magnitude - 0.044f * source_v.magnitude);             /// Dynamic (Han equation, seems to work best on a higher update rate)
+        k = s_z * (5f / 7f);
 
-        /// [Equation 16]
-        ///I = 2 * k_BALL_MASS * Mathf.Pow(k_BALL_RADIUS, 2) / 5;                       /// C# INT
+        c = V.x * cosθ;
 
-        I = 2f / 5f * k_BALL_MASS * Mathf.Pow(k_BALL_RADIUS, 2);                        /// Unity Sintax C# FLOAT <- to avoid confusion, A and B are using the same order.
-        k_A = (7f / (2f * k_BALL_MASS));                                                /// A is Correct 
-        k_B = (1f / k_BALL_MASS);                                                       /// B is Correct
-
-        // [Equations 17 & 20]
-        /// P_zE and P_zS (Remember, Z is up, so we write to Unity's "Y" here.
-
-        P_yE = ((1f + e) * c) / k_B;                                                    /// P_yE is Correct
-        P_yS = (Mathf.Sqrt(Mathf.Pow(s_x, 2) + Mathf.Pow(s_z, 2)) / k_A);               /// P_yS is Correct (In case of Anomaly, do: Mathf.Sqrt(s_x * s_x + s_z * s_z) instead;
-
-        if (P_yS <= P_yE)
-        {
-            // Sliding and sticking case 1-1                                                   1-1
-            PX = -s_x / k_A * sinθ - (1f + e) * c / k_B * cosθ;                          /// PX is Correct
-            PZ = s_z / k_A;                                                             /// PZ is correct
-            PY = s_x / k_A * cosθ - (1f + e) * c / k_B * sinθ;                          /// PY is correct     
-        }
-        else
-        {
-            // Forward Sliding Case 1-2                                                        1-2
-            PX = -mu * (1f + e) * c / k_B * cosPhi * sinθ - (1f + e) * c / k_B * cosθ;   /// PX is Correct
-            PZ = mu * (1f + e) * c / k_B * sinθ;                                        /// PZ is Correct
-            PY = mu * (1f + e) * c / k_B * cosPhi * cosθ - (1f + e) * c / k_B * sinθ;   /// PY is Correct
-        }
-        float k = (s_z) / (2 * k_BALL_MASS * k_A);
-
-        // Update Velocity                                                               /// Update Velocity is Corret
-        V1.x = V.x += PX / k_BALL_MASS;
-        V1.z = V.z += PZ / k_BALL_MASS;
-        ///V1.y = V.y += PY / k_BALL_MASS; // not yet
-
-        // Update Angular Velocity
         W1.x = k * sinθ;
-        //W1.x = W.x += -k_BALL_RADIUS / I * PZ * sinθ;
-        W1.z = W.z += k_BALL_RADIUS / I * (PX * sinθ - PY * cosθ);
-        W1.y = W.y += k_BALL_RADIUS / I * PZ * cosθ;
+        W1.z = (5.0f / (2.0f * k_BALL_MASS)) * (-s_x / k_A + ((sinθ * c * 1.79f) / k_B) * (cosθ - sinθ)); ;
+        W1.y = k * cosθ;
 
-        // Change back to Table Reference Frame (Unrotate result)
-        balls_V[id] = rb * V1;
-        balls_W[id] = rb * W1;
+        balls_V[id] += rb * V1;
+        balls_W[id] += rb * W1;
 
         table._TriggerBounceCushion(id, N);
     }
