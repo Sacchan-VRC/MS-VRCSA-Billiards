@@ -627,7 +627,7 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
         tangent -= Vector3.Cross((relativeAngularVelocity * 0.03571f), r2 - r1);
 
         float staticFriction = (0.03f); // Friction Constant / Static
-        float dynamicFriction = (0.06f / relativeVelocity.magnitude); // Friction Dynamic
+        float dynamicFriction = 0.06f / Mathf.Pow(relativeVelocity.magnitude, 0.5f);
 
 
         if (Mathf.Approximately(tangent.magnitude, Vector3.zero.magnitude))
