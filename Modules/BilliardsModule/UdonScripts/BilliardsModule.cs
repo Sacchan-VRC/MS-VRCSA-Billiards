@@ -2521,6 +2521,7 @@ public class BilliardsModule : UdonSharpBehaviour
         {
             if (i == from) { continue; }
             if (i == to) { continue; }
+            if ((0x1U << i & ballsPocketedLocal) != 0U) { continue; }
             float distToThis = (ballsP[from] - ballsP[i]).magnitude;
             if (distToThis > distTo) { continue; }
             if (_phy_ray_sphere(innerTanPoint1, innerTanPoint3 - innerTanPoint1, ballsP[i]))
@@ -2536,6 +2537,7 @@ public class BilliardsModule : UdonSharpBehaviour
         {
             if (i == from) { continue; }
             if (i == to) { continue; }
+            if ((0x1U << i & ballsPocketedLocal) != 0U) { continue; }
             float distToThis = (ballsP[from] - ballsP[i]).magnitude;
             if (distToThis > distTo) { continue; }
             if (_phy_ray_sphere(innerTanPoint2, innerTanPoint4 - innerTanPoint2, ballsP[i]))
@@ -2552,6 +2554,7 @@ public class BilliardsModule : UdonSharpBehaviour
             {
                 if (i == from) { continue; }
                 if (i == to) { continue; }
+                if ((0x1U << i & ballsPocketedLocal) != 0U) { continue; }
                 float distToThis = (ballsP[from] - ballsP[i]).magnitude;
                 if (distToThis > distTo) { continue; }
                 if (_phy_ray_sphere(innerTanPoint2_oposite, innerTanPoint4 - innerTanPoint2, ballsP[i]))
@@ -2569,6 +2572,7 @@ public class BilliardsModule : UdonSharpBehaviour
             {
                 if (i == from) { continue; }
                 if (i == to) { continue; }
+                if ((0x1U << i & ballsPocketedLocal) != 0U) { continue; }
                 float distToThis = (ballsP[from] - ballsP[i]).magnitude;
                 if (distToThis > distTo) { continue; }
                 if (_phy_ray_sphere(innerTanPoint1_oposite, innerTanPoint3 - innerTanPoint1, ballsP[i]))
