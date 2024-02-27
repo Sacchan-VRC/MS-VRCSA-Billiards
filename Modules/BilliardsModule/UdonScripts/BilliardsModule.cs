@@ -717,10 +717,11 @@ public class BilliardsModule : UdonSharpBehaviour
 
     private bool onRemotePlayersChanged(int[] playerIDsSynced)
     {
-        int myOldSlot = _GetPlayerSlot(Networking.LocalPlayer, playerIDsCached);
+        int myOldSlot = _GetPlayerSlot(Networking.LocalPlayer, playerIDsLocal);
 
-        if (intArrayEquals(playerIDsCached, playerIDsSynced)) return false;
-        Array.Copy(playerIDsSynced, playerIDsCached, playerIDsCached.Length);
+        if (intArrayEquals(playerIDsLocal, playerIDsSynced)) return false;
+        Array.Copy(playerIDsLocal, playerIDsCached, playerIDsLocal.Length);
+        Array.Copy(playerIDsSynced, playerIDsLocal, playerIDsLocal.Length);
 
         string[] playerDetails = new string[4];
         for (int i = 0; i < 4; i++)
@@ -729,8 +730,6 @@ public class BilliardsModule : UdonSharpBehaviour
             playerDetails[i] = (playerIDsSynced[i] == -1 || plyr == null) ? "none" : plyr.displayName;
         }
         _LogInfo($"onRemotePlayersChanged newPlayers={string.Join(",", playerDetails)}");
-
-        Array.Copy(playerIDsSynced, playerIDsLocal, playerIDsLocal.Length);
 
         localPlayerId = Array.IndexOf(playerIDsLocal, Networking.LocalPlayer.playerId);
         if (localPlayerId != -1) localTeamId = (uint)(localPlayerId & 0x1u);
@@ -934,8 +933,9 @@ public class BilliardsModule : UdonSharpBehaviour
         }
         else
         {
-            _LogWarn("game over, team " + winningTeamLocal + " won (" + playerIDsLocal[winningTeamLocal] + " and " + playerIDsLocal[winningTeamLocal + 2] + ")");
-            graphicsManager._SetWinners(isPracticeMode ? 0u : winningTeamLocal, playerIDsLocal);
+            // All players are kicked from the match when it's won, so use the previous turn's player names to show the winners (playerIDsCached)
+            _LogWarn("game over, team " + winningTeamLocal + " won (" + playerIDsCached[winningTeamLocal] + " and " + playerIDsCached[winningTeamLocal + 2] + ")");
+            graphicsManager._SetWinners(isPracticeMode ? 0u : winningTeamLocal, playerIDsCached);
         }
 
         gameLive = false;
