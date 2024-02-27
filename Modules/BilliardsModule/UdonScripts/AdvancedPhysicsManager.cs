@@ -243,6 +243,12 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
         cue_llpos = lpos2;
     }
 
+#if UNITY_EDITOR
+    public bool Test_Mode;
+    public float Test_MoveSpeed = 3f;
+    public Vector3 Test_RotSpeed;
+#endif
+
     // Run one physics iteration for all balls
     private void tickOnce()
     {
@@ -257,6 +263,18 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
         if ((sn_pocketed & 0x1U) == 0)
         {
             // Apply movement
+#if UNITY_EDITOR
+            if (Test_Mode)
+            {
+                int Wi = Input.GetKey(KeyCode.W) ? 1 : 0; //inputs as ints
+                int Si = Input.GetKey(KeyCode.S) ? -1 : 0;
+                int Ai = Input.GetKey(KeyCode.A) ? -1 : 0;
+                int Di = Input.GetKey(KeyCode.D) ? 1 : 0;
+                Vector3 movedir = new Vector3(Ai + Di, 0, Wi + Si) * Test_MoveSpeed * Time.deltaTime;
+                balls_V[0] += movedir;
+                // balls_W[0] = Test_RotSpeed;
+            }
+#endif
             Vector3 deltaPos = calculateDeltaPosition(sn_pocketed);
             balls_P[0] += deltaPos;
             moved[0] = deltaPos != Vector3.zero;
