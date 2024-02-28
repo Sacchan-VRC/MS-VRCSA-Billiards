@@ -295,6 +295,139 @@ MonoBehaviour:
   m_hasFontAssetChanged: 0
   m_baseMaterial: {fileID: 0}
   m_maskOffset: {x: 0, y: 0, z: 0, w: 0}
+--- !u!1 &348135504825113863
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 597207033722170138}
+  - component: {fileID: 3220740378736397243}
+  - component: {fileID: 3025942001394153257}
+  m_Layer: 22
+  m_Name: SnookerInstructions
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!224 &597207033722170138
+RectTransform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 348135504825113863}
+  m_LocalRotation: {x: -0.00000017881392, y: 0.0000036656852, z: 0.000005726709, w: -1}
+  m_LocalPosition: {x: 0, y: 0, z: -0.77453935}
+  m_LocalScale: {x: 0.005000017, y: 0.005000001, z: 0.005000017}
+  m_Children: []
+  m_Father: {fileID: 7432241953062530082}
+  m_RootOrder: 4
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_AnchorMin: {x: 0.5, y: 0.5}
+  m_AnchorMax: {x: 0.5, y: 0.5}
+  m_AnchoredPosition: {x: 0, y: -0.061291274}
+  m_SizeDelta: {x: 220.52, y: 19.800001}
+  m_Pivot: {x: 0.5, y: 0.5}
+--- !u!222 &3220740378736397243
+CanvasRenderer:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 348135504825113863}
+  m_CullTransparentMesh: 0
+--- !u!114 &3025942001394153257
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 348135504825113863}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f4688fdb7df04437aeb418b961361dc5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_Material: {fileID: 0}
+  m_Color: {r: 1, g: 1, b: 1, a: 1}
+  m_RaycastTarget: 1
+  m_Maskable: 1
+  m_OnCullStateChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  m_text: Pot red
+  m_isRightToLeft: 0
+  m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
+  m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
+  m_fontSharedMaterials: []
+  m_fontMaterial: {fileID: 0}
+  m_fontMaterials: []
+  m_fontColor32:
+    serializedVersion: 2
+    rgba: 4294967295
+  m_fontColor: {r: 1, g: 1, b: 1, a: 1}
+  m_enableVertexGradient: 0
+  m_colorMode: 3
+  m_fontColorGradient:
+    topLeft: {r: 1, g: 1, b: 1, a: 1}
+    topRight: {r: 1, g: 1, b: 1, a: 1}
+    bottomLeft: {r: 1, g: 1, b: 1, a: 1}
+    bottomRight: {r: 1, g: 1, b: 1, a: 1}
+  m_fontColorGradientPreset: {fileID: 0}
+  m_spriteAsset: {fileID: 0}
+  m_tintAllSprites: 0
+  m_StyleSheet: {fileID: 0}
+  m_TextStyleHashCode: -1183493901
+  m_overrideHtmlColors: 0
+  m_faceColor:
+    serializedVersion: 2
+    rgba: 4294967295
+  m_fontSize: 12
+  m_fontSizeBase: 12
+  m_fontWeight: 400
+  m_enableAutoSizing: 0
+  m_fontSizeMin: 18
+  m_fontSizeMax: 72
+  m_fontStyle: 0
+  m_HorizontalAlignment: 2
+  m_VerticalAlignment: 512
+  m_textAlignment: 65535
+  m_characterSpacing: 0
+  m_wordSpacing: 0
+  m_lineSpacing: 0
+  m_lineSpacingMax: 0
+  m_paragraphSpacing: 0
+  m_charWidthMaxAdj: 0
+  m_enableWordWrapping: 1
+  m_wordWrappingRatios: 0.4
+  m_overflowMode: 0
+  m_linkedTextComponent: {fileID: 0}
+  parentLinkedComponent: {fileID: 0}
+  m_enableKerning: 1
+  m_enableExtraPadding: 0
+  checkPaddingRequired: 0
+  m_isRichText: 1
+  m_parseCtrlCharacters: 1
+  m_isOrthographic: 1
+  m_isCullingEnabled: 0
+  m_horizontalMapping: 0
+  m_verticalMapping: 0
+  m_uvLineOffset: 0
+  m_geometrySortingOrder: 0
+  m_IsTextObjectScaleStatic: 0
+  m_VertexBufferAutoSizeReduction: 0
+  m_useMaxVisibleDescender: 1
+  m_pageToDisplay: 1
+  m_margin: {x: 0, y: 0, z: 0, w: 0}
+  m_isUsingLegacyAnimationComponent: 0
+  m_isVolumetricText: 0
+  m_hasFontAssetChanged: 0
+  m_baseMaterial: {fileID: 0}
+  m_maskOffset: {x: 0, y: 0, z: 0, w: 0}
 --- !u!1 &371263883578174093
 GameObject:
   m_ObjectHideFlags: 0
@@ -3434,6 +3567,7 @@ RectTransform:
   - {fileID: 4119155920471242866}
   - {fileID: 6896678561725527938}
   - {fileID: 9042644262300791558}
+  - {fileID: 597207033722170138}
   m_Father: {fileID: 5951911174870518007}
   m_RootOrder: 5
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
@@ -6577,6 +6711,9 @@ MonoBehaviour:
   - {fileID: 8300000, guid: feebba097cc8e2d4fb236753ecd5c137, type: 3}
   transform_Surface: {fileID: 1961406577989517608}
   balls: []
+  Test_Mode: 0
+  Test_MoveSpeed: 3
+  Test_RotSpeed: {x: 0, y: 0, z: 0}
   cue_vdir: {x: 0, y: 0, z: 0}
   dkTargetPos: {x: 0, y: 0, z: 0}
   k_pO: {x: 0, y: 0, z: 0}
@@ -13084,6 +13221,7 @@ MonoBehaviour:
   infReset: {fileID: 1349421164573367718}
   reflection_main: {fileID: 8803897271036541830}
   moderators: []
+  colorTurnLocal: 0
 --- !u!114 &5951911174870518006
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -19690,8 +19828,9 @@ MonoBehaviour:
   fourBallPoint: {fileID: 5951911173748581821}
   fourBallMeshPlus: {fileID: 4300000, guid: 6103d4b006c84024b9867f7984693862, type: 3}
   fourBallMeshMinus: {fileID: 4300002, guid: 6103d4b006c84024b9867f7984693862, type: 3}
-  BlueScore: {fileID: 5954902736132941997}
-  OrangeScore: {fileID: 6706716044084947250}
+  blueScore: {fileID: 5954902736132941997}
+  orangeScore: {fileID: 6706716044084947250}
+  snookerInstruction: {fileID: 3025942001394153257}
   scorecardHolder: {fileID: 2559712782119474481}
   playerNames:
   - {fileID: 7526605791274279359}
@@ -21245,6 +21384,12 @@ PrefabInstance:
       objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 9b6bd4231d25b69419c7f31b90fe202a, type: 3}
+--- !u!4 &2934818543408870208 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 3855363360235652509, guid: 9b6bd4231d25b69419c7f31b90fe202a,
+    type: 3}
+  m_PrefabInstance: {fileID: 2106437121605269213}
+  m_PrefabAsset: {fileID: 0}
 --- !u!114 &117147822707249808 stripped
 MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: 2061417400193475661, guid: 9b6bd4231d25b69419c7f31b90fe202a,
@@ -21257,12 +21402,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c9969258aa6757e4593d3c8fe783a236, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
---- !u!4 &2934818543408870208 stripped
-Transform:
-  m_CorrespondingSourceObject: {fileID: 3855363360235652509, guid: 9b6bd4231d25b69419c7f31b90fe202a,
-    type: 3}
-  m_PrefabInstance: {fileID: 2106437121605269213}
-  m_PrefabAsset: {fileID: 0}
 --- !u!1001 &3088087326441598736
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -21338,6 +21477,12 @@ PrefabInstance:
       objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 1709734a6a13c0842af58ad2ba78ee32, type: 3}
+--- !u!4 &5999787612440683818 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 8761911423124048442, guid: 1709734a6a13c0842af58ad2ba78ee32,
+    type: 3}
+  m_PrefabInstance: {fileID: 3088087326441598736}
+  m_PrefabAsset: {fileID: 0}
 --- !u!114 &1001419656140460003 stripped
 MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: 2827933808177144051, guid: 1709734a6a13c0842af58ad2ba78ee32,
@@ -21350,9 +21495,3 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c9969258aa6757e4593d3c8fe783a236, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
---- !u!4 &5999787612440683818 stripped
-Transform:
-  m_CorrespondingSourceObject: {fileID: 8761911423124048442, guid: 1709734a6a13c0842af58ad2ba78ee32,
-    type: 3}
-  m_PrefabInstance: {fileID: 3088087326441598736}
-  m_PrefabAsset: {fileID: 0}

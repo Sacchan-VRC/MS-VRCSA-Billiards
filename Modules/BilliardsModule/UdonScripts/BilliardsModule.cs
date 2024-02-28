@@ -238,7 +238,7 @@ public class BilliardsModule : UdonSharpBehaviour
     [NonSerialized] public const float ballMeshDiameter = 0.06f;//the ball's size as modeled in the mesh file
     private float ballsParentStartHeight;
     [NonSerialized] public Vector3 ballsParentHeightOffset;
-    private bool colorTurnLocal;
+    public bool colorTurnLocal;
     private int numBallsPocketedThisTurn;
     private void OnEnable()
     {
@@ -750,7 +750,7 @@ public class BilliardsModule : UdonSharpBehaviour
 
         applyCueAccess();
 
-        graphicsManager._SetScorecardPlayers(playerIDsLocal);
+        if (networkingManager.gameStateSynced != 3) { graphicsManager._SetScorecardPlayers(playerIDsLocal); } // don't remove player names when match is won
 
         int myNewSlot = _GetPlayerSlot(Networking.LocalPlayer, playerIDsLocal);
         bool amPlayer = myNewSlot != -1;
@@ -2222,8 +2222,13 @@ public class BilliardsModule : UdonSharpBehaviour
         desktopManager._DenyShoot();
         graphicsManager._HideTimers();
     }
-    private string sixRedNumberToColor(int ball)
+    public string sixRedNumberToColor(int ball, bool doBreakOrder)
     {
+        if (doBreakOrder)
+        {
+            if (ball > -1 && ball < 12)
+                ball = break_order_sixredsnooker[ball];
+        }
         switch (ball)
         {
             case 2: return "Yellow";
@@ -2333,11 +2338,11 @@ public class BilliardsModule : UdonSharpBehaviour
                 numBallsPocketed++;
                 if (foulStateLocal == 5 && firstHit == i)
                 {
-                    _LogInfo("6RED: " + sixRedNumberToColor(i) + "(freeball) pocketed");
+                    _LogInfo("6RED: " + sixRedNumberToColor(i, false) + "(freeball) pocketed");
                 }
                 else
                 {
-                    _LogInfo("6RED: " + sixRedNumberToColor(i) + " ball pocketed");
+                    _LogInfo("6RED: " + sixRedNumberToColor(i, false) + " ball pocketed");
                 }
             }
         }
@@ -2393,7 +2398,7 @@ public class BilliardsModule : UdonSharpBehaviour
         else if (!_redOnTable)
         {
             objective = (uint)(1 << break_order_sixredsnooker[_nextcolor]);
-            if (writeLog) { _LogInfo("6RED: Objective is: " + sixRedNumberToColor(break_order_sixredsnooker[_nextcolor])); }
+            if (writeLog) { _LogInfo("6RED: Objective is: " + sixRedNumberToColor(_nextcolor, true)); }
         }
         else
         {

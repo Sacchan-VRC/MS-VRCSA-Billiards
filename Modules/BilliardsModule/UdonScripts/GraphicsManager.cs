@@ -14,8 +14,9 @@ public class GraphicsManager : UdonSharpBehaviour
     [SerializeField] Mesh fourBallMeshPlus;
     [SerializeField] Mesh fourBallMeshMinus;
     [Header("Snooker")]
-    [SerializeField] TextMeshProUGUI BlueScore;
-    [SerializeField] TextMeshProUGUI OrangeScore;
+    [SerializeField] TextMeshProUGUI blueScore;
+    [SerializeField] TextMeshProUGUI orangeScore;
+    [SerializeField] TextMeshProUGUI snookerInstruction;
 
     [Header("Text")]
     [SerializeField] GameObject scorecardHolder;
@@ -610,13 +611,15 @@ int uniform_cue_colour;
         scorecard.SetInt("_SolidsMode", 0);
         if (table.isSnooker6Red)
         {
-            OrangeScore.gameObject.SetActive(true);
-            BlueScore.gameObject.SetActive(true);
+            orangeScore.gameObject.SetActive(true);
+            blueScore.gameObject.SetActive(true);
+            snookerInstruction.gameObject.SetActive(true);
         }
         else
         {
-            OrangeScore.gameObject.SetActive(false);
-            BlueScore.gameObject.SetActive(false);
+            orangeScore.gameObject.SetActive(false);
+            blueScore.gameObject.SetActive(false);
+            snookerInstruction.gameObject.SetActive(false);
         }
 
         _UpdateTableColorScheme();
@@ -693,8 +696,9 @@ int uniform_cue_colour;
         scorecardHolder.SetActive(false);
         table.marker9ball.SetActive(false);
         fourBallPoint.SetActive(false);
-        OrangeScore.gameObject.SetActive(false);
-        BlueScore.gameObject.SetActive(false);
+        orangeScore.gameObject.SetActive(false);
+        blueScore.gameObject.SetActive(false);
+        snookerInstruction.gameObject.SetActive(false);
         _HideTimers();
 
         winnerText.text = "";
@@ -735,8 +739,28 @@ int uniform_cue_colour;
         }
         else if (table.isSnooker6Red)
         {
-            OrangeScore.text = table.fbScoresLocal[0].ToString();
-            BlueScore.text = table.fbScoresLocal[1].ToString();
+            orangeScore.text = table.fbScoresLocal[0].ToString();
+            blueScore.text = table.fbScoresLocal[1].ToString();
+            bool redOnTable = table.sixRedCheckIfRedOnTable(table.ballsPocketedLocal, false);
+            if (table.colorTurnLocal)
+            {
+                snookerInstruction.text = "Pot any color but red";
+            }
+            else
+            {
+                if (redOnTable)
+                {
+                    snookerInstruction.text = "Pot a Red";
+                }
+                else
+                {
+                    int nextcolor = table.sixRedFindLowestUnpocketedColor(table.ballsPocketedLocal);
+                    if (nextcolor < 12 && nextcolor > -1)
+                        snookerInstruction.text = "Pot " + table.sixRedNumberToColor(nextcolor, true);
+                    else
+                        snookerInstruction.text = string.Empty;
+                }
+            }
         }
         else
         {

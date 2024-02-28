@@ -231,7 +231,10 @@ public class NetworkingManager : UdonSharpBehaviour
     {
         gameStateSynced = 3;
         winningTeamSynced = (byte)winnerId;
-
+        for (int i = 0; i < MAX_PLAYERS; i++)
+        {
+            playerIDsSynced[i] = -1;
+        }
         bufferMessages(false);
     }
 
