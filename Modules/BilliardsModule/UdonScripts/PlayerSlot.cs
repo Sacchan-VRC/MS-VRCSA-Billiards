@@ -8,10 +8,8 @@ using VRC.Udon;
 [UdonBehaviourSyncMode(BehaviourSyncMode.Manual)]
 public class PlayerSlot : UdonSharpBehaviour
 {
-    [UdonSynced] [NonSerialized] public byte eventID;
-    [UdonSynced] [NonSerialized] public byte slot = byte.MaxValue;
-    [UdonSynced] [NonSerialized] public bool leave = false;
-    private byte eventIDLocal;
+    [UdonSynced][NonSerialized] public byte slot = byte.MaxValue;
+    [UdonSynced][NonSerialized] public bool leave = false;
     private NetworkingManager networkingManager;
 
     public void _Init(NetworkingManager networkingManager_)
@@ -21,7 +19,6 @@ public class PlayerSlot : UdonSharpBehaviour
 
     public void JoinSlot(int slot_)
     {
-        eventID++;
         slot = (byte)slot_;
         leave = false;
         Networking.SetOwner(Networking.LocalPlayer, gameObject);
@@ -31,7 +28,6 @@ public class PlayerSlot : UdonSharpBehaviour
 
     public void LeaveSlot(int slot_)
     {
-        eventID++;
         slot = (byte)slot_;
         leave = true;
         Networking.SetOwner(Networking.LocalPlayer, gameObject);
@@ -51,8 +47,6 @@ public class PlayerSlot : UdonSharpBehaviour
 
     public override void OnDeserialization()
     {
-        if (eventIDLocal == eventID) return;
-        eventIDLocal = eventID;
         if (networkingManager == null) return;
         if (slot > 3) return;
 
