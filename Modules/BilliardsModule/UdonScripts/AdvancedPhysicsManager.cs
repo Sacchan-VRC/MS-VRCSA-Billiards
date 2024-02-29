@@ -1094,10 +1094,6 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
         k_BALL_MASS = table.k_BALL_MASS;
         Vector3 k_CONTACT_POINT = new Vector3(0.0f, -k_BALL_RADIUS, 0.0f);
 
-        for (int i = 0; i < table.pockets.Length; i++)
-        {
-            table.pockets[i].SetActive(false);
-        }
         Collider[] collider = table.GetComponentsInChildren<Collider>();
         for (int i = 0; i < collider.Length; i++)
         {

@@ -37,7 +37,6 @@ public class BilliardsModule : UdonSharpBehaviour
     [NonSerialized] public float k_BALL_MASS; // Mass of balls
     [NonSerialized] public Vector3 k_vE; // corner pocket data
     [NonSerialized] public Vector3 k_vF; // side pocket data
-    [NonSerialized] public GameObject[] pockets;
     [NonSerialized] public Vector3 k_rack_position = new Vector3();
     private Vector3 k_rack_direction = new Vector3();
     private GameObject auto_rackPosition;
@@ -1920,7 +1919,6 @@ public class BilliardsModule : UdonSharpBehaviour
         k_SPOT_POSITION_X = data.rackTrianglePosition;
         k_vE = data.cornerPocket;
         k_vF = data.sidePocket;
-        pockets = data.pockets;
 
         tableMRs = tableModels[newTableModel].GetComponentsInChildren<MeshRenderer>();
 
@@ -1951,6 +1949,7 @@ public class BilliardsModule : UdonSharpBehaviour
         Transform score_info_root = this.transform.Find("intl.scorecardinfo");
         setTransform(table_base.Find(".NAME_0"), score_info_root.Find("player0-name").gameObject.GetComponent<RectTransform>(), 1F / 200F);
         setTransform(table_base.Find(".NAME_1"), score_info_root.Find("player1-name").gameObject.GetComponent<RectTransform>(), 1F / 200F);
+        setTransform(table_base.Find(".SNOOKER_INSTRUCTIONS"), score_info_root.Find("SnookerInstructions").gameObject.GetComponent<RectTransform>(), 1F / 200F);
 
         cueControllers[0]._RefreshTable();
         cueControllers[1]._RefreshTable();

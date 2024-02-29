@@ -991,7 +991,6 @@ public class BetaPhysicsManager : UdonSharpBehaviour
 
     public void _InitConstants()
     {
-        pockets = table.pockets;
         for (int i = 0; i < pockets.Length; i++)
         {
             pockets[i].SetActive(true);

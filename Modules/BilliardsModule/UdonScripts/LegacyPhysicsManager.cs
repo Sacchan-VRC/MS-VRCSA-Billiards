@@ -714,10 +714,6 @@ public class LegacyPhysicsManager : UdonSharpBehaviour
         k_POCKET_RADIUS = table.k_POCKET_RADIUS;
         k_CUSHION_RADIUS = table.k_CUSHION_RADIUS;
 
-        for (int i = 0; i < table.pockets.Length; i++)
-        {
-            table.pockets[i].SetActive(false);
-        }
         Collider[] collider = table.GetComponentsInChildren<Collider>();
         for (int i = 0; i < collider.Length; i++)
         {
