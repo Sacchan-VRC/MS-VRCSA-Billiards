@@ -521,7 +521,7 @@ public class BilliardsModule : UdonSharpBehaviour
         menuManager._RefreshPlayerList();
         menuManager._DisableLobbyMenu();
     }
-
+    private float LastActionTime;
     public void _TriggerGameReset()
     {
         int self = Networking.LocalPlayer.playerId;
@@ -541,7 +541,7 @@ public class BilliardsModule : UdonSharpBehaviour
             if (allowedPlayer == self) isAllowedPlayer = true;
         }
 
-        if (allPlayersOffline || isAllowedPlayer || _IsModerator(Networking.LocalPlayer))
+        if (allPlayersOffline || isAllowedPlayer || _IsModerator(Networking.LocalPlayer) || (Time.time - LastActionTime > 300))
         {
             _LogInfo("force resetting game");
 
@@ -593,6 +593,8 @@ public class BilliardsModule : UdonSharpBehaviour
     public void _OnRemoteDeserialization()
     {
         _LogInfo("processing latest remote state (packet=" + networkingManager.packetIdSynced + ", state=" + networkingManager.stateIdSynced + ")");
+
+        LastActionTime = Time.time;
 
         // propagate game settings first
         onRemoteGlobalSettingsUpdated(
