@@ -403,7 +403,7 @@ public class BilliardsModule : UdonSharpBehaviour
 
         if (foulStateLocal == 5)//free ball
         {
-            if (SixRedCheckObjBlocked(ballsPocketedLocal, colorTurnLocal) > 0)
+            if (SixRedCheckObjBlocked(ballsPocketedLocal, colorTurnLocal, true) > 0)
             {
                 _LogInfo("6RED: Free ball turn. First hit ball is counted as current objective ball.");
             }
@@ -982,9 +982,12 @@ public class BilliardsModule : UdonSharpBehaviour
     {
         if (!gameLive) return;
 
-        if (fbScoresLocal[0] == fbScoresSynced[0] && fbScoresLocal[1] == fbScoresSynced[1]) return;
-
-        _LogInfo($"onRemoteFourBallScoresUpdated team1={fbScoresSynced[0]} team2={fbScoresSynced[1]}");
+        if (fbScoresLocal[0] == fbScoresSynced[0] && fbScoresLocal[1] == fbScoresSynced[1])
+        {
+            _LogInfo($"onRemoteFourBallScoresUpdated team1={fbScoresSynced[0]} team2={fbScoresSynced[1]}");
+            //don't escape, as this will always be true for the sender, and they may need to run the rest.
+        }
+        if (!isSnooker6Red && !is4Ball) { return; }
 
         Array.Copy(fbScoresSynced, fbScoresLocal, 2);
         graphicsManager._UpdateScorecard();
@@ -1519,7 +1522,7 @@ public class BilliardsModule : UdonSharpBehaviour
 
                 int nextcolor = sixRedFindLowestUnpocketedColor(ballsPocketedOrig);
                 bool redOnTable = sixRedCheckIfRedOnTable(ballsPocketedOrig, true);
-                uint objective = sixRedGetObjective(colorTurnLocal, redOnTable, nextcolor, true);
+                uint objective = sixRedGetObjective(colorTurnLocal, redOnTable, nextcolor, true, true);
                 if (isScratch) { _LogInfo("6RED: White ball pocketed"); }
                 isObjectiveSink = (ballsPocketedLocal & (objective)) > (ballsPocketedOrig & (objective));
                 int ballScore = 0, numBallsPocketed = 0, highestPocketedBallScore = 0;
@@ -1591,11 +1594,14 @@ public class BilliardsModule : UdonSharpBehaviour
                 //free ball rules
                 if (!isScratch && !allBallsPocketed)
                 {
-                    if (freeBall && !isObjectiveSink)
+                    nextTurnBlocked = SixRedCheckObjBlocked(ballsPocketedLocal, false, false) > 0;
+                    if (freeBall && !isObjectiveSink && firstHit != 0)
                     {
+                        // it's a foul if you use the free ball to block the opponent from hitting object ball
+                        // free ball is defined as first ball hit
                         for (int i = 0; i < objVisible_blockingBalls_len; i++)
                         {
-                            if (objVisible_blockingBalls[i] == firstHit)
+                            if (objVisible_blockingBalls[i] == firstHit) // objVisible_blockingBalls is updated inside the above call to SixRedCheckObjBlocked
                             {
                                 foulCondition = true;
                                 _LogInfo("6RED: Foul: Free ball was used to block");
@@ -1605,7 +1611,6 @@ public class BilliardsModule : UdonSharpBehaviour
                     }
                     if (foulCondition)
                     {
-                        nextTurnBlocked = SixRedCheckObjBlocked(ballsPocketedLocal, false) > 0;
                         if (nextTurnBlocked)
                         {
                             _LogInfo("6RED: Objective blocked with a foul. Next turn is Free Ball.");
@@ -2253,12 +2258,12 @@ public class BilliardsModule : UdonSharpBehaviour
         }
     }
 
-    private int SixRedCheckObjBlocked(uint field, bool colorTurn)
+    private int SixRedCheckObjBlocked(uint field, bool colorTurn, bool includeFreeBall)
     {
         //in case of undo/redo the results of these methods need to be re-calculated
         bool redOnTable = sixRedCheckIfRedOnTable(field, false);
         int nextcolor = sixRedFindLowestUnpocketedColor(field);
-        uint objective = sixRedGetObjective(colorTurn, redOnTable, nextcolor, false);
+        uint objective = sixRedGetObjective(colorTurn, redOnTable, nextcolor, false, includeFreeBall);
         // 0 = fully visible, 1 = left OR right blocked, 2 = both blocked
         return objVisible(objective);
     }
@@ -2403,7 +2408,7 @@ public class BilliardsModule : UdonSharpBehaviour
         return result;
     }
 
-    public uint sixRedGetObjective(bool _colorTurn, bool _redOnTable, int _nextcolor, bool writeLog)
+    public uint sixRedGetObjective(bool _colorTurn, bool _redOnTable, int _nextcolor, bool writeLog, bool includeFreeBall)
     {
         uint objective = 0x1E50u;
         if (writeLog)
@@ -2425,7 +2430,7 @@ public class BilliardsModule : UdonSharpBehaviour
         {
             if (writeLog) { _LogInfo("6RED: Objective is: Red"); }
         }
-        if (foulStateLocal == 5) // add freeball to objective
+        if (includeFreeBall && foulStateLocal == 5) // add freeball to objective
         {
             objective = objective | 1u << firstHit;
         }
@@ -2493,6 +2498,7 @@ public class BilliardsModule : UdonSharpBehaviour
     {
         int mostVisible = 2;
         objVisible_blockingBalls = new int[32];
+        for (int i = 0; i < 32; i++) objVisible_blockingBalls[i] = -1;
         objVisible_blockingBalls_len = 0;
         for (int i = 0; i < 16; i++)
         {
@@ -2522,7 +2528,7 @@ public class BilliardsModule : UdonSharpBehaviour
     int[] ballBlocked_blockingBalls = new int[2];
     int ballBlocked(int from, int to, bool ignoreReds)
     {
-        ballBlocked_blockingBalls = new int[2];
+        ballBlocked_blockingBalls = new int[2] { -1, -1 };
         Vector3 center = (ballsP[from] + ballsP[to]) / 2;
         float cenMag = (ballsP[from] - center).magnitude;
 
@@ -2563,6 +2569,7 @@ public class BilliardsModule : UdonSharpBehaviour
         float distTo = (ballsP[from] - ballsP[to]).magnitude;
         bool blockedLeft = false;
         bool blockedRight = false;
+        // left
         for (int i = 0; i < 16; i++)
         {
             if (i == from) { continue; }
@@ -2579,7 +2586,7 @@ public class BilliardsModule : UdonSharpBehaviour
                 ballBlocked_blockingBalls[0] = i;
             }
         }
-
+        // right
         for (int i = 0; i < 16; i++)
         {
             if (i == from) { continue; }
@@ -2596,6 +2603,7 @@ public class BilliardsModule : UdonSharpBehaviour
                 ballBlocked_blockingBalls[1] = i;
             }
         }
+        // right + ball width
         if (!blockedRight)
         {
             for (int i = 0; i < 16; i++)
@@ -2615,6 +2623,7 @@ public class BilliardsModule : UdonSharpBehaviour
                 }
             }
         }
+        // left + ball width
         if (!blockedLeft)
         {
             for (int i = 0; i < 16; i++)

@@ -742,6 +742,7 @@ int uniform_cue_colour;
             orangeScore.text = table.fbScoresLocal[0].ToString();
             blueScore.text = table.fbScoresLocal[1].ToString();
             bool redOnTable = table.sixRedCheckIfRedOnTable(table.ballsPocketedLocal, false);
+            bool freeBall = table.foulStateLocal == 5;
             if (table.colorTurnLocal)
             {
                 snookerInstruction.text = "Pot any color but red";
@@ -751,12 +752,18 @@ int uniform_cue_colour;
                 if (redOnTable)
                 {
                     snookerInstruction.text = "Pot a Red";
+                    if (freeBall)
+                        snookerInstruction.text += " or free ball of choice";
                 }
                 else
                 {
                     int nextcolor = table.sixRedFindLowestUnpocketedColor(table.ballsPocketedLocal);
                     if (nextcolor < 12 && nextcolor > -1)
+                    {
                         snookerInstruction.text = "Pot " + table.sixRedNumberToColor(nextcolor, true);
+                        if (freeBall)
+                            snookerInstruction.text += " or free ball of choice";
+                    }
                     else
                         snookerInstruction.text = string.Empty;
                 }
