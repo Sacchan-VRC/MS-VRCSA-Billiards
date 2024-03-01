@@ -403,7 +403,7 @@ public class BilliardsModule : UdonSharpBehaviour
 
         if (foulStateLocal == 5)//free ball
         {
-            if (SixRedCheckSnookered(ballsPocketedLocal, colorTurnLocal) > 0)
+            if (SixRedCheckObjBlocked(ballsPocketedLocal, colorTurnLocal) > 0)
             {
                 _LogInfo("6RED: Free ball turn. First hit ball is counted as current objective ball.");
             }
@@ -616,8 +616,8 @@ public class BilliardsModule : UdonSharpBehaviour
         onRemoteTeamIdChanged(networkingManager.teamIdSynced);
         onRemoteFourBallCueBallChanged(networkingManager.fourBallCueBallSynced, joinedDuringMatch);
         onRemoteBallsPocketedChanged(networkingManager.ballsPocketedSynced);
-        onRemoteFourBallScoresUpdated(networkingManager.fourBallScoresSynced);
         onRemoteFoulStateChanged(networkingManager.foulStateSynced);
+        onRemoteFourBallScoresUpdated(networkingManager.fourBallScoresSynced);
         onRemoteIsTableOpenChanged(networkingManager.isTableOpenSynced, networkingManager.teamColorSynced, joinedDuringMatch);
         onRemoteTurnStateChanged(networkingManager.turnStateSynced);
         onRemotePreviewWinningTeamChanged(networkingManager.previewWinningTeamSynced);
@@ -1069,10 +1069,10 @@ public class BilliardsModule : UdonSharpBehaviour
     {
         if (!gameLive) return;
 
-        // should not escape because it can stay the same turn to turn while whos turn it is changes (especially with Undo/SnookerUndo)
         if (foulStateLocal != foulStateSynced)
         {
             _LogInfo($"onRemoteFoulStateChanged foulState={foulStateSynced}");
+            // should not escape here because it can stay the same turn to turn while whos turn it is changes (especially with Undo/SnookerUndo)
         }
 
         foulStateLocal = foulStateSynced;
@@ -1416,7 +1416,7 @@ public class BilliardsModule : UdonSharpBehaviour
             // Common informations
             bool isSetComplete = (ballsPocketedLocal & bmask) == bmask;
             bool isScratch = (ballsPocketedLocal & 0x1U) == 0x1U || forceScratch;
-            bool nextTurnSnookered = false;
+            bool nextTurnBlocked = false;
 
             ballsPocketedLocal = ballsPocketedLocal & ~(0x1U);
             if (isScratch) ballsP[0] = Vector3.zero;
@@ -1605,8 +1605,8 @@ public class BilliardsModule : UdonSharpBehaviour
                     }
                     if (foulCondition)
                     {
-                        nextTurnSnookered = SixRedCheckSnookered(ballsPocketedLocal, false) > 0;
-                        if (nextTurnSnookered)
+                        nextTurnBlocked = SixRedCheckObjBlocked(ballsPocketedLocal, false) > 0;
+                        if (nextTurnBlocked)
                         {
                             _LogInfo("6RED: Objective blocked with a foul. Next turn is Free Ball.");
                         }
@@ -1674,7 +1674,7 @@ public class BilliardsModule : UdonSharpBehaviour
             else if (foulCondition)
             {
                 // Foul
-                onLocalTurnFoul(isScratch, nextTurnSnookered);
+                onLocalTurnFoul(isScratch, nextTurnBlocked);
             }
             else if (isObjectiveSink && !isOpponentSink)
             {
@@ -2065,11 +2065,11 @@ public class BilliardsModule : UdonSharpBehaviour
         networkingManager._OnTurnPass(teamIdLocal ^ 0x1u);
     }
 
-    private void onLocalTurnFoul(bool Scratch, bool Snookered)
+    private void onLocalTurnFoul(bool Scratch, bool objBlocked)
     {
         _LogInfo($"onLocalTurnFoul");
 
-        networkingManager._OnTurnFoul(teamIdLocal ^ 0x1u, Scratch, Snookered);
+        networkingManager._OnTurnFoul(teamIdLocal ^ 0x1u, Scratch, objBlocked);
     }
 
     private void onLocalTurnContinue()
@@ -2253,12 +2253,13 @@ public class BilliardsModule : UdonSharpBehaviour
         }
     }
 
-    private int SixRedCheckSnookered(uint field, bool colorTurn)
+    private int SixRedCheckObjBlocked(uint field, bool colorTurn)
     {
         //in case of undo/redo the results of these methods need to be re-calculated
         bool redOnTable = sixRedCheckIfRedOnTable(field, false);
         int nextcolor = sixRedFindLowestUnpocketedColor(field);
         uint objective = sixRedGetObjective(colorTurn, redOnTable, nextcolor, false);
+        // 0 = fully visible, 1 = left OR right blocked, 2 = both blocked
         return objVisible(objective);
     }
 

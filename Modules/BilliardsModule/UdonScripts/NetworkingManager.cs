@@ -285,7 +285,7 @@ public class NetworkingManager : UdonSharpBehaviour
         bufferMessages(false);
     }
 
-    public void _OnTurnFoul(uint teamId, bool Scratch, bool Snookered)
+    public void _OnTurnFoul(uint teamId, bool Scratch, bool objBlocked)
     {
         stateIdSynced++;
 
@@ -302,7 +302,7 @@ public class NetworkingManager : UdonSharpBehaviour
             {
                 foulStateSynced = 3;
             }
-            else if (Snookered)
+            else if (objBlocked)
             {
                 foulStateSynced = 5;
             }
