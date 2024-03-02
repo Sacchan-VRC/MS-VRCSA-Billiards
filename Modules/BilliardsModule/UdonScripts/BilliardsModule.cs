@@ -1966,6 +1966,8 @@ public class BilliardsModule : UdonSharpBehaviour
         Transform score_info_root = this.transform.Find("intl.scorecardinfo");
         setTransform(table_base.Find(".NAME_0"), score_info_root.Find("player0-name").gameObject.GetComponent<RectTransform>(), 1F / 200F);
         setTransform(table_base.Find(".NAME_1"), score_info_root.Find("player1-name").gameObject.GetComponent<RectTransform>(), 1F / 200F);
+        setTransform(table_base.Find(".SCORE_0"), score_info_root.Find("player0-score").gameObject.GetComponent<RectTransform>(), 1F / 200F);
+        setTransform(table_base.Find(".SCORE_1"), score_info_root.Find("player1-score").gameObject.GetComponent<RectTransform>(), 1F / 200F);
         setTransform(table_base.Find(".SNOOKER_INSTRUCTIONS"), score_info_root.Find("SnookerInstructions").gameObject.GetComponent<RectTransform>(), 1F / 200F);
 
         cueControllers[0]._RefreshTable();
