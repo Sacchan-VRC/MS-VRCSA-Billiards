@@ -939,6 +939,7 @@ public class BilliardsModule : UdonSharpBehaviour
 
         gameLive = false;
 
+        Array.Copy(networkingManager.fourBallScoresSynced, fbScoresLocal, 2);
         graphicsManager._UpdateTeamColor(winningTeamSynced);
         graphicsManager._UpdateScorecard();
         graphicsManager._RackBalls();
