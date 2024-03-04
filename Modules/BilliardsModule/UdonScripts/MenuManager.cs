@@ -56,7 +56,7 @@ public class MenuManager : UdonSharpBehaviour
         _RefreshPhysics();
         _RefreshTable();
         _RefreshToggleSettings();
-        _RefreshLobbyOpen();
+        _RefreshLobby();
         _RefreshPlayerList();
         _RefreshRefereeDisplay();
 
@@ -72,34 +72,14 @@ public class MenuManager : UdonSharpBehaviour
     //     if (table.gameLive) return;
     // }
 
-    private void refreshJoinMenu()
-    {
-        if (!table._IsPlayer(Networking.LocalPlayer))
-        {
-            if (table.gameLive || table.lobbyOpen)
-            {
-                if ((table.teamsLocal && table.numPlayersCurrent == 4) || (!table.teamsLocal && table.numPlayersCurrent == 2))
-                {
-                    _DisableMenuJoinLeave();
-                }
-                else
-                {
-                    _EnableMenuJoinLeave();
-                }
-            }
-        }
-        else
-        {
-            _EnableMenuJoinLeave();
-        }
-    }
-
     public void _RefreshPlayerList()
     {
         int numPlayers = 0;
+        int numPlayersOrange = 0;
+        int numPlayersBlue = 0;
         for (int i = 0; i < 4; i++)
         {
-            if (!table.teamsLocal && i > 1)
+            if (!table.teamsLocal && i > 1 || (table.isPracticeMode && i % 2 != 0))
             {
                 lobbyNames[i].text = string.Empty;
                 continue;
@@ -111,13 +91,17 @@ public class MenuManager : UdonSharpBehaviour
             }
             else
             {
-                numPlayers++;
                 lobbyNames[i].text = table.graphicsManager._FormatName(player);
+                numPlayers++;
+                if (i % 2 == 0)
+                    numPlayersOrange++;
+                else
+                    numPlayersBlue++;
             }
         }
+        table.numPlayersCurrentOrange = numPlayersOrange;
+        table.numPlayersCurrentBlue = numPlayersBlue;
         table.numPlayersCurrent = numPlayers;
-
-        refreshJoinMenu();
     }
 
     public void _RefreshTimer()
@@ -176,29 +160,94 @@ public class MenuManager : UdonSharpBehaviour
         TeamsToggle_button.SetIsOnWithoutNotify(table.teamsLocal);
         GuidelineToggle_button.SetIsOnWithoutNotify(!table.noGuidelineLocal);
         LockingToggle_button.SetIsOnWithoutNotify(!table.noLockingLocal);
-
-        _RefreshPlayerList();
     }
 
-    public void _RefreshLobbyOpen()
+    public void _RefreshLobby()
     {
         _RefreshToggleSettings();
+        _RefreshPlayerList();
+        _RefreshMenu();
     }
 
-    public void _OnLobbyOpened()
+    public void _RefreshMenu()
     {
-        Transform menuJoin = table.transform.Find("intl.menu/JoinMenu");
-        if (menuJoin)
+        Transform menu_Join = table.transform.Find("intl.menu/JoinMenu");
+        switch (table.gameStateLocal)
         {
-            menuJoin.localPosition = joinMenuPosition;
-            menuJoin.localRotation = joinMenuRotation;
-            menuJoin.localScale = joinMenuScale;
+            case 0://table idle
+                _DisableLobbyMenu();
+                _EnableStartMenu();
+                menu_Join.gameObject.SetActive(false);
+                break;
+            case 1://lobby
+                if (table.isPlayer)
+                    _EnableLobbyMenu();
+                else
+                    _DisableLobbyMenu();
+                _DisableStartMenu();
+                _RefreshTeamJoinButtons();
+                if (menu_Join)
+                {
+                    menu_Join.localPosition = joinMenuPosition;
+                    menu_Join.localRotation = joinMenuRotation;
+                    menu_Join.localScale = joinMenuScale;
+                }
+                menu_Join.gameObject.SetActive(true);
+                _RefreshTeamJoinButtons();
+                break;
+            case 2://game live
+                _DisableLobbyMenu();
+                _DisableStartMenu();
+                Transform table_base = table._GetTableBase().transform;
+                Transform JOINMENU = table_base.Find(".JOINMENU");
+                if (JOINMENU && menu_Join)
+                    table.setTransform(JOINMENU, menu_Join.gameObject.GetComponent<RectTransform>(), 1F);
+                if (table.isBlueTeamFull && table.isOrangeTeamFull)
+                {
+                    if (table.isPlayer)
+                    {
+                        menu_Join.gameObject.SetActive(true);
+                        _RefreshTeamJoinButtons();
+                    }
+                    else
+                    {
+                        menu_Join.gameObject.SetActive(false);
+                    }
+                }
+                else
+                {
+                    menu_Join.gameObject.SetActive(true);
+                    _RefreshTeamJoinButtons();
+                }
+                break;
+            case 3://game ended/reset
+                _DisableLobbyMenu();
+                _EnableStartMenu();
+                menu_Join.gameObject.SetActive(false);
+                break;
         }
-        Transform JoinBlue = table.transform.Find("intl.menu/JoinMenu/JoinBlue");
-        if (JoinBlue)
-            JoinBlue.gameObject.SetActive(true);
+        Transform leave_Button = table.transform.Find("intl.menu/JoinMenu/LeaveButton");
+        if (table.isPlayer)
+            leave_Button.gameObject.SetActive(true);
+        else
+            leave_Button.gameObject.SetActive(false);
     }
 
+    private void _RefreshTeamJoinButtons()
+    {
+        //TODO: Handle leave button
+        Transform join_Orange = table.transform.Find("intl.menu/JoinMenu/JoinOrange");
+        Transform join_Blue = table.transform.Find("intl.menu/JoinMenu/JoinBlue");
+        if (table.isOrangeTeamFull)
+            join_Orange.gameObject.SetActive(false);
+        else
+            join_Orange.gameObject.SetActive(true);
+
+        if (table.isBlueTeamFull)
+            join_Blue.gameObject.SetActive(false);
+        else
+            join_Blue.gameObject.SetActive(!table.isPracticeMode);
+    }
     public void _RefreshRefereeDisplay()
     {
         if (table.tournamentRefereeLocal != -1)
@@ -311,21 +360,6 @@ public class MenuManager : UdonSharpBehaviour
 
             table._TriggerPhysicsChanged(selectedPhysics);
         }
-    }
-
-    public void _OnGameStarted()
-    {
-        _DisableLobbyMenu();
-        refreshJoinMenu();
-        Transform table_base = table._GetTableBase().transform;
-        Transform JOINMENU = table_base.Find(".JOINMENU");
-        Transform menuJoin = table.transform.Find("intl.menu/JoinMenu");
-        if (JOINMENU && menuJoin)
-            table.setTransform(JOINMENU, menuJoin.gameObject.GetComponent<RectTransform>(), 1F);
-
-        Transform JoinBlue = table.transform.Find("intl.menu/JoinMenu/JoinBlue");
-        if (JoinBlue)
-            JoinBlue.gameObject.SetActive(!table.isPracticeMode);
     }
 
     [NonSerialized] public UIButton inButton;

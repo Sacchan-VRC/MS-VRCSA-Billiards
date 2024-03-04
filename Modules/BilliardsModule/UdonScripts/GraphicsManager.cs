@@ -19,7 +19,6 @@ public class GraphicsManager : UdonSharpBehaviour
     [SerializeField] TextMeshProUGUI snookerInstruction;
 
     [Header("Text")]
-    [SerializeField] GameObject scorecardHolder;
     [SerializeField] TextMeshProUGUI[] playerNames;
 
     [SerializeField] TextMeshPro winnerText;
@@ -118,8 +117,7 @@ public class GraphicsManager : UdonSharpBehaviour
         scorecard = scorecard_gameobject.GetComponent<MeshRenderer>().material;
         scorecard_info = table.transform.Find("intl.scorecardinfo").gameObject;
 
-        scorecard_info.SetActive(false);
-        scorecard_gameobject.SetActive(false);
+        _DisableObjects();
     }
 
     public void _Tick()
@@ -238,8 +236,6 @@ public class GraphicsManager : UdonSharpBehaviour
 
     public void _SetScorecardPlayers(int[] players)
     {
-        scorecardHolder.SetActive(true);
-
         if (players[2] == -1 || !table.teamsLocal)
         {
             playerNames[0].text = "<size=13>" + _FormatName(VRCPlayerApi.GetPlayerById(players[0]));
@@ -261,10 +257,12 @@ public class GraphicsManager : UdonSharpBehaviour
 
     public void _OnGameReset()
     {
-        winnerText.gameObject.SetActive(true);
-        winnerText.text = "Game reset!";
-        scorecard_info.SetActive(false);
-        scorecard_gameobject.SetActive(false);
+        _DisableObjects();
+        if (table.gameLive)
+        {
+            winnerText.gameObject.SetActive(true);
+            winnerText.text = "Game reset!";
+        }
     }
 
     public void _ResetWinners()
@@ -356,12 +354,6 @@ public class GraphicsManager : UdonSharpBehaviour
             colors[i] = $"{red.ToString("X2")}{green.ToString("X2")}{blue.ToString("X2")}";
         }
         return colors;
-    }
-
-
-    public void _HideScorecardHolder()
-    {
-        scorecardHolder.SetActive(false);
     }
 
     public void _PlayIntroAnimation()
@@ -606,9 +598,7 @@ int uniform_cue_colour;
 
     public void _OnLobbyOpened()
     {
-        winnerText.gameObject.SetActive(false);
-        scorecard_info.SetActive(false);
-        scorecard_gameobject.SetActive(false);
+        _DisableObjects();
     }
 
     public void _OnLobbyClosed()
@@ -707,7 +697,8 @@ int uniform_cue_colour;
         table.devhit.SetActive(false);
         winnerText.gameObject.SetActive(false);
         table.markerObj.SetActive(false);
-        scorecardHolder.SetActive(false);
+        scorecard_info.SetActive(false);
+        scorecard_gameobject.SetActive(false);
         table.marker9ball.SetActive(false);
         fourBallPoint.SetActive(false);
         orangeScore.gameObject.SetActive(false);

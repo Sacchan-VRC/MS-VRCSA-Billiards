@@ -181,6 +181,8 @@ public class BilliardsModule : UdonSharpBehaviour
     [NonSerialized] public bool isTableOpenLocal;
     [NonSerialized] public uint teamColorLocal;
     [NonSerialized] public int numPlayersCurrent = 0;
+    [NonSerialized] public int numPlayersCurrentOrange = 0;
+    [NonSerialized] public int numPlayersCurrentBlue = 0;
     [NonSerialized] public int[] playerIDsLocal = { -1, -1, -1, -1 };
     [NonSerialized] public int tournamentRefereeLocal = -1;
     [NonSerialized] public int[] fbScoresLocal = new int[2];
@@ -188,7 +190,7 @@ public class BilliardsModule : UdonSharpBehaviour
     [NonSerialized] public uint previewWinningTeamLocal;
     [NonSerialized] public int activeCueSkin;
     [NonSerialized] public int tableSkinLocal;
-    private byte gameStateLocal = byte.MaxValue;
+    [NonSerialized] public byte gameStateLocal = byte.MaxValue;
     private byte turnStateLocal = byte.MaxValue;
     private int timerStartLocal;
     [NonSerialized] public uint foulStateLocal;
@@ -220,7 +222,7 @@ public class BilliardsModule : UdonSharpBehaviour
     [NonSerialized] public bool timerRunning = false;
 
     [NonSerialized] public int localPlayerId = -1;
-    [NonSerialized] public uint localTeamId = 0u;
+    [NonSerialized] public uint localTeamId = uint.MaxValue;
 
     [NonSerialized] public UdonSharpBehaviour currentPhysicsManager;
     [NonSerialized] public CueController activeCue;
@@ -233,6 +235,9 @@ public class BilliardsModule : UdonSharpBehaviour
     [NonSerialized] public bool isKr4Ball = false;
     [NonSerialized] public bool isSnooker6Red = false;
     [NonSerialized] public bool isPracticeMode = false;
+    [NonSerialized] public bool isPlayer = false;
+    [NonSerialized] public bool isOrangeTeamFull = false;
+    [NonSerialized] public bool isBlueTeamFull = false;
     [NonSerialized] public CameraOverrideModule cameraOverrideModule;
     public string[] moderators = new string[0];
     [NonSerialized] public const float ballMeshDiameter = 0.06f;//the ball's size as modeled in the mesh file
@@ -340,7 +345,7 @@ public class BilliardsModule : UdonSharpBehaviour
     public void _TriggerLobbyOpen()
     {
         if (lobbyOpen) return;
-
+        menuManager._EnableLobbyMenu();
         networkingManager._OnLobbyOpened();
     }
 
@@ -488,14 +493,39 @@ public class BilliardsModule : UdonSharpBehaviour
 
         _LogInfo("joining team " + teamId);
 
-        int newteam = networkingManager._OnJoinTeam(teamId);
-        if (newteam != -1)
+        int newslot = networkingManager._OnJoinTeam(teamId);
+        if (newslot != -1)
         {
-            menuManager._RefreshLobbyOpen();
-            menuManager._RefreshPlayerList();
             if (!gameLive)
             {
-                menuManager._EnableLobbyMenu();
+                //for responsive menu prediction. These values will be overwritten in deserialization
+                isPlayer = true;
+                VRCPlayerApi lp = Networking.LocalPlayer;
+                int curSlot = _GetPlayerSlot(lp, playerIDsLocal);
+                if (curSlot != -1)
+                {
+                    playerIDsLocal[curSlot] = -1;
+                    if (curSlot % 2 == 0) { numPlayersCurrentOrange--; }
+                    else { numPlayersCurrentBlue--; }
+                }
+                playerIDsLocal[newslot] = lp.playerId;
+                if (teamsLocal)
+                {
+                    if (teamId == 0)
+                    {
+                        if (numPlayersCurrentOrange == 1) isOrangeTeamFull = true;
+                    }
+                    else
+                    {
+                        if (numPlayersCurrentBlue == 1) isBlueTeamFull = true;
+                    }
+                }
+                else
+                {
+                    if (teamId == 0) isOrangeTeamFull = true;
+                    else isBlueTeamFull = true;
+                }
+                menuManager._RefreshLobby();
             }
         }
         else
@@ -510,12 +540,17 @@ public class BilliardsModule : UdonSharpBehaviour
         _LogInfo("leaving lobby");
 
         networkingManager._OnLeaveLobby(localPlayerId);
+
+        //for responsive menu prediction, will be overwritten in deserialization
+        isPlayer = false;
         playerIDsLocal[localPlayerId] = -1;
         localPlayerId = -1;
-        localTeamId = 0;
-        menuManager._RefreshLobbyOpen();
-        menuManager._RefreshPlayerList();
-        menuManager._DisableLobbyMenu();
+        if (localTeamId == 0)
+            isOrangeTeamFull = false;
+        else
+            isBlueTeamFull = false;
+        localTeamId = uint.MaxValue;
+        menuManager._RefreshLobby();
     }
     private float lastActionTime;
     public void _TriggerGameReset()
@@ -726,7 +761,8 @@ public class BilliardsModule : UdonSharpBehaviour
     {
         int myOldSlot = _GetPlayerSlot(Networking.LocalPlayer, playerIDsLocal);
 
-        if (intArrayEquals(playerIDsLocal, playerIDsSynced)) return false;
+        // escape disabled because playerIDsLocal is changed elsewhere for the purpose of prediction (more responsive menu), and this needs to run after that.
+        // if (intArrayEquals(playerIDsLocal, playerIDsSynced)) return false;
         Array.Copy(playerIDsLocal, playerIDsCached, playerIDsLocal.Length);
         Array.Copy(playerIDsSynced, playerIDsLocal, playerIDsLocal.Length);
 
@@ -740,7 +776,7 @@ public class BilliardsModule : UdonSharpBehaviour
 
         localPlayerId = Array.IndexOf(playerIDsLocal, Networking.LocalPlayer.playerId);
         if (localPlayerId != -1) localTeamId = (uint)(localPlayerId & 0x1u);
-
+        else localTeamId = uint.MaxValue;
         cueControllers[0]._SetAuthorizedOwners(new int[] { playerIDsLocal[0], playerIDsLocal[2] });
         cueControllers[1]._SetAuthorizedOwners(new int[] { playerIDsLocal[1], playerIDsLocal[3] });
         if (playerIDsLocal[0] == -1 && playerIDsLocal[2] == -1)
@@ -752,16 +788,17 @@ public class BilliardsModule : UdonSharpBehaviour
             cueControllers[1]._ResetCuePosition();
         }
 
-        menuManager._RefreshLobbyOpen();
-        menuManager._RefreshPlayerList();
-
         applyCueAccess();
 
         if (networkingManager.gameStateSynced != 3) { graphicsManager._SetScorecardPlayers(playerIDsLocal); } // don't remove player names when match is won
 
         int myNewSlot = _GetPlayerSlot(Networking.LocalPlayer, playerIDsLocal);
-        bool amPlayer = myNewSlot != -1;
-        enablePracticeControls(amPlayer && gameLive);
+        isPlayer = myNewSlot != -1;
+        enablePracticeControls(isPlayer && gameLive);
+
+        isOrangeTeamFull = teamsLocal ? playerIDsLocal[0] != -1 && playerIDsLocal[2] != -1 : playerIDsLocal[0] != -1;
+        isBlueTeamFull = teamsLocal ? playerIDsLocal[1] != -1 && playerIDsLocal[3] != -1 : playerIDsLocal[1] != -1;
+        menuManager._RefreshLobby();
 
         return gameLive && myOldSlot != myNewSlot;//if our slot changed, we left, or we joined, return true to force updates
     }
@@ -773,19 +810,19 @@ public class BilliardsModule : UdonSharpBehaviour
         gameStateLocal = gameStateSynced;
         _LogInfo($"onRemoteGameStateChanged newState={gameStateSynced}");
 
-        if (gameStateSynced == 1)
+        if (gameStateLocal == 1)
         {
             onRemoteLobbyOpened();
         }
-        else if (gameStateSynced == 0)
+        else if (gameStateLocal == 0)
         {
             onRemoteLobbyClosed();
         }
-        else if (gameStateSynced == 2)
+        else if (gameStateLocal == 2)
         {
             onRemoteGameStarted();
         }
-        else if (gameStateSynced == 3)
+        else if (gameStateLocal == 3)
         {
             onRemoteGameEnded(networkingManager.winningTeamSynced);
         }
@@ -797,12 +834,7 @@ public class BilliardsModule : UdonSharpBehaviour
 
         lobbyOpen = true;
         graphicsManager._OnLobbyOpened();
-        menuManager._RefreshLobbyOpen();
-        menuManager._RefreshPlayerList();
-
-        menuManager._EnableMenuJoinLeave();
-        menuManager._DisableStartMenu();
-        menuManager._OnLobbyOpened();
+        menuManager._RefreshLobby();
 
         if (callbacks != null) callbacks.SendCustomEvent("_OnLobbyOpened");
     }
@@ -814,11 +846,7 @@ public class BilliardsModule : UdonSharpBehaviour
         lobbyOpen = false;
         localPlayerId = -1;
         graphicsManager._OnLobbyClosed();
-        menuManager._RefreshLobbyOpen();
-
-        menuManager._DisableMenuJoinLeave();
-        menuManager._DisableLobbyMenu();
-        menuManager._EnableStartMenu();
+        menuManager._RefreshLobby();
 
         resetCachedData();
 
@@ -838,8 +866,7 @@ public class BilliardsModule : UdonSharpBehaviour
 
         isPracticeMode = playerIDsLocal[1] == -1 && playerIDsLocal[3] == -1;
 
-        menuManager._OnGameStarted();
-
+        menuManager._RefreshLobby();
         graphicsManager._OnGameStarted();
         desktopManager._OnGameStarted();
         applyCueAccess();
@@ -907,10 +934,6 @@ public class BilliardsModule : UdonSharpBehaviour
     {
         _LogInfo($"onRemoteGameEnded winningTeam={winningTeamSynced}");
 
-        menuManager._EnableStartMenu();
-        menuManager._DisableMenuJoinLeave();
-        menuManager._DisableLobbyMenu();
-
         isLocalSimulationRunning = false;
 
         if (tournamentRefereeLocal != -1)
@@ -934,10 +957,7 @@ public class BilliardsModule : UdonSharpBehaviour
 
             isTableOpenLocal = true;
             _LogWarn("game reset");
-            if (gameLive)
-            {
-                graphicsManager._OnGameReset();
-            }
+            graphicsManager._OnGameReset();
         }
         else
         {
@@ -957,9 +977,10 @@ public class BilliardsModule : UdonSharpBehaviour
 
         enablePracticeControls(false);
 
+
         // Remove any access rights
         localPlayerId = -1;
-        localTeamId = 0;
+        localTeamId = uint.MaxValue;
         applyCueAccess();
 
         lobbyOpen = false;
@@ -968,9 +989,11 @@ public class BilliardsModule : UdonSharpBehaviour
 
         infReset.text = string.Empty;
 
+        resetCachedData();
+
         tableModels[tableModelLocal]._OnGameEnded();
 
-        resetCachedData();
+        menuManager._RefreshLobby();
     }
 
     private void onRemoteBallsPocketedChanged(uint ballsPocketedSynced)
@@ -2218,12 +2241,12 @@ public class BilliardsModule : UdonSharpBehaviour
             menuManager._DisableInGameMenu();
         }
     }
+
     private void enablePlayComponents()
     {
         bool isOurTurnVar = isMyTurn();
 
-        bool amPlayer = _GetPlayerSlot(Networking.LocalPlayer, playerIDsLocal) != -1;
-        enablePracticeControls(amPlayer || (tournamentRefereeLocal != -1 && _IsLocalPlayerReferee()));
+        enablePracticeControls(isPlayer || (tournamentRefereeLocal != -1 && _IsLocalPlayerReferee()));
 
         if (is9Ball)
         {
