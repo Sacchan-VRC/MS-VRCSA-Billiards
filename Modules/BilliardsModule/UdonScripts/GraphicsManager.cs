@@ -57,6 +57,8 @@ public class GraphicsManager : UdonSharpBehaviour
     private VRCPlayerApi[] savedPlayers = new VRCPlayerApi[4];
 
     private Material scorecard;
+    private GameObject scorecard_gameobject;
+    private GameObject scorecard_info;
     private Color[] scorecardColors = new Color[15];
 
     private bool usColors;
@@ -111,7 +113,13 @@ public class GraphicsManager : UdonSharpBehaviour
 
     public void _InitializeTable()
     {
-        scorecard = table._GetTableBase().transform.Find("scorecard").GetComponent<MeshRenderer>().material;
+        Transform tableBase = table._GetTableBase().transform;
+        scorecard_gameobject = tableBase.transform.Find("scorecard").gameObject;
+        scorecard = scorecard_gameobject.GetComponent<MeshRenderer>().material;
+        scorecard_info = table.transform.Find("intl.scorecardinfo").gameObject;
+
+        scorecard_info.SetActive(false);
+        scorecard_gameobject.SetActive(false);
     }
 
     public void _Tick()
@@ -255,6 +263,8 @@ public class GraphicsManager : UdonSharpBehaviour
     {
         winnerText.gameObject.SetActive(true);
         winnerText.text = "Game reset!";
+        scorecard_info.SetActive(false);
+        scorecard_gameobject.SetActive(false);
     }
 
     public void _ResetWinners()
@@ -597,6 +607,8 @@ int uniform_cue_colour;
     public void _OnLobbyOpened()
     {
         winnerText.gameObject.SetActive(false);
+        scorecard_info.SetActive(false);
+        scorecard_gameobject.SetActive(false);
     }
 
     public void _OnLobbyClosed()
@@ -607,6 +619,8 @@ int uniform_cue_colour;
     public void _OnGameStarted()
     {
         if (table.gameModeLocal == uint.MaxValue) { return; }
+        scorecard_info.SetActive(true);
+        scorecard_gameobject.SetActive(true);
         scorecard.SetInt("_GameMode", (int)table.gameModeLocal);
         scorecard.SetInt("_SolidsMode", 0);
         if (table.isSnooker6Red)

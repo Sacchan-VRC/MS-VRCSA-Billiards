@@ -14,6 +14,7 @@ using VRC.Udon;
 using System;
 using Metaphira.Modules.CameraOverride;
 using TMPro;
+using Unity.Mathematics;
 
 [UdonBehaviourSyncMode(BehaviourSyncMode.None)]
 public class BilliardsModule : UdonSharpBehaviour
@@ -288,6 +289,7 @@ public class BilliardsModule : UdonSharpBehaviour
 
         currentPhysicsManager.SendCustomEvent("_InitConstants");
 
+        infReset.text = string.Empty;
 
 #if HT8B_DEBUGGER
         this.transform.Find("debugger").gameObject.SetActive(true);
@@ -296,10 +298,6 @@ public class BilliardsModule : UdonSharpBehaviour
         this.transform.Find("intl.balls/guide/guide_display").GetComponent<MeshRenderer>().material.SetMatrix("_BaseTransform", this.transform.worldToLocalMatrix);
 
         reflection_main.RenderProbe();
-
-#if UNITY_EDITOR
-        graphicsManager._OnGameStarted();
-#endif
     }
 
     private void FixedUpdate()
@@ -625,13 +623,13 @@ public class BilliardsModule : UdonSharpBehaviour
         onRemoteBallPositionsChanged(networkingManager.ballsPSynced);
         onRemoteTeamIdChanged(networkingManager.teamIdSynced);
         onRemoteFourBallCueBallChanged(networkingManager.fourBallCueBallSynced, joinedDuringMatch);
+        onRemoteColorTurnChanged(networkingManager.colorTurnSynced);
         onRemoteBallsPocketedChanged(networkingManager.ballsPocketedSynced);
         onRemoteFoulStateChanged(networkingManager.foulStateSynced);
         onRemoteFourBallScoresUpdated(networkingManager.fourBallScoresSynced);
         onRemoteIsTableOpenChanged(networkingManager.isTableOpenSynced, networkingManager.teamColorSynced, joinedDuringMatch);
         onRemoteTurnStateChanged(networkingManager.turnStateSynced);
         onRemotePreviewWinningTeamChanged(networkingManager.previewWinningTeamSynced);
-        onRemoteColorTurnChanged(networkingManager.colorTurnSynced);
 
         // finally, take a snapshot
         practiceManager._Record();
@@ -804,6 +802,7 @@ public class BilliardsModule : UdonSharpBehaviour
 
         menuManager._EnableMenuJoinLeave();
         menuManager._DisableStartMenu();
+        menuManager._OnLobbyOpened();
 
         if (callbacks != null) callbacks.SendCustomEvent("_OnLobbyOpened");
     }
@@ -967,7 +966,7 @@ public class BilliardsModule : UdonSharpBehaviour
 
         cueControllers[1].gameObject.SetActive(true);
 
-        infReset.text = "Reset";
+        infReset.text = string.Empty;
 
         tableModels[tableModelLocal]._OnGameEnded();
 
@@ -1916,7 +1915,7 @@ public class BilliardsModule : UdonSharpBehaviour
         previewWinningTeamLocal = 2;
     }
 
-    private void setTransform(Transform src, Transform dest, float sf)
+    public void setTransform(Transform src, Transform dest, float sf)
     {
         dest.position = src.position;
         dest.rotation = src.rotation;
@@ -1959,10 +1958,7 @@ public class BilliardsModule : UdonSharpBehaviour
         balls[0].transform.parent.localPosition = new Vector3(0, ballsParentStartHeight, 0);
         balls[0].transform.parent.localPosition += ballsParentHeightOffset;
 
-        Transform table_base = _GetTableBase().transform;
-        auto_pocketblockers = table_base.Find(".4BALL_FILL").gameObject;
-        auto_rackPosition = table_base.Find(".RACK").gameObject;
-        auto_colliderBaseVFX = table_base.Find("collision.vfx").gameObject;
+        SetTableTransforms();
 
         Transform transformSurface = (Transform)currentPhysicsManager.GetProgramVariable("transform_Surface");
         k_rack_position = transformSurface.InverseTransformPoint(auto_rackPosition.transform.position);
@@ -1973,13 +1969,6 @@ public class BilliardsModule : UdonSharpBehaviour
             currentPhysicsManager.SendCustomEvent("_InitConstants");
             graphicsManager._InitializeTable();
         }
-
-        Transform score_info_root = this.transform.Find("intl.scorecardinfo");
-        setTransform(table_base.Find(".NAME_0"), score_info_root.Find("player0-name").gameObject.GetComponent<RectTransform>(), 1F / 200F);
-        setTransform(table_base.Find(".NAME_1"), score_info_root.Find("player1-name").gameObject.GetComponent<RectTransform>(), 1F / 200F);
-        setTransform(table_base.Find(".SCORE_0"), score_info_root.Find("player0-score").gameObject.GetComponent<RectTransform>(), 1F / 200F);
-        setTransform(table_base.Find(".SCORE_1"), score_info_root.Find("player1-score").gameObject.GetComponent<RectTransform>(), 1F / 200F);
-        setTransform(table_base.Find(".SNOOKER_INSTRUCTIONS"), score_info_root.Find("SnookerInstructions").gameObject.GetComponent<RectTransform>(), 1F / 200F);
 
         cueControllers[0]._RefreshTable();
         cueControllers[1]._RefreshTable();
@@ -1995,6 +1984,47 @@ public class BilliardsModule : UdonSharpBehaviour
 
         menuManager._RefreshTable();
     }
+
+    private void SetTableTransforms()
+    {
+        Transform table_base = _GetTableBase().transform;
+        auto_pocketblockers = table_base.Find(".4BALL_FILL").gameObject;
+        auto_rackPosition = table_base.Find(".RACK").gameObject;
+        auto_colliderBaseVFX = table_base.Find("collision.vfx").gameObject;
+
+        Transform NAME_0 = table_base.Find(".NAME_0");
+        Transform NAME_1 = table_base.Find(".NAME_1");
+        Transform SCORE_0 = table_base.Find(".SCORE_0");
+        Transform SCORE_1 = table_base.Find(".SCORE_1");
+        Transform MENU = table_base.Find(".MENU");
+        Transform SNOOKER_INSTRUCTIONS = table_base.Find(".SNOOKER_INSTRUCTIONS");
+
+        Transform score_info_root = this.transform.Find("intl.scorecardinfo");
+        Transform player0name = score_info_root.Find("player0-name");
+        Transform player1name = score_info_root.Find("player1-name");
+        Transform player0score = score_info_root.Find("player0-score");
+        Transform player1score = score_info_root.Find("player1-score");
+        Transform SnookerInstructions = score_info_root.Find("SnookerInstructions");
+        if (NAME_0 && player0name)
+            setTransform(NAME_0, player0name.gameObject.GetComponent<RectTransform>(), 1F / 200F);
+        if (NAME_1 && player1name)
+            setTransform(NAME_1, player1name.gameObject.GetComponent<RectTransform>(), 1F / 200F);
+        if (SCORE_0 && player0score)
+            setTransform(SCORE_0, player0score.gameObject.GetComponent<RectTransform>(), 1F / 200F);
+        if (SCORE_1 && player1score)
+            setTransform(SCORE_1, player1score.gameObject.GetComponent<RectTransform>(), 1F / 200F);
+        if (SNOOKER_INSTRUCTIONS && SnookerInstructions)
+            setTransform(SNOOKER_INSTRUCTIONS, SnookerInstructions.gameObject.GetComponent<RectTransform>(), 1F / 200F);
+
+        Transform menu = this.transform.Find("intl.menu");
+        if (MENU && menu)
+            setTransform(MENU, menu.gameObject.GetComponent<RectTransform>(), 1F / 200F);
+        Transform LOADMENU = table_base.Find(".LOADMENU");
+        Transform menuLoad = this.transform.Find("intl.menu/InGameMenu/LoadMenu");
+        if (LOADMENU && menuLoad)
+            setTransform(LOADMENU, menuLoad.gameObject.GetComponent<RectTransform>(), 1F);
+    }
+
     private void ConfineBallTransformsToTable()
     {
         for (int i = 0; i < balls.Length; i++)
@@ -2839,7 +2869,7 @@ public class BilliardsModule : UdonSharpBehaviour
 
     public void _IndicateError()
     {
-        tableModels[tableModelLocal]._flashTableColor(k_colour_foul);
+        tableModels[tableModelLocal]._flashTableColor();
     }
 
     public void _IndicateSuccess()

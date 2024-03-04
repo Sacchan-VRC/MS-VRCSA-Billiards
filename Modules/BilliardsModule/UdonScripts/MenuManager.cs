@@ -31,9 +31,26 @@ public class MenuManager : UdonSharpBehaviour
     private uint selectedTable;
     private uint selectedPhysics;
 
+    private Vector3 joinMenuPosition;
+    private Quaternion joinMenuRotation;
+    private Vector3 joinMenuScale;
+    public bool Initialized;
+
     public void _Init(BilliardsModule table_)
     {
         table = table_;
+
+        if (!Initialized)
+        {
+            Initialized = true;
+            Transform menuJoin = table.transform.Find("intl.menu/JoinMenu");
+            if (menuJoin)
+            {
+                joinMenuPosition = menuJoin.localPosition;
+                joinMenuRotation = menuJoin.localRotation;
+                joinMenuScale = menuJoin.localScale;
+            }
+        }
 
         _RefreshTimer();
         _RefreshPhysics();
@@ -168,6 +185,20 @@ public class MenuManager : UdonSharpBehaviour
         _RefreshToggleSettings();
     }
 
+    public void _OnLobbyOpened()
+    {
+        Transform menuJoin = table.transform.Find("intl.menu/JoinMenu");
+        if (menuJoin)
+        {
+            menuJoin.localPosition = joinMenuPosition;
+            menuJoin.localRotation = joinMenuRotation;
+            menuJoin.localScale = joinMenuScale;
+        }
+        Transform JoinBlue = table.transform.Find("intl.menu/JoinMenu/JoinBlue");
+        if (JoinBlue)
+            JoinBlue.gameObject.SetActive(true);
+    }
+
     public void _RefreshRefereeDisplay()
     {
         if (table.tournamentRefereeLocal != -1)
@@ -287,6 +318,15 @@ public class MenuManager : UdonSharpBehaviour
     {
         _DisableLobbyMenu();
         refreshJoinMenu();
+        Transform table_base = table._GetTableBase().transform;
+        Transform JOINMENU = table_base.Find(".JOINMENU");
+        Transform menuJoin = table.transform.Find("intl.menu/JoinMenu");
+        if (JOINMENU && menuJoin)
+            table.setTransform(JOINMENU, menuJoin.gameObject.GetComponent<RectTransform>(), 1F);
+
+        Transform JoinBlue = table.transform.Find("intl.menu/JoinMenu/JoinBlue");
+        if (JoinBlue)
+            JoinBlue.gameObject.SetActive(!table.isPracticeMode);
     }
 
     [NonSerialized] public UIButton inButton;
