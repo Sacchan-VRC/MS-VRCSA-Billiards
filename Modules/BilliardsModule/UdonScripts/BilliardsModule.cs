@@ -1565,17 +1565,17 @@ public class BilliardsModule : UdonSharpBehaviour
                         _LogInfo("6RED: Foul: No balls hit");
                         foulCondition = true;
                     }
-                    if (pocketedBallTypes == 0)
+                    if (pocketedBallTypes == 0 || pocketedBallTypes == 2) // red or red and color
                     {
                         if (colorTurnLocal)
                         {
                             _LogInfo("6RED: Foul: Red was pocketed on color turn");
                             foulCondition = true;
                             //pocketing a red on a colorturn is a foul with a penalty of 7
-                            ballScore = 7;
+                            highestPocketedBallScore = 7;
                         }
                     }
-                    else if (pocketedBallTypes > 0)
+                    else if (pocketedBallTypes > 0) // color or red and color
                     {
                         if (!colorTurnLocal)
                         {
