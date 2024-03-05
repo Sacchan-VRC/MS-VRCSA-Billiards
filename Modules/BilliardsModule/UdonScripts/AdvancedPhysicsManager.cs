@@ -260,7 +260,7 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
         table._BeginPerf(table.PERF_PHYSICS_BALL);
         bool[] moved = new bool[balls.Length];
 
-        if ((sn_pocketed & 0x1U) == 0)
+        if ((sn_pocketed & 0x1U) == 0) // Cue ball is not pocketed
         {
             // Apply movement
 #if UNITY_EDITOR
@@ -424,7 +424,7 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
             if (lf < 0f) continue; // discard balls that are behind the movement direction
 
             s = k_BALL_DSQRPE - Vector3.Dot(h, h) + lf * lf; // I assume this checks if predicted new position is inside another ball
-                                                             // why dot product with the same values????
+
             if (s < 0.0f) // and skips if it isn't
                 continue;
 
@@ -533,12 +533,17 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
                         // In snooker it's a foul if the cue ball jumps over the object ball even if it hits it in the process
                         // check if cue ball is moving faster in the direction of the movement of the object ball to determine if it's going to go over it.
                         // there may be unknown problems with this implementation.
-                        float velDot = Vector3.Dot(Vector3.ProjectOnPlane(balls_V[i], Vector3.up), Vector3.ProjectOnPlane(balls_V[id], Vector3.up));
+                        Vector3 ballid = balls_V[id]; ballid.y = 0;
+                        Vector3 balli = balls_V[i]; balli.y = 0;
+                        ballid *= ballid.magnitude / balli.magnitude;
+                        balli = balli.normalized;
+                        float velDot = Vector3.Dot(ballid, balli);
 
+                        // detect if ball landed on top of the far side of the ball, which means by definition you went over it (this case is not covered by the velDot check)
                         Vector3 flattenedCueBallVelPrev = cueBallVelPrev;
                         flattenedCueBallVelPrev.y = 0;
-                        // detect if ball landed on top of the far side of the ball, which means by definition you went over it (this case is not covered by the velDot check)
                         bool dotBehind = Vector3.Dot(flattenedCueBallVelPrev, delta) < 0;
+
                         if (velDot > 1 || dotBehind)
                         {
                             table_._TriggerJumpShotFoul();
@@ -592,7 +597,7 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
         float COR = (1f + e);
         float alongNormal = Vector3.Dot(relativeVelocity, normal);  // numerator [dot]
         float denominator_mass = ( k_BALL_MASS +  k_BALL_MASS );    // denominator
- 
+
         float j = COR * alongNormal / denominator_mass;
 
         Vector3 impulse = j * normal;
@@ -630,7 +635,7 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
         float dynamicFriction = 0.06f / Mathf.Pow(relativeVelocity.magnitude, 0.5f);
 
 
-        if (Mathf.Approximately(tangent.magnitude, Vector3.zero.magnitude))
+        if (Mathf.Approximately(tangent.magnitude, 0f))
         {
             return;
         }
@@ -646,7 +651,7 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
 
 
         ///Coulomb's law
-        if (Mathf.Abs(tangent.magnitude) <= impulse * staticFriction)
+        if (/* Mathf.Abs(tangent.magnitude) */ 1f <= impulse * staticFriction)
         {
             frictionImpulse = impulseTangent * tangent;
         }
@@ -773,7 +778,7 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
 
             float absolute_u0 = u0.magnitude;                       /// |v0| the absolute velocity of Relative Velocity
 
-            ///DEBUG LOG LIST
+                                                                    ///DEBUG LOG LIST
             /*
             //u0 = (7f / 2f) * mu_s * g * t * u0;
             //float Ts = (2 * u0.magnitude) / (7 * mu_s * g) * t;

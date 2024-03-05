@@ -515,12 +515,17 @@ public class StandardPhysicsManager : UdonSharpBehaviour
                         // In snooker it's a foul if the cue ball jumps over the object ball even if it hits it in the process
                         // check if cue ball is moving faster in the direction of the movement of the object ball to determine if it's going to go over it.
                         // there may be unknown problems with this implementation.
-                        float velDot = Vector3.Dot(Vector3.ProjectOnPlane(balls_V[i], Vector3.up), Vector3.ProjectOnPlane(balls_V[id], Vector3.up));
+                        Vector3 ballid = balls_V[id]; ballid.y = 0;
+                        Vector3 balli = balls_V[i]; balli.y = 0;
+                        ballid *= ballid.magnitude / balli.magnitude;
+                        balli = balli.normalized;
+                        float velDot = Vector3.Dot(ballid, balli);
 
+                        // detect if ball landed on top of the far side of the ball, which means by definition you went over it (this case is not covered by the velDot check)
                         Vector3 flattenedCueBallVelPrev = cueBallVelPrev;
                         flattenedCueBallVelPrev.y = 0;
-                        // detect if ball landed on top of the far side of the ball, which means by definition you went over it (this case is not covered by the velDot check)
                         bool dotBehind = Vector3.Dot(flattenedCueBallVelPrev, delta) < 0;
+
                         if (velDot > 1 || dotBehind)
                         {
                             table_._TriggerJumpShotFoul();
