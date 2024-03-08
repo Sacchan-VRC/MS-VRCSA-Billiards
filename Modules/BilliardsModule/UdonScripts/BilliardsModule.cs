@@ -14,7 +14,6 @@ using VRC.Udon;
 using System;
 using Metaphira.Modules.CameraOverride;
 using TMPro;
-using Unity.Mathematics;
 
 [UdonBehaviourSyncMode(BehaviourSyncMode.None)]
 public class BilliardsModule : UdonSharpBehaviour
@@ -553,6 +552,7 @@ public class BilliardsModule : UdonSharpBehaviour
         menuManager._RefreshLobby();
     }
     private float lastActionTime;
+    private float lastResetTime;
     public void _TriggerGameReset()
     {
         int self = Networking.LocalPlayer.playerId;
@@ -582,7 +582,12 @@ public class BilliardsModule : UdonSharpBehaviour
                 nearestPlayer = playerDist;
         }
         bool allPlayersAway = nearestPlayer < 20f ? false : true;
-        if (allPlayersOffline || isAllowedPlayer || _IsModerator(Networking.LocalPlayer) || (Time.time - lastActionTime > 300) || allPlayersAway)
+
+        if (Time.time - lastResetTime > 0.3f)
+        {
+            infReset.text = "Double click to reset"; ClearResetInfo();
+        }
+        else if (allPlayersOffline || isAllowedPlayer || _IsModerator(Networking.LocalPlayer) || (Time.time - lastActionTime > 300) || allPlayersAway)
         {
             _LogInfo("force resetting game");
 
@@ -601,8 +606,23 @@ public class BilliardsModule : UdonSharpBehaviour
                 playerStr += graphicsManager._FormatName(VRCPlayerApi.GetPlayerById(allowedPlayer));
             }
 
-            infReset.text = "Only these players may reset:\n" + playerStr;
+            infReset.text = "Only these players may reset:\n" + playerStr; ClearResetInfo();
         }
+        lastResetTime = Time.time;
+    }
+
+    int resetInfoCount = 0;
+    private void ClearResetInfo()
+    {
+        resetInfoCount++;
+        SendCustomEventDelayedSeconds(nameof(_ClearResetInfo), 3f);
+    }
+
+    public void _ClearResetInfo()
+    {
+        resetInfoCount--;
+        if (resetInfoCount != 0) return;
+        infReset.text = string.Empty;
     }
     #endregion
 
@@ -967,6 +987,7 @@ public class BilliardsModule : UdonSharpBehaviour
         }
 
         gameLive = false;
+        isPracticeMode = false;
 
         Array.Copy(networkingManager.fourBallScoresSynced, fbScoresLocal, 2);
         graphicsManager._UpdateTeamColor(winningTeamSynced);
@@ -1938,10 +1959,11 @@ public class BilliardsModule : UdonSharpBehaviour
         previewWinningTeamLocal = 2;
     }
 
-    public void setTransform(Transform src, Transform dest, float sf)
+    public void setTransform(Transform src, Transform dest, bool doScale = false, float sf = 1f)
     {
         dest.position = src.position;
         dest.rotation = src.rotation;
+        if (!doScale) return;
         dest.localScale = src.localScale * sf;
     }
 
@@ -2015,37 +2037,39 @@ public class BilliardsModule : UdonSharpBehaviour
         auto_rackPosition = table_base.Find(".RACK").gameObject;
         auto_colliderBaseVFX = table_base.Find("collision.vfx").gameObject;
 
-        Transform NAME_0 = table_base.Find(".NAME_0");
-        Transform NAME_1 = table_base.Find(".NAME_1");
-        Transform SCORE_0 = table_base.Find(".SCORE_0");
-        Transform SCORE_1 = table_base.Find(".SCORE_1");
-        Transform MENU = table_base.Find(".MENU");
-        Transform SNOOKER_INSTRUCTIONS = table_base.Find(".SNOOKER_INSTRUCTIONS");
+        Transform NAME_0_SPOT = table_base.Find(".NAME_0");
+        Transform MENU_SPOT = table_base.Find(".MENU");
 
         Transform score_info_root = this.transform.Find("intl.scorecardinfo");
         Transform player0name = score_info_root.Find("player0-name");
-        Transform player1name = score_info_root.Find("player1-name");
-        Transform player0score = score_info_root.Find("player0-score");
-        Transform player1score = score_info_root.Find("player1-score");
-        Transform SnookerInstructions = score_info_root.Find("SnookerInstructions");
-        if (NAME_0 && player0name)
-            setTransform(NAME_0, player0name.gameObject.GetComponent<RectTransform>(), 1F / 200F);
-        if (NAME_1 && player1name)
-            setTransform(NAME_1, player1name.gameObject.GetComponent<RectTransform>(), 1F / 200F);
-        if (SCORE_0 && player0score)
-            setTransform(SCORE_0, player0score.gameObject.GetComponent<RectTransform>(), 1F / 200F);
-        if (SCORE_1 && player1score)
-            setTransform(SCORE_1, player1score.gameObject.GetComponent<RectTransform>(), 1F / 200F);
-        if (SNOOKER_INSTRUCTIONS && SnookerInstructions)
-            setTransform(SNOOKER_INSTRUCTIONS, SnookerInstructions.gameObject.GetComponent<RectTransform>(), 1F / 200F);
+        if (NAME_0_SPOT && player0name)
+            setTransform(NAME_0_SPOT, player0name);
 
-        Transform menu = this.transform.Find("intl.menu");
-        if (MENU && menu)
-            setTransform(MENU, menu.gameObject.GetComponent<RectTransform>(), 1F / 200F);
-        Transform LOADMENU = table_base.Find(".LOADMENU");
-        Transform menuLoad = this.transform.Find("intl.menu/InGameMenu/LoadMenu");
-        if (LOADMENU && menuLoad)
-            setTransform(LOADMENU, menuLoad.gameObject.GetComponent<RectTransform>(), 1F);
+        Transform NAME_1_SPOT = table_base.Find(".NAME_1");
+        Transform player1name = score_info_root.Find("player1-name");
+        if (NAME_1_SPOT && player1name)
+            setTransform(NAME_1_SPOT, player1name);
+
+        Transform SCORE_0_SPOT = table_base.Find(".SCORE_0");
+        Transform player0score = score_info_root.Find("player0-score");
+        if (SCORE_0_SPOT && player0score)
+            setTransform(SCORE_0_SPOT, player0score);
+
+        Transform SCORE_1_SPOT = table_base.Find(".SCORE_1");
+        Transform player1score = score_info_root.Find("player1-score");
+        if (SCORE_1_SPOT && player1score)
+            setTransform(SCORE_1_SPOT, player1score);
+
+        Transform SNOOKER_INSTRUCTIONS_SPOT = table_base.Find(".SNOOKER_INSTRUCTIONS");
+        Transform SnookerInstructions = score_info_root.Find("SnookerInstructions");
+        if (SNOOKER_INSTRUCTIONS_SPOT && SnookerInstructions)
+            setTransform(SNOOKER_INSTRUCTIONS_SPOT, SnookerInstructions);
+
+        Transform menu = this.transform.Find("intl.menu/MenuAnchor");
+        if (MENU_SPOT && menu)
+            setTransform(MENU_SPOT, menu);
+
+        menuManager._PlaceLoadMenu();
     }
 
     private void ConfineBallTransformsToTable()
@@ -2234,11 +2258,11 @@ public class BilliardsModule : UdonSharpBehaviour
     {
         if (enable)
         {
-            menuManager._EnableInGameMenu();
+            menuManager._EnableLoadMenu();
         }
         else
         {
-            menuManager._DisableInGameMenu();
+            menuManager._DisableLoadMenu();
         }
     }
 

@@ -14,9 +14,10 @@ public class MenuManager : UdonSharpBehaviour
     [SerializeField] private GameObject menuStart;
     [SerializeField] private GameObject menuJoinLeave;
     [SerializeField] private GameObject menuLobby;
-    [SerializeField] private GameObject menuInGame;
-    [SerializeField] private GameObject menuSnookerUndo;
-    [SerializeField] private GameObject menuSkipTurn;
+    [SerializeField] private GameObject menuLoad;
+    [SerializeField] private GameObject menuUndo;
+    [SerializeField] private GameObject buttonSkipTurn;
+    [SerializeField] private GameObject buttonSnookerUndo;
     [SerializeField] private TextMeshProUGUI[] lobbyNames;
 
     [SerializeField] private TextMeshProUGUI gameModeDisplay;
@@ -43,7 +44,7 @@ public class MenuManager : UdonSharpBehaviour
         if (!Initialized)
         {
             Initialized = true;
-            Transform menuJoin = table.transform.Find("intl.menu/JoinMenu");
+            Transform menuJoin = table.transform.Find("intl.menu/MenuAnchor/JoinMenu");
             if (menuJoin)
             {
                 joinMenuPosition = menuJoin.localPosition;
@@ -62,8 +63,9 @@ public class MenuManager : UdonSharpBehaviour
 
         _DisableMenuJoinLeave();
         _DisableLobbyMenu();
-        _DisableInGameMenu();
+        _DisableLoadMenu();
         _DisableSnookerUndoMenu();
+        _DisableUndoMenu();
         _EnableStartMenu();
     }
 
@@ -125,22 +127,34 @@ public class MenuManager : UdonSharpBehaviour
     {
         string modeName = "";
         uint mode = (uint)table.GetProgramVariable("gameModeLocal");
+        Transform selection = table.transform.Find("intl.menu/MenuAnchor/LobbyMenu/GameMode/ModeSelection");
+        Transform selectionPoint;
         switch (mode)
         {
             case 0:
                 modeName = "8 Ball";
+                selectionPoint = table.transform.Find("intl.menu/MenuAnchor/LobbyMenu/GameMode/SelectionPoints/8ball");
+                table.setTransform(selectionPoint, selection, true);
                 break;
             case 1:
                 modeName = "9 Ball";
+                selectionPoint = table.transform.Find("intl.menu/MenuAnchor/LobbyMenu/GameMode/SelectionPoints/9ball");
+                table.setTransform(selectionPoint, selection, true);
                 break;
             case 2:
                 modeName = "4 Ball JP";
+                selectionPoint = table.transform.Find("intl.menu/MenuAnchor/LobbyMenu/GameMode/SelectionPoints/4ballJP");
+                table.setTransform(selectionPoint, selection, true);
                 break;
             case 3:
                 modeName = "4 Ball KR";
+                selectionPoint = table.transform.Find("intl.menu/MenuAnchor/LobbyMenu/GameMode/SelectionPoints/4ballKR");
+                table.setTransform(selectionPoint, selection, true);
                 break;
             case 4:
                 modeName = "Snooker 6 Red";
+                selectionPoint = table.transform.Find("intl.menu/MenuAnchor/LobbyMenu/GameMode/SelectionPoints/6red");
+                table.setTransform(selectionPoint, selection, true);
                 break;
         }
         gameModeDisplay.text = modeName;
@@ -169,14 +183,25 @@ public class MenuManager : UdonSharpBehaviour
         _RefreshMenu();
     }
 
+    public void _PlaceLoadMenu()
+    {
+        Transform table_base = table._GetTableBase().transform;
+        Transform LOADMENU_SPOT = table_base.Find(".LOADMENU");
+        if (LOADMENU_SPOT && menuLoad)
+            table.setTransform(LOADMENU_SPOT, menuLoad.transform);
+    }
+
     public void _RefreshMenu()
     {
-        Transform menu_Join = table.transform.Find("intl.menu/JoinMenu");
+        Transform table_base = table._GetTableBase().transform;
+        Transform menu_Join = menuJoinLeave.transform;
         switch (table.gameStateLocal)
         {
             case 0://table idle
                 _DisableLobbyMenu();
                 _EnableStartMenu();
+                _DisableLoadMenu();
+                _DisableUndoMenu();
                 menu_Join.gameObject.SetActive(false);
                 break;
             case 1://lobby
@@ -185,23 +210,23 @@ public class MenuManager : UdonSharpBehaviour
                 else
                     _DisableLobbyMenu();
                 _DisableStartMenu();
+                _DisableLoadMenu();
+                _DisableUndoMenu();
                 _RefreshTeamJoinButtons();
-                if (menu_Join)
-                {
-                    menu_Join.localPosition = joinMenuPosition;
-                    menu_Join.localRotation = joinMenuRotation;
-                    menu_Join.localScale = joinMenuScale;
-                }
+                menu_Join.localPosition = joinMenuPosition;
+                menu_Join.localRotation = joinMenuRotation;
+                menu_Join.localScale = joinMenuScale;
                 menu_Join.gameObject.SetActive(true);
                 _RefreshTeamJoinButtons();
                 break;
             case 2://game live
                 _DisableLobbyMenu();
                 _DisableStartMenu();
-                Transform table_base = table._GetTableBase().transform;
-                Transform JOINMENU = table_base.Find(".JOINMENU");
-                if (JOINMENU && menu_Join)
-                    table.setTransform(JOINMENU, menu_Join.gameObject.GetComponent<RectTransform>(), 1F);
+                _EnableLoadMenu();
+                _EnableUndoMenu();
+                Transform JOINMENU_SPOT = table_base.Find(".JOINMENU");
+                if (JOINMENU_SPOT && menu_Join)
+                    table.setTransform(JOINMENU_SPOT, menu_Join.transform);
                 if (table.isBlueTeamFull && table.isOrangeTeamFull)
                 {
                     if (table.isPlayer)
@@ -223,10 +248,12 @@ public class MenuManager : UdonSharpBehaviour
             case 3://game ended/reset
                 _DisableLobbyMenu();
                 _EnableStartMenu();
+                _DisableLoadMenu();
+                _DisableUndoMenu();
                 menu_Join.gameObject.SetActive(false);
                 break;
         }
-        Transform leave_Button = table.transform.Find("intl.menu/JoinMenu/LeaveButton");
+        Transform leave_Button = menu_Join.Find("LeaveButton");
         if (table.isPlayer)
             leave_Button.gameObject.SetActive(true);
         else
@@ -236,8 +263,8 @@ public class MenuManager : UdonSharpBehaviour
     private void _RefreshTeamJoinButtons()
     {
         //TODO: Handle leave button
-        Transform join_Orange = table.transform.Find("intl.menu/JoinMenu/JoinOrange");
-        Transform join_Blue = table.transform.Find("intl.menu/JoinMenu/JoinBlue");
+        Transform join_Orange = menuJoinLeave.transform.Find("JoinOrange");
+        Transform join_Blue = menuJoinLeave.transform.Find("JoinBlue");
         if (table.isOrangeTeamFull)
             join_Orange.gameObject.SetActive(false);
         else
@@ -251,9 +278,9 @@ public class MenuManager : UdonSharpBehaviour
     public void _RefreshRefereeDisplay()
     {
         if (table.tournamentRefereeLocal != -1)
-        {
             refereeDisplay.text = $"\nTournament Mode ({table.tournamentRefereeLocal})";
-        }
+        else
+            refereeDisplay.text = string.Empty;
     }
 
     public void StartButton()
@@ -314,52 +341,56 @@ public class MenuManager : UdonSharpBehaviour
     public void TimeRight()
     {
         if (selectedTimer > 0)
-        {
             selectedTimer--;
+        else
+            selectedTimer = 3;
 
-            table._TriggerTimerChanged(TIMER_VALUES[selectedTimer]);
-        }
+        table._TriggerTimerChanged(TIMER_VALUES[selectedTimer]);
     }
     public void TimeLeft()
     {
         if (selectedTimer < 3)
-        {
             selectedTimer++;
+        else
+            selectedTimer = 0;
 
-            table._TriggerTimerChanged(TIMER_VALUES[selectedTimer]);
-        }
+        table._TriggerTimerChanged(TIMER_VALUES[selectedTimer]);
     }
     public void TableRight()
     {
-        if (selectedTable == table.tableModels.Length - 1) { return; }
-        selectedTable++;
+        if (selectedTable == table.tableModels.Length - 1)
+            selectedTable = 0;
+        else
+            selectedTable++;
 
         table._TriggerTableModelChanged(selectedTable);
     }
     public void TableLeft()
     {
-        if (selectedTable == 0) { return; }
-        selectedTable--;
+        if (selectedTable == 0)
+            selectedTable = (uint)table.tableModels.Length - 1;
+        else
+            selectedTable--;
 
         table._TriggerTableModelChanged(selectedTable);
     }
     public void PhysicsRight()
     {
-        if (selectedPhysics == table.PhysicsManagers.Length - 1) { return; }
-        {
+        if (selectedPhysics == table.PhysicsManagers.Length - 1)
+            selectedPhysics = 0;
+        else
             selectedPhysics++;
 
-            table._TriggerPhysicsChanged(selectedPhysics);
-        }
+        table._TriggerPhysicsChanged(selectedPhysics);
     }
     public void PhysicsLeft()
     {
-        if (selectedPhysics == 0) { return; }
-        {
+        if (selectedPhysics == 0)
+            selectedPhysics = (uint)table.PhysicsManagers.Length - 1;
+        else
             selectedPhysics--;
 
-            table._TriggerPhysicsChanged(selectedPhysics);
-        }
+        table._TriggerPhysicsChanged(selectedPhysics);
     }
 
     [NonSerialized] public UIButton inButton;
@@ -509,33 +540,42 @@ public class MenuManager : UdonSharpBehaviour
         menuStart.SetActive(false);
     }
 
-    public void _EnableInGameMenu()
+    public void _EnableLoadMenu()
     {
-        menuInGame.SetActive(true);
+        menuLoad.SetActive(true);
     }
 
-    public void _DisableInGameMenu()
+    public void _DisableLoadMenu()
     {
-        menuInGame.SetActive(false);
+        menuLoad.SetActive(false);
+    }
+    public void _EnableUndoMenu()
+    {
+        menuUndo.SetActive(true);
+    }
+
+    public void _DisableUndoMenu()
+    {
+        menuUndo.SetActive(false);
     }
 
     public void _EnableSkipTurnMenu()
     {
-        menuSkipTurn.SetActive(true);
+        buttonSkipTurn.SetActive(true);
     }
 
     public void _DisableSkipTurnMenu()
     {
-        menuSkipTurn.SetActive(false);
+        buttonSkipTurn.SetActive(false);
     }
     public void _EnableSnookerUndoMenu()
     {
-        menuSnookerUndo.SetActive(true);
+        buttonSnookerUndo.SetActive(true);
     }
 
     public void _DisableSnookerUndoMenu()
     {
-        menuSnookerUndo.SetActive(false);
+        buttonSnookerUndo.SetActive(false);
     }
 
     public void _EnableMenuJoinLeave()
