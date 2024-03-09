@@ -1,4 +1,4 @@
-﻿#if UNITY_ANDROID
+#if UNITY_ANDROID
 #define HT_QUEST
 #endif
 
@@ -1557,7 +1557,7 @@ public class BilliardsModule : UdonSharpBehaviour
 
                 winCondition = fbScoresLocal[teamIdLocal] >= 10;
             }
-            else /* if (isSnooker) */
+            else /* if (isSnooker6Red) */
             {
                 if (isScratch)
                 {
@@ -1599,8 +1599,8 @@ public class BilliardsModule : UdonSharpBehaviour
                     {
                         if (!colorTurnLocal)
                         {
-                            foulFirstHitScore = sixredsnooker_ballpoints[firstHit];
                             _LogInfo("6RED: Foul: Red was not hit first on non-color turn");
+                            foulFirstHitScore = sixredsnooker_ballpoints[firstHit];
                             foulCondition = true;
                         }
                     }
@@ -1632,7 +1632,8 @@ public class BilliardsModule : UdonSharpBehaviour
                 {
                     if (firstHit != break_order_sixredsnooker[nextcolor] && !freeBall)
                     {
-                        _LogInfo("6RED: Foul: Wrong color hit");
+                        _LogInfo("6RED: Foul: Wrong color as first hit");
+                        foulFirstHitScore = sixredsnooker_ballpoints[firstHit];
                         foulCondition = true;
                     }
                     //if pocketed a ball that was not the objective, foul
