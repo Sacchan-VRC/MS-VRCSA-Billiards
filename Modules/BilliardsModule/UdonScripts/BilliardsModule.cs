@@ -254,8 +254,6 @@ public class BilliardsModule : UdonSharpBehaviour
 
         resetCachedData();
 
-        cueControllers[1].TeamBlue = true;
-
         currentPhysicsManager = PhysicsManagers[0];
 
         for (int i = 0; i < balls.Length; i++)
@@ -268,7 +266,9 @@ public class BilliardsModule : UdonSharpBehaviour
         }
 
         aud_main = this.GetComponent<AudioSource>();
-
+        cueControllers[1].TeamBlue = true;
+        for (int i = 0; i < cueControllers.Length; i++)
+        { cueControllers[i]._Init(); }
         networkingManager._Init(this);
         practiceManager._Init(this);
         repositionManager._Init(this);
@@ -416,7 +416,7 @@ public class BilliardsModule : UdonSharpBehaviour
 
     public void _TriggerCueActivate()
     {
-        if (!isMyTurn()) return;
+        if (!isMyTurn() || !activeCue) return;
 
         if (Vector3.Distance(activeCue._GetCuetip().transform.position, ballsP[0]) < k_BALL_RADIUS)
         {

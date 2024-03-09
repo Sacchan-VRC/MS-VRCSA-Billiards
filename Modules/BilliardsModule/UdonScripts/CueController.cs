@@ -49,7 +49,7 @@ public class CueController : UdonSharpBehaviour
 
     [NonSerialized] public bool TeamBlue;
 
-    private void Start()
+    public void _Init()
     {
         primaryController = primary.GetComponent<CueGripPrimary>();
         secondaryController = secondary.GetComponent<CueGripSecondary>();
