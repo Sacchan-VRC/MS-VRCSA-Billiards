@@ -240,14 +240,10 @@ public class BilliardsModule : UdonSharpBehaviour
     [NonSerialized] public CameraOverrideModule cameraOverrideModule;
     public string[] moderators = new string[0];
     [NonSerialized] public const float ballMeshDiameter = 0.06f;//the ball's size as modeled in the mesh file
-    private float ballsParentStartHeight;
     [NonSerialized] public Vector3 ballsParentHeightOffset;
     public bool colorTurnLocal;
     private void OnEnable()
     {
-
-        ballsParentStartHeight = balls[0].transform.parent.localPosition.y;
-
         _LogInfo("initializing billiards module");
 
         cameraOverrideModule = (CameraOverrideModule)_GetModule(nameof(CameraOverrideModule));
@@ -814,7 +810,6 @@ public class BilliardsModule : UdonSharpBehaviour
 
         int myNewSlot = _GetPlayerSlot(Networking.LocalPlayer, playerIDsLocal);
         isPlayer = myNewSlot != -1;
-        enablePracticeControls(isPlayer && gameLive);
 
         isOrangeTeamFull = teamsLocal ? playerIDsLocal[0] != -1 && playerIDsLocal[2] != -1 : playerIDsLocal[0] != -1;
         isBlueTeamFull = teamsLocal ? playerIDsLocal[1] != -1 && playerIDsLocal[3] != -1 : playerIDsLocal[1] != -1;
@@ -996,10 +991,6 @@ public class BilliardsModule : UdonSharpBehaviour
 
         disablePlayComponents();
 
-        enablePracticeControls(false);
-
-
-        // Remove any access rights
         localPlayerId = -1;
         localTeamId = uint.MaxValue;
         applyCueAccess();
@@ -1996,13 +1987,13 @@ public class BilliardsModule : UdonSharpBehaviour
         tableMRs = tableModels[newTableModel].GetComponentsInChildren<MeshRenderer>();
 
         float newscale = k_BALL_DIAMETRE / ballMeshDiameter;
+        Vector3 newBallSize = Vector3.one * newscale;
         for (int i = 0; i < balls.Length; i++)
         {
-            balls[i].transform.localScale = new Vector3(newscale, newscale, newscale);
+            balls[i].transform.localScale = newBallSize;
         }
-        ballsParentHeightOffset = new Vector3(0, -ballMeshDiameter * .5f + k_BALL_RADIUS, 0);
-        balls[0].transform.parent.localPosition = new Vector3(0, ballsParentStartHeight, 0);
-        balls[0].transform.parent.localPosition += ballsParentHeightOffset;
+        float table_base = _GetTableBase().transform.Find(".TABLE_SURFACE").localPosition.y;
+        balls[0].transform.parent.localPosition = new Vector3(0, table_base + k_BALL_RADIUS, 0);
 
         SetTableTransforms();
 
@@ -2254,24 +2245,9 @@ public class BilliardsModule : UdonSharpBehaviour
         }
     }
 
-    // turn on any game elements that are enabled when someone is taking a shot
-    private void enablePracticeControls(bool enable)
-    {
-        if (enable)
-        {
-            menuManager._EnableLoadMenu();
-        }
-        else
-        {
-            menuManager._DisableLoadMenu();
-        }
-    }
-
     private void enablePlayComponents()
     {
         bool isOurTurnVar = isMyTurn();
-
-        enablePracticeControls(isPlayer || (tournamentRefereeLocal != -1 && _IsLocalPlayerReferee()));
 
         if (is9Ball)
         {
@@ -2883,7 +2859,7 @@ public class BilliardsModule : UdonSharpBehaviour
 
     public bool isMyTurn()
     {
-        return localPlayerId >= 0 && (localTeamId == teamIdLocal || isPracticeMode);
+        return localPlayerId >= 0 && (localTeamId == teamIdLocal || (isPracticeMode && isPlayer));
     }
 
     public bool _AllPlayersOffline()
