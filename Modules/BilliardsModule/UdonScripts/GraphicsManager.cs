@@ -72,8 +72,6 @@ public class GraphicsManager : UdonSharpBehaviour
     {
         table = table_;
 
-        _InitializeTable();
-
         // copy some temporaries
         balls = table.balls;
         ballPositions = table.ballsP;
@@ -107,6 +105,8 @@ public class GraphicsManager : UdonSharpBehaviour
             meshOverrideRegular[i + 1] = balls[13 + i].GetComponent<MeshFilter>().sharedMesh;
         }
 
+        _InitializeTable();
+
         _DisableObjects();
     }
 
@@ -116,6 +116,8 @@ public class GraphicsManager : UdonSharpBehaviour
         scorecard_gameobject = tableBase.transform.Find("scorecard").gameObject;
         scorecard = scorecard_gameobject.GetComponent<MeshRenderer>().material;
         scorecard_info = table.transform.Find("intl.scorecardinfo").gameObject;
+
+        _SetShadowsDisabled(false);
 
         _DisableObjects();
     }
@@ -915,9 +917,8 @@ int uniform_cue_colour;
             {
                 newMaterials = new Material[] { ballMaterial, shadowMaterial };
 
-                Transform gamespace = table.transform.Find("intl.balls");
-                gamespace.localPosition = table._GetTableBase().transform.Find(".TABLE_SURFACE").localPosition + Vector3.up * 0.03f;
-                shadowMaterial.SetFloat("_Floor", gamespace.position.y - 0.03f);
+                float height = table._GetTableBase().transform.Find(".TABLE_SURFACE").localPosition.y - table.k_BALL_RADIUS + 0.03f;
+                shadowMaterial.SetFloat("_Floor", height);
             }
             for (int i = 0; i < 16; i++)
             {
