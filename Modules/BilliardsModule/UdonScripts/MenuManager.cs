@@ -223,7 +223,10 @@ public class MenuManager : UdonSharpBehaviour
                 _DisableLobbyMenu();
                 _DisableStartMenu();
                 _EnableLoadMenu();
-                _EnableUndoMenu();
+                if (table.isPlayer)
+                    _EnableUndoMenu();
+                else
+                    _DisableUndoMenu();
                 Transform JOINMENU_SPOT = table_base.Find(".JOINMENU");
                 if (JOINMENU_SPOT && menu_Join)
                     table.setTransform(JOINMENU_SPOT, menu_Join.transform);
@@ -262,7 +265,6 @@ public class MenuManager : UdonSharpBehaviour
 
     private void _RefreshTeamJoinButtons()
     {
-        //TODO: Handle leave button
         Transform join_Orange = menuJoinLeave.transform.Find("JoinOrange");
         Transform join_Blue = menuJoinLeave.transform.Find("JoinBlue");
         if (table.isOrangeTeamFull)
