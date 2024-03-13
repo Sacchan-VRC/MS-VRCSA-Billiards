@@ -1642,12 +1642,17 @@ public class BilliardsModule : UdonSharpBehaviour
                 }
                 if (isScratch) { foulCondition = true; }
 
+                //return balls to table before setting allBallsPocketed
+                if (redOnTable || colorTurnLocal)
+                { sixRedReturnColoredBalls(6); }
+                else if (foulCondition || freeBall)
+                { sixRedReturnColoredBalls(nextcolor); }
                 bool allBallsPocketed = ((ballsPocketedLocal & 0x1FFEu) == 0x1FFEu);
                 //free ball rules
                 if (!isScratch && !allBallsPocketed)
                 {
                     nextTurnBlocked = SixRedCheckObjBlocked(ballsPocketedLocal, false, false) > 0;
-                    if (freeBall && !isObjectiveSink && firstHit != 0)
+                    if (freeBall && !isObjectiveSink && firstHit != 0 && !foulCondition)
                     {
                         // it's a foul if you use the free ball to block the opponent from hitting object ball
                         // free ball is defined as first ball hit
@@ -1669,6 +1674,7 @@ public class BilliardsModule : UdonSharpBehaviour
                         }
                     }
                 }
+
                 if (foulCondition)//points given to other team if foul
                 {
                     int foulscore = Mathf.Max(highestPocketedBallScore, foulFirstHitScore);
@@ -1682,10 +1688,6 @@ public class BilliardsModule : UdonSharpBehaviour
                 }
                 _LogInfo("6RED: TeamScore 0: " + fbScoresLocal[0]);
                 _LogInfo("6RED: TeamScore 1: " + fbScoresLocal[1]);
-                if (redOnTable || colorTurnLocal)
-                { sixRedReturnColoredBalls(6); }
-                else if (foulCondition || freeBall)
-                { sixRedReturnColoredBalls(nextcolor); }
                 if (redOnTable)
                 {
                     if (foulCondition)
