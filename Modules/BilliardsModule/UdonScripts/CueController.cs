@@ -2,7 +2,6 @@
 using UdonSharp;
 using UnityEngine;
 using VRC.SDKBase;
-using VRC.Udon;
 //
 [UdonBehaviourSyncMode(BehaviourSyncMode.Manual)]
 public class CueController : UdonSharpBehaviour
@@ -41,6 +40,8 @@ public class CueController : UdonSharpBehaviour
     private CueGrip primaryController;
     private CueGrip secondaryController;
 
+    private Renderer renderer;
+
     private float gripSize;
     private float cuetipDistance;
 
@@ -50,9 +51,10 @@ public class CueController : UdonSharpBehaviour
 
     public void _Init()
     {
+        renderer = this.transform.Find("body/render").GetComponent<Renderer>();
+
         primaryController = primary.GetComponent<CueGrip>();
         secondaryController = secondary.GetComponent<CueGrip>();
-
         primaryController._Init(this, false);
         secondaryController._Init(this, true);
 
@@ -66,6 +68,8 @@ public class CueController : UdonSharpBehaviour
         lagSecondaryPosition = origSecondaryPosition;
 
         resetSecondaryOffset();
+
+        _DisableRenderer();
     }
 
     public override void OnDeserialization()
@@ -79,7 +83,7 @@ public class CueController : UdonSharpBehaviour
 
     private void refreshCueSkin()
     {
-        MeshRenderer renderer = this.transform.Find("body/render").GetComponent<MeshRenderer>();
+        renderer = this.transform.Find("body/render").GetComponent<Renderer>();
         renderer.materials[1].SetTexture("_MainTex", table.cueSkins[activeCueSkin]);
     }
 
@@ -375,6 +379,16 @@ public class CueController : UdonSharpBehaviour
         secondaryLocked = false;
 
         RequestSerialization();
+    }
+
+    public void _EnableRenderer()
+    {
+        renderer.enabled = true;
+    }
+
+    public void _DisableRenderer()
+    {
+        renderer.enabled = false;
     }
 
     private void clampControllers()

@@ -841,6 +841,10 @@ public class BilliardsModule : UdonSharpBehaviour
         {
             onRemoteGameEnded(networkingManager.winningTeamSynced);
         }
+        if (gameLive)
+            for (int i = 0; i < cueControllers.Length; i++) cueControllers[i]._EnableRenderer();
+        else
+            for (int i = 0; i < cueControllers.Length; i++) cueControllers[i]._DisableRenderer();
     }
 
     private void onRemoteLobbyOpened()
@@ -2243,7 +2247,7 @@ public class BilliardsModule : UdonSharpBehaviour
 
     private void applyCueAccess()
     {
-        if (localPlayerId == -1)
+        if (localPlayerId == -1 || !gameLive)
         {
             cueControllers[0]._Disable();
             cueControllers[1]._Disable();
