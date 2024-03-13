@@ -4,7 +4,7 @@ using UnityEngine;
 using VRC.SDKBase;
 
 [UdonBehaviourSyncMode(BehaviourSyncMode.None)]
-public class CueGripPrimary : UdonSharpBehaviour
+public class CueGrip : UdonSharpBehaviour
 {
     private CueController controller;
 
@@ -12,9 +12,12 @@ public class CueGripPrimary : UdonSharpBehaviour
     private MeshRenderer meshRenderer;
     private SphereCollider sphereCollider;
 
-    public void _Init(CueController controller_)
+    bool isSecondary = false;
+
+    public void _Init(CueController controller_, bool _isSecondary)
     {
         controller = controller_;
+        isSecondary = _isSecondary;
 
         pickup = (VRC_Pickup)this.GetComponent(typeof(VRC_Pickup));
         meshRenderer = this.GetComponent<MeshRenderer>();
@@ -23,39 +26,47 @@ public class CueGripPrimary : UdonSharpBehaviour
         _Hide();
     }
 
-    public override bool OnOwnershipRequest(VRCPlayerApi requester, VRCPlayerApi newOwner)
-    {
-        return controller._IsOwnershipTransferAllowed(this.gameObject, requester, newOwner);
-    }
-
     public override void OnPickup()
     {
-        controller._OnPrimaryPickup();
+        if (isSecondary)
+            controller._OnSecondaryPickup();
+        else
+            controller._OnPrimaryPickup();
     }
 
     public override void OnDrop()
     {
-        controller._OnPrimaryDrop();
+        if (isSecondary)
+            controller._OnSecondaryDrop();
+        else
+            controller._OnPrimaryDrop();
     }
 
     public override void OnPickupUseDown()
     {
         meshRenderer.enabled = false;
 
-        controller._OnPrimaryUseDown();
+        if (isSecondary)
+            controller._OnSecondaryUseDown();
+        else
+            controller._OnPrimaryUseDown();
     }
 
     public override void OnPickupUseUp()
     {
         meshRenderer.enabled = true;
 
-        controller._OnPrimaryUseUp();
+        if (isSecondary)
+            controller._OnSecondaryUseUp();
+        else
+            controller._OnPrimaryUseUp();
     }
 
     public void _Show()
     {
         sphereCollider.enabled = true;
         pickup.pickupable = true;
+        meshRenderer.enabled = true;
     }
 
     public void _Hide()
@@ -63,5 +74,6 @@ public class CueGripPrimary : UdonSharpBehaviour
         pickup.Drop();
         pickup.pickupable = false;
         sphereCollider.enabled = false;
+        meshRenderer.enabled = false;
     }
 }

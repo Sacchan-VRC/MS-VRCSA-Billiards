@@ -38,9 +38,8 @@ public class CueController : UdonSharpBehaviour
     private Vector3 lagPrimaryPosition;
     private Vector3 lagSecondaryPosition;
 
-    private CueGripPrimary primaryController;
-    private CueGripSecondary secondaryController;
-    private CueGripDesktop desktopController;
+    private CueGrip primaryController;
+    private CueGrip secondaryController;
 
     private float gripSize;
     private float cuetipDistance;
@@ -51,13 +50,11 @@ public class CueController : UdonSharpBehaviour
 
     public void _Init()
     {
-        primaryController = primary.GetComponent<CueGripPrimary>();
-        secondaryController = secondary.GetComponent<CueGripSecondary>();
-        desktopController = desktop.GetComponent<CueGripDesktop>();
+        primaryController = primary.GetComponent<CueGrip>();
+        secondaryController = secondary.GetComponent<CueGrip>();
 
-        primaryController._Init(this);
-        secondaryController._Init(this);
-        desktopController._Init(this);
+        primaryController._Init(this, false);
+        secondaryController._Init(this, true);
 
         gripSize = 0.03f;
         cuetipDistance = (cuetip.transform.position - primary.transform.position).magnitude;
@@ -84,11 +81,6 @@ public class CueController : UdonSharpBehaviour
     {
         MeshRenderer renderer = this.transform.Find("body/render").GetComponent<MeshRenderer>();
         renderer.materials[1].SetTexture("_MainTex", table.cueSkins[activeCueSkin]);
-    }
-
-    public override bool OnOwnershipRequest(VRCPlayerApi requester, VRCPlayerApi newOwner)
-    {
-        return _IsOwnershipTransferAllowed(this.gameObject, requester, newOwner);
     }
 
     public void _SetAuthorizedOwners(int[] newOwners)
@@ -277,15 +269,6 @@ public class CueController : UdonSharpBehaviour
         desktop.transform.localRotation = Quaternion.identity;
         body.transform.position = origPrimaryPosition;
         body.transform.LookAt(origSecondaryPosition);
-    }
-
-    public bool _IsOwnershipTransferAllowed(GameObject what, VRCPlayerApi requester, VRCPlayerApi newOwner)
-    {
-        if (requester.playerId != newOwner.playerId) return false;
-
-        if (Array.IndexOf(authorizedOwners, newOwner.playerId) == -1) return false;
-
-        return true;
     }
 
     public void _OnPrimaryPickup()
