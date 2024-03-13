@@ -105,9 +105,6 @@ public class CueController : UdonSharpBehaviour
     {
         primaryController._Hide();
         secondaryController._Hide();
-
-        lagPrimaryPosition = origPrimaryPosition;
-        lagSecondaryPosition = origSecondaryPosition;
     }
 
     public void _ResetCuePosition()
