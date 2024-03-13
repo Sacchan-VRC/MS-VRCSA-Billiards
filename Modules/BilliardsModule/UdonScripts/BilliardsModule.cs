@@ -1176,13 +1176,15 @@ public class BilliardsModule : UdonSharpBehaviour
         Array.Clear(ballsW, 0, ballsW.Length);
     }
 
-    private void onRemoteTurnSimulate(Vector3 cueBallV, Vector3 cueBallW)
+    private void onRemoteTurnSimulate(Vector3 cueBallV, Vector3 cueBallW, bool fake = false)
     {
         VRCPlayerApi owner = Networking.GetOwner(networkingManager.gameObject);
         int ownerID = owner != null ? owner.playerId : -1;
+        bool isOwner = owner == Networking.LocalPlayer || fake;
         _LogInfo($"onRemoteTurnSimulate cueBallV={cueBallV.ToString("F4")} cueBallW={cueBallW.ToString("F4")} owner={ownerID}");
 
-        balls[0].GetComponent<AudioSource>().PlayOneShot(snd_hitball, 1.0f);
+        if (!fake)
+            balls[0].GetComponent<AudioSource>().PlayOneShot(snd_hitball, 1.0f);
 
         canPlayLocal = false;
         disablePlayComponents();
@@ -1196,7 +1198,7 @@ public class BilliardsModule : UdonSharpBehaviour
                 break;
             }
         }
-        if (!_IsPlayer(Networking.LocalPlayer) && !TableVisible)
+        if (!_IsPlayer(Networking.LocalPlayer) && !TableVisible && !isOwner)
         {
             // don't bother simulating if the table isn't even visible
             _LogWarn("skipping simulation");
@@ -1213,9 +1215,9 @@ public class BilliardsModule : UdonSharpBehaviour
         ballsPocketedOrig = ballsPocketedLocal;
         jumpShotFoul = false;
         currentPhysicsManager.SendCustomEvent("_ResetJumpShotVariables");
-
         numBallsPocketedThisTurn = 0;
-        if (Networking.LocalPlayer.playerId == ownerID)
+
+        if (Networking.LocalPlayer.playerId == ownerID || fake)
         {
             isLocalSimulationOurs = true;
         }
@@ -1440,9 +1442,9 @@ public class BilliardsModule : UdonSharpBehaviour
 
     public void _TriggerJumpShotFoul() { jumpShotFoul = true; }
 
-    public void _TriggerSimulationEnded(bool forceScratch)
+    public void _TriggerSimulationEnded(bool forceScratch, bool forceRun = false)
     {
-        if (!isLocalSimulationRunning) return;
+        if (!isLocalSimulationRunning && !forceRun) return;
         isLocalSimulationRunning = false;
 
         _LogInfo("local simulation completed");
@@ -1451,7 +1453,7 @@ public class BilliardsModule : UdonSharpBehaviour
         auto_colliderBaseVFX.SetActive(false);
 
         // Make sure we only run this from the client who initiated the move
-        if (isLocalSimulationOurs)
+        if (isLocalSimulationOurs || forceRun)
         {
             isLocalSimulationOurs = false;
 
@@ -2220,10 +2222,10 @@ public class BilliardsModule : UdonSharpBehaviour
             // no one is allowed to play
             canPlayLocal = false;
 
-            if (isMyTurn())
+            if (Networking.IsOwner(Networking.LocalPlayer, networkingManager.gameObject))
             {
-                // everyone on the current team propagates the change
-                onLocalTurnFoul(false, false);
+                onRemoteTurnSimulate(Vector3.zero, Vector3.zero, true);
+                _TriggerSimulationEnded(false, true);
             }
         }
     }
