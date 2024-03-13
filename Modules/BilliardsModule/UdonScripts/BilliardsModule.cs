@@ -1571,14 +1571,14 @@ public class BilliardsModule : UdonSharpBehaviour
                     _LogInfo("6RED: Foul: Jumped over a ball");
                 }
 
-                int nextcolor = sixRedFindLowestUnpocketedColor(ballsPocketedOrig);
+                int nextColor = sixRedFindLowestUnpocketedColor(ballsPocketedOrig);
                 bool redOnTable = sixRedCheckIfRedOnTable(ballsPocketedOrig, true);
-                uint objective = sixRedGetObjective(colorTurnLocal, redOnTable, nextcolor, true, true);
+                uint objective = sixRedGetObjective(colorTurnLocal, redOnTable, nextColor, true, true);
                 if (isScratch) { _LogInfo("6RED: White ball pocketed"); }
                 isObjectiveSink = (ballsPocketedLocal & (objective)) > (ballsPocketedOrig & (objective));
                 int ballScore = 0, numBallsPocketed = 0, highestPocketedBallScore = 0;
                 int foulFirstHitScore = 0;
-                sixRedScoreBallsPocketed(redOnTable, ref ballScore, ref numBallsPocketed, ref highestPocketedBallScore);
+                sixRedScoreBallsPocketed(redOnTable, nextColor, ref ballScore, ref numBallsPocketed, ref highestPocketedBallScore);
                 if (redOnTable || colorTurnLocal)
                 {
                     int pocketedBallTypes = sixRedCheckBallTypesPocketed(ballsPocketedOrig, ballsPocketedLocal);
@@ -1627,7 +1627,7 @@ public class BilliardsModule : UdonSharpBehaviour
                 }
                 else
                 {
-                    if (firstHit != break_order_sixredsnooker[nextcolor] && !freeBall)
+                    if (firstHit != break_order_sixredsnooker[nextColor] && !freeBall)
                     {
                         _LogInfo("6RED: Foul: Wrong color as first hit");
                         foulFirstHitScore = sixredsnooker_ballpoints[firstHit];
@@ -1645,8 +1645,20 @@ public class BilliardsModule : UdonSharpBehaviour
                 //return balls to table before setting allBallsPocketed
                 if (redOnTable || colorTurnLocal)
                 { sixRedReturnColoredBalls(6); }
-                else if (foulCondition || freeBall)
-                { sixRedReturnColoredBalls(nextcolor); }
+                else
+                {
+                    if (foulCondition)
+                    { sixRedReturnColoredBalls(nextColor); }
+                    else
+                    {
+                        // if freeball was pocketed it needs to be returned but nextcolor shouldn't be returned.
+                        int returnFrom = nextColor + 1;
+                        if (returnFrom < 11 /* break_order_sixredsnooker.Length - 1 */)
+                        {
+                            sixRedReturnColoredBalls(break_order_sixredsnooker[returnFrom]);
+                        }
+                    }
+                }
                 bool allBallsPocketed = ((ballsPocketedLocal & 0x1FFEu) == 0x1FFEu);
                 //free ball rules
                 if (!isScratch && !allBallsPocketed)
@@ -2312,10 +2324,14 @@ public class BilliardsModule : UdonSharpBehaviour
     }
     public string sixRedNumberToColor(int ball, bool doBreakOrder)
     {
+        if (ball < 0 || ball > 11)
+        {
+            Debug.LogWarning("sixRedNumberToColor: ball index out of range");
+            return "Invalid";
+        }
         if (doBreakOrder)
         {
-            if (ball > -1 && ball < 12)
-                ball = break_order_sixredsnooker[ball];
+            ball = break_order_sixredsnooker[ball];
         }
         switch (ball)
         {
@@ -2408,21 +2424,43 @@ public class BilliardsModule : UdonSharpBehaviour
         }
     }
 
-    public void sixRedScoreBallsPocketed(bool redOnTable, ref int ballscore, ref int numBallsPocketed, ref int highestScoringBall)
+    public void sixRedScoreBallsPocketed(bool redOnTable, int nextColor, ref int ballscore, ref int numBallsPocketed, ref int highestScoringBall)
     {
+        bool freeBall = foulStateLocal == 5;
+        bool nextColorPocketed = false;
+        bool freeBallPocketed = false;
         for (int i = 1; i < 13; i++)
         {
-            if ((ballsPocketedLocal & (1 << i)) > (ballsPocketedOrig & (1 << i)))
+            if ((ballsPocketedLocal & (1u << i)) > (ballsPocketedOrig & (1u << i)))
             {
                 int thisBallScore = sixredsnooker_ballpoints[i];
-                bool freeBall = foulStateLocal == 5;
                 if (freeBall)
                 {
-                    if (i == firstHit)
+                    // pocketing freeball and the nextColor in the same turn is actually legal, but you don't add the points up from potting both
+                    // because in the freeball rule, they're the same ball, unless they're reds.
+                    // since the break_order_sixredsnooker[] is not in sequential order it has to be checked both ways
+                    if (i == break_order_sixredsnooker[nextColor])
                     {
+                        // _LogInfo("6RED: nextColor Pocketed in freeball turn");
+                        nextColorPocketed = true;
+                        if (freeBallPocketed)
+                        {
+                            thisBallScore = 0;
+                            numBallsPocketed--;// prevent foul
+                        }
+                    }
+                    else if (i == firstHit)
+                    {
+                        // _LogInfo("6RED: freeBall Pocketed in freeball turn");
+                        freeBallPocketed = true;
                         if (redOnTable)
                         {
                             thisBallScore = 1;
+                        }
+                        else if (nextColorPocketed)
+                        {
+                            thisBallScore = 0;
+                            numBallsPocketed--;// prevent foul
                         }
                         else
                         {
