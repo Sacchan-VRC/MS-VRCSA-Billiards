@@ -1369,7 +1369,7 @@ public class BilliardsModule : UdonSharpBehaviour
             {
                 if (freeBall)
                 {
-                    bmask = 1u << firstHit;
+                    bmask |= 1u << firstHit;
                 }
                 else
                 {
@@ -1380,7 +1380,7 @@ public class BilliardsModule : UdonSharpBehaviour
             {
                 if (freeBall)
                 {
-                    bmask = bmask | 1u << firstHit;
+                    bmask |= 1u << firstHit;
                 }
             }
             if (((0x1U << id) & bmask) > 0)
@@ -1399,13 +1399,17 @@ public class BilliardsModule : UdonSharpBehaviour
                 foulPocket = true;
             }
         }
-        else
+        else if (is8Ball)
         {
             uint bmask = 0x1FCU << ((int)(teamIdLocal ^ teamColorLocal) * 7);
             if (!(((0x1U << id) & ((bmask) | (isTableOpenLocal ? 0xFFFCU : 0x0000U) | ((bmask & ballsPocketedLocal) == bmask ? 0x2U : 0x0U))) > 0))
             {
                 foulPocket = true;
             }
+        }
+        else if (is9Ball)
+        {
+            foulPocket = !(findLowestUnpocketedBall(ballsPocketedOrig) == firstHit) || id == 0;
         }
         if (foulPocket)
         {
