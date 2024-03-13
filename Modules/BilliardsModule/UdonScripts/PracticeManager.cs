@@ -1,5 +1,6 @@
 ﻿
 using System;
+using System.Net.Http.Headers;
 using UdonSharp;
 
 [UdonBehaviourSyncMode(BehaviourSyncMode.None)]
@@ -85,6 +86,7 @@ public class PracticeManager : UdonSharpBehaviour
 
     public void _Undo()
     {
+        if (!table.isPlayer) { return; }
         int newPtr = pop(false);
         if (newPtr == -1)
         {
@@ -113,6 +115,7 @@ public class PracticeManager : UdonSharpBehaviour
 
     public void _Redo()
     {
+        if (!table.isPlayer) { return; }
         int newPtr = push();
         if (newPtr == -1)
         {
