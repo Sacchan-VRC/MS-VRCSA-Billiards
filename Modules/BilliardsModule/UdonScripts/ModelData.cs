@@ -57,7 +57,7 @@ public class ModelData : UdonSharpBehaviour
     {
         if (tableAnimator) { tableAnimator.SetTrigger(indicateSuccessTriggerName); }
     }
-    public void _flashTableColor(Color color)
+    public void _flashTableColor()
     {
         if (tableAnimator) { tableAnimator.SetTrigger(flashTableColorTriggerName); }
     }
