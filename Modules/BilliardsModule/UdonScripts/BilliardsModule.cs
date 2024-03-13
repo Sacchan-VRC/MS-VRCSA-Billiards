@@ -279,8 +279,6 @@ public class BilliardsModule : UdonSharpBehaviour
             tableModels[i]._Init();
         }
 
-        setTableModel(0, false);
-
         for (int i = 0; i < PhysicsManagers.Length; i++)
         {
             PhysicsManagers[i].SetProgramVariable("table_", this);
@@ -288,6 +286,8 @@ public class BilliardsModule : UdonSharpBehaviour
         }
 
         currentPhysicsManager.SendCustomEvent("_InitConstants");
+
+        setTableModel(0);
 
         infReset.text = string.Empty;
 
@@ -704,7 +704,7 @@ public class BilliardsModule : UdonSharpBehaviour
         }
         if (tableModelLocal != tableModelSynced)
         {
-            setTableModel(tableModelSynced, true);
+            setTableModel(tableModelSynced);
         }
 
         menuManager._RefreshRefereeDisplay();
@@ -1965,7 +1965,7 @@ public class BilliardsModule : UdonSharpBehaviour
         dest.localScale = src.localScale * sf;
     }
 
-    private void setTableModel(int newTableModel, bool update)
+    private void setTableModel(int newTableModel)
     {
         tableModels[tableModelLocal].gameObject.SetActive(false);
         tableModels[newTableModel].gameObject.SetActive(true);
@@ -2007,11 +2007,8 @@ public class BilliardsModule : UdonSharpBehaviour
         k_rack_position = transformSurface.InverseTransformPoint(auto_rackPosition.transform.position);
         k_rack_direction = transformSurface.InverseTransformDirection(auto_rackPosition.transform.up);
 
-        if (update)
-        {
-            currentPhysicsManager.SendCustomEvent("_InitConstants");
-            graphicsManager._InitializeTable();
-        }
+        currentPhysicsManager.SendCustomEvent("_InitConstants");
+        graphicsManager._InitializeTable();
 
         cueControllers[0]._RefreshTable();
         cueControllers[1]._RefreshTable();
