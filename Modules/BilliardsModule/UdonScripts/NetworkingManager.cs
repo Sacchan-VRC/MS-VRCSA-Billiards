@@ -126,7 +126,7 @@ public class NetworkingManager : UdonSharpBehaviour
         if (!Networking.LocalPlayer.IsOwner(gameObject)) return; // only the owner processes player registrations
 
         VRCPlayerApi slotOwner = Networking.GetOwner(slot.gameObject);
-        if (slotOwner == null) return;
+        if (!Utilities.IsValid(slotOwner)) return;
         int slotOwnerID = slotOwner.playerId;
 
         bool changedSlot = false;
@@ -380,6 +380,7 @@ public class NetworkingManager : UdonSharpBehaviour
         {
             playerIDsSynced[i] = -1;
         }
+        playerIDsSynced[0] = Networking.LocalPlayer.playerId;
 
         bufferMessages(false);
     }
