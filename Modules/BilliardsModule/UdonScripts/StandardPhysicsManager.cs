@@ -2,8 +2,6 @@
 using System;
 using UdonSharp;
 using UnityEngine;
-using VRC.SDKBase;
-using VRC.Udon;
 
 [UdonBehaviourSyncMode(BehaviourSyncMode.None)]
 public class StandardPhysicsManager : UdonSharpBehaviour
@@ -250,7 +248,7 @@ public class StandardPhysicsManager : UdonSharpBehaviour
                     cue_fdir = Mathf.Atan2(cue_shotdir.z, cue_shotdir.x);
 
                     // Update the prediction line direction
-                    table.guideline.transform.localPosition = balls_P[0] - table.ballsParentHeightOffset;
+                    table.guideline.transform.localPosition = balls_P[0];
                     table.guideline.transform.localEulerAngles = new Vector3(0.0f, -cue_fdir * Mathf.Rad2Deg, 0.0f);
                 }
                 else

@@ -240,7 +240,6 @@ public class BilliardsModule : UdonSharpBehaviour
     [NonSerialized] public CameraOverrideModule cameraOverrideModule;
     public string[] moderators = new string[0];
     [NonSerialized] public const float ballMeshDiameter = 0.06f;//the ball's size as modeled in the mesh file
-    [NonSerialized] public Vector3 ballsParentHeightOffset;
     public bool colorTurnLocal;
     private void OnEnable()
     {
