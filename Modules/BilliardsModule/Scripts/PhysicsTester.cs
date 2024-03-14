@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-[ExecuteInEditMode]
+// [ExecuteInEditMode] // commented to prevent error appearing in console, as this script is unused
 public class PhysicsTester : MonoBehaviour
 {
     public Texture2D tex;
