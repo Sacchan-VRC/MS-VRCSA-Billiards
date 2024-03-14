@@ -1,9 +1,7 @@
 ﻿
 using System;
 using UdonSharp;
-using UnityEngine;
 using VRC.SDKBase;
-using VRC.Udon;
 
 [UdonBehaviourSyncMode(BehaviourSyncMode.Manual)]
 public class PlayerSlot : UdonSharpBehaviour
@@ -19,6 +17,7 @@ public class PlayerSlot : UdonSharpBehaviour
 
     public void JoinSlot(int slot_)
     {
+        if (slot_ > 3) return;
         slot = (byte)slot_;
         leave = false;
         Networking.SetOwner(Networking.LocalPlayer, gameObject);
@@ -28,21 +27,12 @@ public class PlayerSlot : UdonSharpBehaviour
 
     public void LeaveSlot(int slot_)
     {
+        if (slot_ > 3) return;
         slot = (byte)slot_;
         leave = true;
         Networking.SetOwner(Networking.LocalPlayer, gameObject);
         RequestSerialization();
         OnDeserialization();
-    }
-    public bool _Register()
-    {
-        VRCPlayerApi player = Networking.LocalPlayer;
-
-        Networking.SetOwner(Networking.LocalPlayer, this.gameObject);
-        this.OnDeserialization();
-        this.RequestSerialization();
-
-        return true;
     }
 
     public override void OnDeserialization()
@@ -52,12 +42,4 @@ public class PlayerSlot : UdonSharpBehaviour
 
         networkingManager._OnPlayerSlotChanged(this);
     }
-
-    /*public override bool OnOwnershipRequest(VRCPlayerApi requestingPlayer, VRCPlayerApi requestedOwner)
-    {
-        if (owner != "")
-        {
-
-        }
-    }*/
 }

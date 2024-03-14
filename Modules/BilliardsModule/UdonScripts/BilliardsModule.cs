@@ -491,37 +491,20 @@ public class BilliardsModule : UdonSharpBehaviour
         int newslot = networkingManager._OnJoinTeam(teamId);
         if (newslot != -1)
         {
-            if (!gameLive)
+            //for responsive menu prediction. These values will be overwritten in deserialization
+            isPlayer = true;
+            VRCPlayerApi lp = Networking.LocalPlayer;
+            int curSlot = _GetPlayerSlot(lp, playerIDsLocal);
+            if (curSlot != -1)
             {
-                //for responsive menu prediction. These values will be overwritten in deserialization
-                isPlayer = true;
-                VRCPlayerApi lp = Networking.LocalPlayer;
-                int curSlot = _GetPlayerSlot(lp, playerIDsLocal);
-                if (curSlot != -1)
-                {
-                    playerIDsLocal[curSlot] = -1;
-                    if (curSlot % 2 == 0) { numPlayersCurrentOrange--; }
-                    else { numPlayersCurrentBlue--; }
-                }
-                playerIDsLocal[newslot] = lp.playerId;
-                if (teamsLocal)
-                {
-                    if (teamId == 0)
-                    {
-                        if (numPlayersCurrentOrange == 1) isOrangeTeamFull = true;
-                    }
-                    else
-                    {
-                        if (numPlayersCurrentBlue == 1) isBlueTeamFull = true;
-                    }
-                }
-                else
-                {
-                    if (teamId == 0) isOrangeTeamFull = true;
-                    else isBlueTeamFull = true;
-                }
-                menuManager._RefreshLobby();
+                playerIDsLocal[curSlot] = -1;
+                if (curSlot % 2 == 0) { numPlayersCurrentOrange--; }
+                else { numPlayersCurrentBlue--; }
             }
+            int[] playerIDsLocal_new = new int[4];
+            Array.Copy(playerIDsLocal, playerIDsLocal_new, 4);
+            playerIDsLocal_new[newslot] = lp.playerId;
+            onRemotePlayersChanged(playerIDsLocal_new);
         }
         else
         {
@@ -538,14 +521,10 @@ public class BilliardsModule : UdonSharpBehaviour
 
         //for responsive menu prediction, will be overwritten in deserialization
         isPlayer = false;
-        playerIDsLocal[localPlayerId] = -1;
-        localPlayerId = -1;
-        if (localTeamId == 0)
-            isOrangeTeamFull = false;
-        else
-            isBlueTeamFull = false;
-        localTeamId = uint.MaxValue;
-        menuManager._RefreshLobby();
+        int[] playerIDsLocal_new = new int[4];
+        Array.Copy(playerIDsLocal, playerIDsLocal_new, 4);
+        playerIDsLocal_new[localPlayerId] = -1;
+        onRemotePlayersChanged(playerIDsLocal_new);
     }
     private float lastActionTime;
     private float lastResetTime;
@@ -666,19 +645,19 @@ public class BilliardsModule : UdonSharpBehaviour
         );
 
         // propagate valid players second
-        bool joinedDuringMatch = onRemotePlayersChanged(networkingManager.playerIDsSynced);
+        onRemotePlayersChanged(networkingManager.playerIDsSynced);
         // apply state transitions if needed
         onRemoteGameStateChanged(networkingManager.gameStateSynced);
 
         // now update game state
         onRemoteBallPositionsChanged(networkingManager.ballsPSynced);
         onRemoteTeamIdChanged(networkingManager.teamIdSynced);
-        onRemoteFourBallCueBallChanged(networkingManager.fourBallCueBallSynced, joinedDuringMatch);
+        onRemoteFourBallCueBallChanged(networkingManager.fourBallCueBallSynced);
         onRemoteColorTurnChanged(networkingManager.colorTurnSynced);
         onRemoteBallsPocketedChanged(networkingManager.ballsPocketedSynced);
         onRemoteFoulStateChanged(networkingManager.foulStateSynced);
         onRemoteFourBallScoresUpdated(networkingManager.fourBallScoresSynced);
-        onRemoteIsTableOpenChanged(networkingManager.isTableOpenSynced, networkingManager.teamColorSynced, joinedDuringMatch);
+        onRemoteIsTableOpenChanged(networkingManager.isTableOpenSynced, networkingManager.teamColorSynced);
         onRemoteTurnStateChanged(networkingManager.turnStateSynced);
         onRemotePreviewWinningTeamChanged(networkingManager.previewWinningTeamSynced);
 
@@ -773,12 +752,12 @@ public class BilliardsModule : UdonSharpBehaviour
         }
     }
 
-    private bool onRemotePlayersChanged(int[] playerIDsSynced)
+    private void onRemotePlayersChanged(int[] playerIDsSynced)
     {
-        int myOldSlot = _GetPlayerSlot(Networking.LocalPlayer, playerIDsLocal);
+        // int myOldSlot = _GetPlayerSlot(Networking.LocalPlayer, playerIDsLocal);
 
-        // escape disabled because playerIDsLocal is changed elsewhere for the purpose of prediction (more responsive menu), and this needs to run after that.
-        // if (intArrayEquals(playerIDsLocal, playerIDsSynced)) return false;
+        if (intArrayEquals(playerIDsLocal, playerIDsSynced)) return;
+
         Array.Copy(playerIDsLocal, playerIDsCached, playerIDsLocal.Length);
         Array.Copy(playerIDsSynced, playerIDsLocal, playerIDsLocal.Length);
 
@@ -815,7 +794,7 @@ public class BilliardsModule : UdonSharpBehaviour
         isBlueTeamFull = teamsLocal ? playerIDsLocal[1] != -1 && playerIDsLocal[3] != -1 : playerIDsLocal[1] != -1;
         menuManager._RefreshLobby();
 
-        return gameLive && myOldSlot != myNewSlot;//if our slot changed, we left, or we joined, return true to force updates
+        // return gameLive && myOldSlot != myNewSlot;//if our slot changed, we left, or we joined, return true
     }
 
     private void onRemoteGameStateChanged(byte gameStateSynced)
@@ -1059,18 +1038,15 @@ public class BilliardsModule : UdonSharpBehaviour
         activeCue = cueControllers[isPracticeMode ? 0 : (int)teamIdLocal];
     }
 
-    private void onRemoteFourBallCueBallChanged(uint fourBallCueBallSynced, bool forceUpdate)
+    private void onRemoteFourBallCueBallChanged(uint fourBallCueBallSynced)
     {
         if (!gameLive) return;
-        bool valueUnchanged = fourBallCueBallLocal == fourBallCueBallSynced;
-        if (!forceUpdate)
+
+        if (fourBallCueBallLocal != fourBallCueBallSynced)
         {
-            if (valueUnchanged)
-            {
-                return;
-            }
-            else _LogInfo($"onRemoteFourBallCueBallChanged cueBall={fourBallCueBallSynced}");
+            _LogInfo($"onRemoteFourBallCueBallChanged cueBall={fourBallCueBallSynced}");
         }
+
         if (isSnooker6Red)//reusing this variable for the number of fouls/repeated shots in a row in snooker
         {
             fourBallCueBallLocal = fourBallCueBallSynced;
@@ -1082,18 +1058,13 @@ public class BilliardsModule : UdonSharpBehaviour
         graphicsManager._UpdateFourBallCueBallTextures(fourBallCueBallLocal);
     }
 
-    private void onRemoteIsTableOpenChanged(bool isTableOpenSynced, uint teamColorSynced, bool forceUpdate)
+    private void onRemoteIsTableOpenChanged(bool isTableOpenSynced, uint teamColorSynced)
     {
         if (!gameLive) return;
 
-        bool valueUnchanged = (teamColorLocal == teamColorSynced && isTableOpenLocal == isTableOpenSynced);
-        if (!forceUpdate)
+        if ((teamColorLocal != teamColorSynced || isTableOpenLocal != isTableOpenSynced))
         {
-            if (valueUnchanged)
-            {
-                return;
-            }
-            else _LogInfo($"onRemoteIsTableOpenChanged isTableOpen={isTableOpenSynced} teamColor={teamColorSynced}");
+            _LogInfo($"onRemoteIsTableOpenChanged isTableOpen={isTableOpenSynced} teamColor={teamColorSynced}");
         }
         isTableOpenLocal = isTableOpenSynced;
         teamColorLocal = teamColorSynced;
