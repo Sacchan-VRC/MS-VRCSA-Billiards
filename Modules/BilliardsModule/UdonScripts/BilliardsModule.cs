@@ -1334,7 +1334,7 @@ public class BilliardsModule : UdonSharpBehaviour
         bool foulPocket = false;
         if (isSnooker6Red)//largely a copy of code from _TriggerSimulationEnded()
         {
-            uint bmask = 0x1E50u;
+            uint bmask = 0x1E50u;// reds
             int nextcolor = sixRedFindLowestUnpocketedColor(ballsPocketedOrig);
             bool redOnTable = sixRedCheckIfRedOnTable(ballsPocketedOrig, false);
             bool freeBall = foulStateLocal == 5;
@@ -1344,13 +1344,10 @@ public class BilliardsModule : UdonSharpBehaviour
             }
             else if (!redOnTable)
             {
+                bmask = 1u << break_order_sixredsnooker[nextcolor];
                 if (freeBall)
                 {
-                    bmask |= 1u << firstHit;
-                }
-                else
-                {
-                    bmask = 1u << break_order_sixredsnooker[nextcolor];
+                    bmask |= 1u << break_order_sixredsnooker[firstHit];
                 }
             }
             else
