@@ -295,8 +295,6 @@ public class BilliardsModule : UdonSharpBehaviour
 #endif
 
         this.transform.Find("intl.balls/guide/guide_display").GetComponent<MeshRenderer>().material.SetMatrix("_BaseTransform", this.transform.worldToLocalMatrix);
-
-        reflection_main.RenderProbe();
     }
 
     private void FixedUpdate()
@@ -891,8 +889,6 @@ public class BilliardsModule : UdonSharpBehaviour
         aud_main.PlayOneShot(snd_Intro, 1.0f);
 
         timerRunning = false;
-
-        reflection_main.RenderProbe();
 
         activeCue = cueControllers[0];
     }
@@ -2008,6 +2004,8 @@ public class BilliardsModule : UdonSharpBehaviour
         ConfineBallTransformsToTable();
 
         menuManager._RefreshTable();
+
+        reflection_main.RenderProbe();
     }
 
     private void SetTableTransforms()
