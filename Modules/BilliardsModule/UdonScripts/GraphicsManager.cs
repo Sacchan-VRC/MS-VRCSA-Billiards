@@ -262,7 +262,17 @@ public class GraphicsManager : UdonSharpBehaviour
         {
             winnerText.gameObject.SetActive(true);
             winnerText.text = "Game reset!";
+            numGameResets++;
+            SendCustomEventDelayedSeconds(nameof(disableGameResetText), 5);
         }
+    }
+
+    int numGameResets = 0;
+    public void disableGameResetText()
+    {
+        numGameResets--;
+        if (numGameResets != 0) return;
+        winnerText.gameObject.SetActive(false);
     }
 
     public void _ResetWinners()
