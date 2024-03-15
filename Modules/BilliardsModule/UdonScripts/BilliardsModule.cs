@@ -1208,9 +1208,11 @@ public class BilliardsModule : UdonSharpBehaviour
         if (!gameLive) return;
 
         // should not escape because it can stay the same turn to turn while whos turn it is changes (especially with Undo/SnookerUndo)
+        bool stateChanged = false;
         if (turnStateSynced != turnStateLocal)
         {
             _LogInfo($"onRemoteFoulStateChanged foulState={turnStateSynced}");
+            stateChanged = true;
         }
         turnStateLocal = turnStateSynced;
 
@@ -1223,7 +1225,9 @@ public class BilliardsModule : UdonSharpBehaviour
         }
         else if (turnStateLocal == 1)
         {
-            onRemoteTurnSimulate(networkingManager.cueBallVSynced, networkingManager.cueBallWSynced);
+            // prevent simulation from running twice if a serialization was sent during sim
+            if (stateChanged)
+                onRemoteTurnSimulate(networkingManager.cueBallVSynced, networkingManager.cueBallWSynced);
             // practiceManager._Record();
         }
         else
