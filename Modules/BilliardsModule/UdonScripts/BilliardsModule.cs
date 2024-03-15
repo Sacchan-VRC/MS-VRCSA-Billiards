@@ -764,6 +764,7 @@ public class BilliardsModule : UdonSharpBehaviour
         if (refreshToggles)
         {
             menuManager._RefreshToggleSettings();
+            menuManager._RefreshPlayerList();
         }
     }
 
