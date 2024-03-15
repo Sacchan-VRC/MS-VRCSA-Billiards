@@ -381,6 +381,16 @@ public class CueController : UdonSharpBehaviour
         RequestSerialization();
     }
 
+    public void _RefreshRenderer()
+    {
+        // enable if live, in LoD range,
+        // disable second cue if in practice mode
+        if (table.gameLive && !table.localPlayerDistant && (!table.isPracticeMode || this == table.cueControllers[0]))
+            renderer.enabled = true;
+        else
+            renderer.enabled = false;
+    }
+
     public void _EnableRenderer()
     {
         renderer.enabled = true;

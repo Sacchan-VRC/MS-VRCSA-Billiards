@@ -3,7 +3,6 @@ using UdonSharp;
 using UnityEngine;
 using UnityEngine.UI;
 using VRC.SDKBase;
-using VRC.Udon;
 using TMPro;
 
 [UdonBehaviourSyncMode(BehaviourSyncMode.None)]
@@ -15,6 +14,7 @@ public class MenuManager : UdonSharpBehaviour
     [SerializeField] private GameObject menuJoinLeave;
     [SerializeField] private GameObject menuLobby;
     [SerializeField] private GameObject menuLoad;
+    [SerializeField] private GameObject menuOther;
     [SerializeField] private GameObject menuUndo;
     [SerializeField] private GameObject buttonSkipTurn;
     [SerializeField] private GameObject buttonSnookerUndo;
@@ -178,6 +178,9 @@ public class MenuManager : UdonSharpBehaviour
 
     public void _RefreshLobby()
     {
+        if (table.localPlayerDistant)
+        { _DisableOtherMenu(); }
+        else { _EnableOtherMenu(); }
         _RefreshToggleSettings();
         _RefreshPlayerList();
         _RefreshMenu();
@@ -193,6 +196,15 @@ public class MenuManager : UdonSharpBehaviour
 
     public void _RefreshMenu()
     {
+        if (table.localPlayerDistant)
+        {
+            _DisableLobbyMenu();
+            _DisableStartMenu();
+            _DisableLoadMenu();
+            _DisableUndoMenu();
+            _DisableMenuJoinLeave();
+            return;
+        }
         Transform table_base = table._GetTableBase().transform;
         Transform menu_Join = menuJoinLeave.transform;
         switch (table.gameStateLocal)
@@ -202,7 +214,7 @@ public class MenuManager : UdonSharpBehaviour
                 _EnableStartMenu();
                 _DisableLoadMenu();
                 _DisableUndoMenu();
-                menu_Join.gameObject.SetActive(false);
+                _DisableMenuJoinLeave();
                 break;
             case 1://lobby
                 if (table.isPlayer)
@@ -216,7 +228,7 @@ public class MenuManager : UdonSharpBehaviour
                 menu_Join.localPosition = joinMenuPosition;
                 menu_Join.localRotation = joinMenuRotation;
                 menu_Join.localScale = joinMenuScale;
-                menu_Join.gameObject.SetActive(true);
+                _EnableMenuJoinLeave();
                 _RefreshTeamJoinButtons();
                 break;
             case 2://game live
@@ -234,17 +246,17 @@ public class MenuManager : UdonSharpBehaviour
                 {
                     if (table.isPlayer)
                     {
-                        menu_Join.gameObject.SetActive(true);
+                        _EnableMenuJoinLeave();
                         _RefreshTeamJoinButtons();
                     }
                     else
                     {
-                        menu_Join.gameObject.SetActive(false);
+                        _DisableMenuJoinLeave();
                     }
                 }
                 else
                 {
-                    menu_Join.gameObject.SetActive(true);
+                    _EnableMenuJoinLeave();
                     _RefreshTeamJoinButtons();
                 }
                 break;
@@ -253,7 +265,7 @@ public class MenuManager : UdonSharpBehaviour
                 _EnableStartMenu();
                 _DisableLoadMenu();
                 _DisableUndoMenu();
-                menu_Join.gameObject.SetActive(false);
+                _DisableMenuJoinLeave();
                 break;
         }
         Transform leave_Button = menu_Join.Find("LeaveButton");
@@ -551,6 +563,17 @@ public class MenuManager : UdonSharpBehaviour
     {
         menuLoad.SetActive(false);
     }
+
+    public void _EnableOtherMenu()
+    {
+        menuOther.SetActive(true);
+    }
+
+    public void _DisableOtherMenu()
+    {
+        menuOther.SetActive(false);
+    }
+
     public void _EnableUndoMenu()
     {
         menuUndo.SetActive(true);

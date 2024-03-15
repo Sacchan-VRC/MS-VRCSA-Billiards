@@ -101,8 +101,8 @@ public class BilliardsModule : UdonSharpBehaviour
     [SerializeField] public DesktopManager desktopManager;
     [SerializeField] public CameraManager cameraManager;
     [SerializeField] public GraphicsManager graphicsManager;
-    [SerializeField] public UdonSharpBehaviour[] PhysicsManagers;
     [SerializeField] public MenuManager menuManager;
+    [SerializeField] public UdonSharpBehaviour[] PhysicsManagers;
 
     [Header("Camera Module")]
     [SerializeField] public UdonSharpBehaviour cameraModule;
@@ -117,6 +117,11 @@ public class BilliardsModule : UdonSharpBehaviour
     [SerializeField] public AudioClip snd_spin;
     [SerializeField] public AudioClip snd_spinstop;
     [SerializeField] AudioClip snd_hitball;
+
+    [Space(10)]
+    [Header("Other")]
+    [Tooltip("Disable menus and balls at this distance, set negative to disable")]
+    public float LoDDistance = 10;
 
     [Space(10)]
     [Header("Internal (no touching!)")]
@@ -189,11 +194,12 @@ public class BilliardsModule : UdonSharpBehaviour
     [NonSerialized] public uint previewWinningTeamLocal;
     [NonSerialized] public int activeCueSkin;
     [NonSerialized] public int tableSkinLocal;
-    [NonSerialized] public byte gameStateLocal = byte.MaxValue;
-    private byte turnStateLocal = byte.MaxValue;
+    [NonSerialized] public byte gameStateLocal;
+    private byte turnStateLocal;
     private int timerStartLocal;
     [NonSerialized] public uint foulStateLocal;
     [NonSerialized] public int tableModelLocal;
+    [NonSerialized] public bool colorTurnLocal;
 
     // physics simulation data, must be reset before every simulation
     [NonSerialized] public bool isLocalSimulationRunning;
@@ -237,10 +243,12 @@ public class BilliardsModule : UdonSharpBehaviour
     [NonSerialized] public bool isPlayer = false;
     [NonSerialized] public bool isOrangeTeamFull = false;
     [NonSerialized] public bool isBlueTeamFull = false;
+    [NonSerialized] public bool localPlayerDistant = false;
+    bool checkingDistant;
+    GameObject debugger;
     [NonSerialized] public CameraOverrideModule cameraOverrideModule;
     public string[] moderators = new string[0];
     [NonSerialized] public const float ballMeshDiameter = 0.06f;//the ball's size as modeled in the mesh file
-    public bool colorTurnLocal;
     private void OnEnable()
     {
         _LogInfo("initializing billiards module");
@@ -290,11 +298,21 @@ public class BilliardsModule : UdonSharpBehaviour
 
         infReset.text = string.Empty;
 
-#if HT8B_DEBUGGER
-        this.transform.Find("debugger").gameObject.SetActive(true);
-#endif
+        debugger = this.transform.Find("debugger").gameObject;
+        debugger.SetActive(true);
 
         this.transform.Find("intl.balls/guide/guide_display").GetComponent<MeshRenderer>().material.SetMatrix("_BaseTransform", this.transform.worldToLocalMatrix);
+
+        if (LoDDistance > 0)
+        {
+            checkingDistant = true;
+            SendCustomEventDelayedSeconds(nameof(checkDistanceLoop), UnityEngine.Random.Range(0, 1f));
+        }
+    }
+
+    private void OnDisable()
+    {
+        checkingDistant = false;
     }
 
     private void FixedUpdate()
@@ -817,10 +835,7 @@ public class BilliardsModule : UdonSharpBehaviour
         {
             onRemoteGameEnded(networkingManager.winningTeamSynced);
         }
-        if (gameLive)
-            for (int i = 0; i < cueControllers.Length; i++) cueControllers[i]._EnableRenderer();
-        else
-            for (int i = 0; i < cueControllers.Length; i++) cueControllers[i]._DisableRenderer();
+        for (int i = 0; i < cueControllers.Length; i++) cueControllers[i]._RefreshRenderer();
     }
 
     private void onRemoteLobbyOpened()
@@ -868,10 +883,7 @@ public class BilliardsModule : UdonSharpBehaviour
         practiceManager._Clear();
         repositionManager._OnGameStarted();
         tableModels[tableModelLocal]._OnGameStarted();
-        if (isPracticeMode)
-        {
-            cueControllers[1].gameObject.SetActive(false);
-        }
+        for (int i = 0; i < cueControllers.Length; i++) cueControllers[i]._RefreshRenderer();
 
         Array.Clear(fbScoresLocal, 0, 2);
         auto_pocketblockers.SetActive(is4Ball);
@@ -975,7 +987,7 @@ public class BilliardsModule : UdonSharpBehaviour
 
         lobbyOpen = false;
 
-        cueControllers[1].gameObject.SetActive(true);
+        for (int i = 0; i < cueControllers.Length; i++) cueControllers[i]._RefreshRenderer();
 
         infReset.text = string.Empty;
 
@@ -1159,13 +1171,16 @@ public class BilliardsModule : UdonSharpBehaviour
         canPlayLocal = false;
         disablePlayComponents();
 
-        bool TableVisible = false;
-        for (int i = 0; i < tableMRs.Length; i++)
+        bool TableVisible = !localPlayerDistant;
+        if (TableVisible)
         {
-            if (tableMRs[i].isVisible)
+            for (int i = 0; i < tableMRs.Length; i++)
             {
-                TableVisible = true;
-                break;
+                if (tableMRs[i].isVisible)
+                {
+                    TableVisible = true;
+                    break;
+                }
             }
         }
         if (!_IsPlayer(Networking.LocalPlayer) && !TableVisible && !isOwner)
@@ -2303,7 +2318,7 @@ public class BilliardsModule : UdonSharpBehaviour
     {
         if (ball < 0 || ball > 11)
         {
-            Debug.LogWarning("sixRedNumberToColor: ball index out of range");
+            _LogWarn("sixRedNumberToColor: ball index out of range");
             return "Invalid";
         }
         if (doBreakOrder)
@@ -2567,13 +2582,13 @@ public class BilliardsModule : UdonSharpBehaviour
         switch (objVisible(redmask))
         {
             case 0:
-                Debug.Log("A Red ball CAN be seen");
+                _LogInfo("A Red ball CAN be seen");
                 break;
             case 1:
-                Debug.Log("A Red ball can be seen on ONE side");
+                _LogInfo("A Red ball can be seen on ONE side");
                 break;
             case 2:
-                Debug.Log("A Red ball can NOT be seen");
+                _LogInfo("A Red ball can NOT be seen");
                 break;
         }
     }
@@ -3060,6 +3075,24 @@ public class BilliardsModule : UdonSharpBehaviour
         return true;
     }
     #endregion
+
+    public void checkDistanceLoop()
+    {
+        if (checkingDistant) SendCustomEventDelayedSeconds(nameof(checkDistanceLoop), 1f);
+
+        bool nowDistant = Vector3.Distance(Networking.LocalPlayer.GetPosition(), transform.position) > LoDDistance;
+        if (nowDistant == localPlayerDistant) { return; }
+        localPlayerDistant = nowDistant;
+        setLOD();
+    }
+
+    private void setLOD()
+    {
+        for (int i = 0; i < cueControllers.Length; i++) cueControllers[i]._RefreshRenderer();
+        balls[0].transform.parent.gameObject.SetActive(!localPlayerDistant);
+        debugger.SetActive(!localPlayerDistant);
+        menuManager._RefreshLobby();
+    }
 
     #region Debugger
     const string LOG_LOW = "<color=\"#ADADAD\">";
