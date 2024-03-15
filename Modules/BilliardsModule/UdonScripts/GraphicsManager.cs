@@ -1,9 +1,7 @@
 ﻿
 using UdonSharp;
 using UnityEngine;
-using UnityEngine.UI;
 using VRC.SDKBase;
-using VRC.Udon;
 using TMPro;
 
 [UdonBehaviourSyncMode(BehaviourSyncMode.None)]
@@ -815,7 +813,7 @@ int uniform_cue_colour;
                 counter0[table.winningTeamLocal] += (int)((table.ballsPocketedLocal & 0x2) >> 1);
                 if (!usColors)
                 {
-                    scorecardColors[7] = (table.winningTeamLocal == 0 ? pColour0 : pColour1) / 1.5f;
+                    scorecardColors[7] = (table.winningTeamLocal == table.teamColorLocal ? pColour0 : pColour1) / 1.5f;
                 }
                 else
                 {
@@ -917,7 +915,7 @@ int uniform_cue_colour;
             {
                 newMaterials = new Material[] { ballMaterial, shadowMaterial };
 
-                float height = table._GetTableBase().transform.Find(".TABLE_SURFACE").localPosition.y - table.k_BALL_RADIUS + 0.03f;
+                float height = table._GetTableBase().transform.Find(".TABLE_SURFACE").localPosition.y - table.k_BALL_RADIUS + 0.01f;
                 shadowMaterial.SetFloat("_Floor", height);
             }
             for (int i = 0; i < 16; i++)
