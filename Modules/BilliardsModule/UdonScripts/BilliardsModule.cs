@@ -2002,7 +2002,11 @@ public class BilliardsModule : UdonSharpBehaviour
 
         tableModels[tableModelLocal]._setTable(gameModeLocal);
 
-        guideline.gameObject.transform.Find("guide_display").GetComponent<MeshRenderer>().material.SetVector("_Dims", new Vector4(tableModels[tableModelLocal].tableWidth, tableModels[tableModelLocal].tableHeight, 0, 0));
+        Transform guideDisplay = guideline.gameObject.transform.Find("guide_display");
+        Vector3 gdlp = guideDisplay.localPosition; gdlp.y = 0;
+        gdlp += Vector3.down * (k_BALL_RADIUS - 0.003f) / guideline.transform.localScale.y;// divide to convert back to worldspace distance
+        guideDisplay.localPosition = gdlp;
+        guideDisplay.GetComponent<MeshRenderer>().material.SetVector("_Dims", new Vector4(tableModels[tableModelLocal].tableWidth, tableModels[tableModelLocal].tableHeight, 0, 0));
 
         initializeRack();
         ConfineBallTransformsToTable();
