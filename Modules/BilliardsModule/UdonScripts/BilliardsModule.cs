@@ -139,7 +139,7 @@ public class BilliardsModule : UdonSharpBehaviour
     [SerializeField] Text ltext;
     [SerializeField] TextMeshProUGUI infReset;
 
-    [SerializeField] ReflectionProbe reflection_main;
+    public ReflectionProbe reflection_main;
     #endregion
 
     // debugger
@@ -1412,17 +1412,12 @@ public class BilliardsModule : UdonSharpBehaviour
 
         tableModels[tableModelLocal].onBallPocketed();
 
-#if !HT_QUEST
-
         // VFX ( make ball move )
         Rigidbody body = balls[id].GetComponent<Rigidbody>();
         body.isKinematic = false;
         body.velocity = transform.TransformDirection(ballsV[id]);
         body.angularVelocity = transform.TransformDirection(ballsW[id].normalized) * -ballsW[id].magnitude;
 
-#else
-        balls[id].transform.localPosition = ballsP[id];
-#endif
         ballsV[id] = Vector3.zero;
         ballsW[id] = Vector3.zero;
     }
@@ -2028,8 +2023,6 @@ public class BilliardsModule : UdonSharpBehaviour
         ConfineBallTransformsToTable();
 
         menuManager._RefreshTable();
-
-        reflection_main.RenderProbe();
     }
 
     private void SetTableTransforms()

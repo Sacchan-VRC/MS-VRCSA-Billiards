@@ -3,6 +3,7 @@ using UdonSharp;
 using UnityEngine;
 using VRC.SDKBase;
 using TMPro;
+using System.Data;
 
 [UdonBehaviourSyncMode(BehaviourSyncMode.None)]
 public class GraphicsManager : UdonSharpBehaviour
@@ -116,6 +117,7 @@ public class GraphicsManager : UdonSharpBehaviour
         scorecard_info = table.transform.Find("intl.scorecardinfo").gameObject;
 
         _SetShadowsDisabled(false);
+        _SetUpReflectionProbe();
 
         _DisableObjects();
     }
@@ -933,5 +935,32 @@ int uniform_cue_colour;
                 balls[i].GetComponent<MeshRenderer>().materials = newMaterials;
             }
         }
+    }
+    public void _SetUpReflectionProbe()
+    {
+        ReflectionProbe dynamicProbe = table.reflection_main;
+        if (!dynamicProbe) { return; }
+        float tableDoty = Vector3.Dot(table.transform.forward, Vector3.forward);
+        float tableDotx = Vector3.Dot(table.transform.forward, Vector3.right);
+        bool tableIsSideWays = tableDotx > tableDoty;
+
+        Transform probeTransform = table.reflection_main.transform;
+        Transform tableBase = table._GetTableBase().transform.Find(".TABLE_SURFACE");
+        probeTransform.position = tableBase.position + Vector3.up * 0.31f;
+        Vector3 reflBounds = dynamicProbe.size;
+        reflBounds.y = 0.6f;
+        if (tableIsSideWays)
+        {
+            reflBounds.x = table.k_TABLE_WIDTH * 2f;
+            reflBounds.z = table.k_TABLE_HEIGHT * 2f;
+        }
+        else
+        {
+            reflBounds.z = table.k_TABLE_WIDTH * 2f;
+            reflBounds.x = table.k_TABLE_HEIGHT * 2f;
+        }
+        dynamicProbe.size = reflBounds;
+
+        table.reflection_main.RenderProbe();
     }
 }
