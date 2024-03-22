@@ -1640,7 +1640,7 @@ public class BilliardsModule : UdonSharpBehaviour
                         int returnFrom = nextColor + 1;
                         if (returnFrom < 11 /* break_order_sixredsnooker.Length - 1 */)
                         {
-                            sixRedReturnColoredBalls(break_order_sixredsnooker[returnFrom]);
+                            sixRedReturnColoredBalls(returnFrom);
                         }
                     }
                 }
@@ -2314,7 +2314,7 @@ public class BilliardsModule : UdonSharpBehaviour
         desktopManager._DenyShoot();
         graphicsManager._HideTimers();
     }
-    public string sixRedNumberToColor(int ball, bool doBreakOrder)
+    public string sixRedNumberToColor(int ball, bool doBreakOrder = false)
     {
         if (ball < 0 || ball > 11)
         {
@@ -2405,6 +2405,11 @@ public class BilliardsModule : UdonSharpBehaviour
 
     public void sixRedReturnColoredBalls(int from)
     {
+        if (from < 6)
+        {
+            _LogWarn("sixRedReturnColoredBalls() requested return of red balls");
+            return;
+        }
         for (int i = Mathf.Max(6, from); i < break_order_sixredsnooker.Length; i++)
         {
             if ((ballsPocketedLocal & (1 << break_order_sixredsnooker[i])) > 0)
@@ -2466,11 +2471,11 @@ public class BilliardsModule : UdonSharpBehaviour
                 numBallsPocketed++;
                 if (freeBall && firstHit == i)
                 {
-                    _LogInfo("6RED: " + sixRedNumberToColor(i, false) + "(free ball) pocketed");
+                    _LogInfo("6RED: " + sixRedNumberToColor(i) + "(free ball) pocketed");
                 }
                 else
                 {
-                    _LogInfo("6RED: " + sixRedNumberToColor(i, false) + " ball pocketed");
+                    _LogInfo("6RED: " + sixRedNumberToColor(i) + " ball pocketed");
                 }
             }
         }
