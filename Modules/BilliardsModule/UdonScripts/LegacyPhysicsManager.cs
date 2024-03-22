@@ -52,7 +52,8 @@ public class LegacyPhysicsManager : UdonSharpBehaviour
 
     float k_TABLE_WIDTH;
     float k_TABLE_HEIGHT;
-    float k_POCKET_RADIUS;
+    float k_POCKET_WIDTH_CORNER;
+    float k_POCKET_HEIGHT_CORNER;
     float k_CUSHION_RADIUS;
 
     [NonSerialized] public BilliardsModule table_;
@@ -711,7 +712,8 @@ public class LegacyPhysicsManager : UdonSharpBehaviour
     {
         k_TABLE_WIDTH = table.k_TABLE_WIDTH;
         k_TABLE_HEIGHT = table.k_TABLE_HEIGHT;
-        k_POCKET_RADIUS = table.k_POCKET_RADIUS;
+        k_POCKET_WIDTH_CORNER = table.k_POCKET_WIDTH_CORNER;
+        k_POCKET_HEIGHT_CORNER = table.k_POCKET_HEIGHT_CORNER;
         k_CUSHION_RADIUS = table.k_CUSHION_RADIUS;
 
         Collider[] collider = table.GetComponentsInChildren<Collider>();
@@ -724,14 +726,14 @@ public class LegacyPhysicsManager : UdonSharpBehaviour
         k_MINOR_REGION_CONST = table.k_TABLE_WIDTH - table.k_TABLE_HEIGHT;
 
         // Major source vertices
-        k_vA.x = table.k_POCKET_RADIUS * 0.92f;
+        k_vA.x = table.k_POCKET_RADIUS_SIDE;
         k_vA.z = table.k_TABLE_HEIGHT;
 
-        k_vB.x = table.k_TABLE_WIDTH - table.k_POCKET_RADIUS;
+        k_vB.x = table.k_TABLE_WIDTH - table.k_POCKET_WIDTH_CORNER;
         k_vB.z = table.k_TABLE_HEIGHT;
 
         k_vC.x = table.k_TABLE_WIDTH;
-        k_vC.z = table.k_TABLE_HEIGHT - table.k_POCKET_RADIUS;
+        k_vC.z = table.k_TABLE_HEIGHT - table.k_POCKET_HEIGHT_CORNER;
 
         k_vD.x = k_vA.x - 0.016f;
         k_vD.z = k_vA.z + 0.060f;
@@ -793,7 +795,7 @@ public class LegacyPhysicsManager : UdonSharpBehaviour
         k_pS.x -= table.k_CUSHION_RADIUS;
 
         // others
-        k_INNER_RADIUS = table.k_INNER_RADIUS;
+        k_INNER_RADIUS = table.k_INNER_RADIUS_CORNER;
         k_INNER_RADIUS_SQ = k_INNER_RADIUS * k_INNER_RADIUS;
         k_vE = table.k_vE;
         k_vF = table.k_vF;
@@ -897,7 +899,7 @@ public class LegacyPhysicsManager : UdonSharpBehaviour
         {
             if (A.x > A.z + k_MINOR_REGION_CONST) // Minor B
             {
-                if (A.z < k_TABLE_HEIGHT - k_POCKET_RADIUS)
+                if (A.z < k_TABLE_HEIGHT - k_POCKET_HEIGHT_CORNER)
                 {
                     // Region H
 #if HT8B_DRAW_REGIONS

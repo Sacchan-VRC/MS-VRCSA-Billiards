@@ -10,8 +10,6 @@ public class ModelData : UdonSharpBehaviour
     [System.NonSerialized] public Animator tableAnimator;
     [Header("Animator trigger names")]
     public string ballPocketedTriggerName = "BallPocketed";
-    public string indicateSuccessTriggerName = "IndicateSuccess";
-    public string flashTableColorTriggerName = "FlashTableColor";
     public string flashTableLightTriggerName = "FlashTableLight";
     public string flashTableErrorTriggerName = "FlashTableError";
     public string onGameStartedTriggerName = "OnGameStarted";
@@ -23,9 +21,12 @@ public class ModelData : UdonSharpBehaviour
     [Header("Table Properties")]
     [SerializeField] public float tableWidth = 1.06f;
     [SerializeField] public float tableHeight = 0.603f;
-    [SerializeField] public float pocketRadius = 0.1f;
     [SerializeField] public float cushionRadius = 0.043f;
-    [SerializeField] public float innerRadius = 0.072f;
+    [SerializeField] public float pocketWidthCorner = 0.1f;
+    [SerializeField] public float pocketHeightCorner = 0.1f;
+    [SerializeField] public float pocketRadiusSide = 0.1f;
+    [SerializeField] public float pocketInnerRadiusCorner = 0.072f;
+    [SerializeField] public float pocketInnerRadiusSide = 0.072f;
     [SerializeField] public float facingAngleCorner = 133f; // corner pocket facing angle
     [SerializeField] public float facingAngleSide = 104.93142f; // corner pocket facing angle
     [SerializeField] public float ballRadius = 0.03f;
@@ -35,7 +36,6 @@ public class ModelData : UdonSharpBehaviour
     [SerializeField] public Vector3 cornerPocket = new Vector3(11.087f, 0, 10.63f); // k_vE
     [SerializeField] public Vector3 sidePocket = new Vector3(0, 0, 10.662f); // k_vF
 
-    [SerializeField] public GameObject[] pockets;
     [Header("Snooker:")]
     [SerializeField] public float baulkLine = 0.7367f;
     [SerializeField] public float blackSpotFromR = 0.324f;
@@ -52,14 +52,6 @@ public class ModelData : UdonSharpBehaviour
     public void onBallPocketed()
     {
         if (tableAnimator) { tableAnimator.SetTrigger(ballPocketedTriggerName); }
-    }
-    public void _indicateSuccess()
-    {
-        if (tableAnimator) { tableAnimator.SetTrigger(indicateSuccessTriggerName); }
-    }
-    public void _flashTableColor()
-    {
-        if (tableAnimator) { tableAnimator.SetTrigger(flashTableColorTriggerName); }
     }
     public void _flashTableLight()
     {

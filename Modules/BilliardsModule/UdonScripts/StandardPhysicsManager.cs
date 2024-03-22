@@ -48,12 +48,16 @@ public class StandardPhysicsManager : UdonSharpBehaviour
     private Vector3[] balls_P; // Displacement Vector
     private Vector3[] balls_V; // Velocity Vector
     private Vector3[] balls_W; // Angular Velocity Vector
-    private float k_INNER_RADIUS;
-    private float k_INNER_RADIUS_SQ;
+    private float k_INNER_RADIUS_CORNER;
+    private float k_INNER_RADIUS_CORNER_SQ;
+    private float k_INNER_RADIUS_SIDE;
+    private float k_INNER_RADIUS_SIDE_SQ;
 
     float k_TABLE_WIDTH;
     float k_TABLE_HEIGHT;
-    float k_POCKET_RADIUS;
+    float k_POCKET_WIDTH_CORNER;
+    float k_POCKET_HEIGHT_CORNER;
+    float k_POCKET_RADIUS_SIDE;
     float k_CUSHION_RADIUS;
     private Vector3 k_vE;
     private Vector3 k_vF;
@@ -898,7 +902,13 @@ public class StandardPhysicsManager : UdonSharpBehaviour
     {
         k_TABLE_WIDTH = table.k_TABLE_WIDTH;
         k_TABLE_HEIGHT = table.k_TABLE_HEIGHT;
-        k_POCKET_RADIUS = table.k_POCKET_RADIUS;
+        k_POCKET_WIDTH_CORNER = table.k_POCKET_WIDTH_CORNER;
+        k_POCKET_HEIGHT_CORNER = table.k_POCKET_HEIGHT_CORNER;
+        k_POCKET_RADIUS_SIDE = table.k_POCKET_RADIUS_SIDE;
+        k_INNER_RADIUS_CORNER = table.k_INNER_RADIUS_CORNER;
+        k_INNER_RADIUS_CORNER_SQ = k_INNER_RADIUS_CORNER * k_INNER_RADIUS_CORNER;
+        k_INNER_RADIUS_SIDE = table.k_INNER_RADIUS_SIDE;
+        k_INNER_RADIUS_SIDE_SQ = k_INNER_RADIUS_SIDE * k_INNER_RADIUS_SIDE;
         k_CUSHION_RADIUS = table.k_CUSHION_RADIUS;
         k_FACING_ANGLE_CORNER = table.k_FACING_ANGLE_CORNER;
         k_FACING_ANGLE_SIDE = table.k_FACING_ANGLE_SIDE;
@@ -912,6 +922,8 @@ public class StandardPhysicsManager : UdonSharpBehaviour
         k_BALL_RSQR = k_BALL_RADIUS * k_BALL_RADIUS;
         k_BALL_MASS = table.k_BALL_MASS;
         k_CONTACT_POINT = new Vector3(0.0f, -k_BALL_RADIUS, 0.0f);
+        k_vE = table.k_vE;
+        k_vF = table.k_vF;
 
         Collider[] collider = table.GetComponentsInChildren<Collider>();
         for (int i = 0; i < collider.Length; i++)
@@ -923,14 +935,14 @@ public class StandardPhysicsManager : UdonSharpBehaviour
         k_MINOR_REGION_CONST = table.k_TABLE_WIDTH - table.k_TABLE_HEIGHT;
 
         // Major source vertices
-        k_vA.x = table.k_POCKET_RADIUS * 0.75f;
-        k_vA.z = table.k_TABLE_HEIGHT;
+        k_vA.x = k_POCKET_RADIUS_SIDE;
+        k_vA.z = k_TABLE_HEIGHT;
 
-        k_vB.x = table.k_TABLE_WIDTH - table.k_POCKET_RADIUS;
-        k_vB.z = table.k_TABLE_HEIGHT;
+        k_vB.x = k_TABLE_WIDTH - k_POCKET_WIDTH_CORNER;
+        k_vB.z = k_TABLE_HEIGHT;
 
-        k_vC.x = table.k_TABLE_WIDTH;
-        k_vC.z = table.k_TABLE_HEIGHT - table.k_POCKET_RADIUS;
+        k_vC.x = k_TABLE_WIDTH;
+        k_vC.z = k_TABLE_HEIGHT - k_POCKET_HEIGHT_CORNER;
 
         k_vD = k_vA;
         Vector3 Rotationk_vD = new Vector3(1, 0, 0);
@@ -971,36 +983,30 @@ public class StandardPhysicsManager : UdonSharpBehaviour
 
         // Minkowski difference
         k_pN = k_vA;
-        k_pN.z -= table.k_CUSHION_RADIUS;
+        k_pN.z -= k_CUSHION_RADIUS;
 
-        k_pM = k_vA + k_vA_vD_normal * table.k_CUSHION_RADIUS;
-        k_pL = k_vD + k_vA_vD_normal * table.k_CUSHION_RADIUS;
+        k_pM = k_vA + k_vA_vD_normal * k_CUSHION_RADIUS;
+        k_pL = k_vD + k_vA_vD_normal * k_CUSHION_RADIUS;
 
         k_pK = k_vD;
-        k_pK.x -= table.k_CUSHION_RADIUS;
+        k_pK.x -= k_CUSHION_RADIUS;
 
         k_pO = k_vB;
-        k_pO.z -= table.k_CUSHION_RADIUS;
-        k_pP = k_vB + k_vB_vY_normal * table.k_CUSHION_RADIUS;
-        k_pQ = k_vC + k_vC_vZ_normal * table.k_CUSHION_RADIUS;
+        k_pO.z -= k_CUSHION_RADIUS;
+        k_pP = k_vB + k_vB_vY_normal * k_CUSHION_RADIUS;
+        k_pQ = k_vC + k_vC_vZ_normal * k_CUSHION_RADIUS;
 
         k_pR = k_vC;
-        k_pR.x -= table.k_CUSHION_RADIUS;
+        k_pR.x -= k_CUSHION_RADIUS;
 
         k_pT = k_vX;
-        k_pT.x -= table.k_CUSHION_RADIUS;
+        k_pT.x -= k_CUSHION_RADIUS;
 
         k_pS = k_vW;
-        k_pS.x -= table.k_CUSHION_RADIUS;
+        k_pS.x -= k_CUSHION_RADIUS;
 
-        k_pU = k_vY + k_vB_vY_normal * table.k_CUSHION_RADIUS;
-        k_pV = k_vZ + k_vC_vZ_normal * table.k_CUSHION_RADIUS;
-
-        // others
-        k_INNER_RADIUS = table.k_INNER_RADIUS;
-        k_INNER_RADIUS_SQ = k_INNER_RADIUS * k_INNER_RADIUS;
-        k_vE = table.k_vE;
-        k_vF = table.k_vF;
+        k_pU = k_vY + k_vB_vY_normal * k_CUSHION_RADIUS;
+        k_pV = k_vZ + k_vC_vZ_normal * k_CUSHION_RADIUS;
     }
 
     // Check pocket condition
@@ -1009,13 +1015,13 @@ public class StandardPhysicsManager : UdonSharpBehaviour
         Vector3 A = balls_P[id];
         Vector3 absA = new Vector3(Mathf.Abs(A.x), A.y, Mathf.Abs(A.z));
 
-        if ((absA - k_vE).sqrMagnitude < k_INNER_RADIUS_SQ)
+        if ((absA - k_vE).sqrMagnitude < k_INNER_RADIUS_CORNER_SQ)
         {
             table._TriggerPocketBall(id);
             return;
         }
 
-        if ((absA - k_vF).sqrMagnitude < k_INNER_RADIUS_SQ)
+        if ((absA - k_vF).sqrMagnitude < k_INNER_RADIUS_SIDE_SQ)
         {
             table._TriggerPocketBall(id);
             return;
@@ -1101,7 +1107,7 @@ public class StandardPhysicsManager : UdonSharpBehaviour
         {
             if (A.x > A.z + k_MINOR_REGION_CONST) // Minor B
             {
-                if (A.z < k_TABLE_HEIGHT - k_POCKET_RADIUS)
+                if (A.z < k_TABLE_HEIGHT - k_POCKET_HEIGHT_CORNER)
                 {
                     // Region H
 #if HT8B_DRAW_REGIONS

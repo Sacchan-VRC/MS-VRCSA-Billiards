@@ -25,8 +25,11 @@ public class BilliardsModule : UdonSharpBehaviour
     [NonSerialized] public float k_TABLE_WIDTH; // horizontal span of table
     [NonSerialized] public float k_TABLE_HEIGHT; // vertical span of table
     [NonSerialized] public float k_CUSHION_RADIUS; // The roundess of colliders
-    [NonSerialized] public float k_POCKET_RADIUS; // Full diameter of pockets
-    [NonSerialized] public float k_INNER_RADIUS; // Pocket 'hitbox' cylinder
+    [NonSerialized] public float k_POCKET_WIDTH_CORNER; // Radius of pockets
+    [NonSerialized] public float k_POCKET_HEIGHT_CORNER; // Radius of pockets
+    [NonSerialized] public float k_POCKET_RADIUS_SIDE; // Radius of side pockets
+    [NonSerialized] public float k_INNER_RADIUS_CORNER; // Pocket 'hitbox' cylinder
+    [NonSerialized] public float k_INNER_RADIUS_SIDE; // Pocket 'hitbox' cylinder for corner pockets
     [NonSerialized] public float k_FACING_ANGLE_CORNER; // Angle of corner pocket inner walls
     [NonSerialized] public float k_FACING_ANGLE_SIDE; // Angle of side pocket inner walls
     [NonSerialized] public float K_BAULK_LINE; // Snooker baulk line distance from end of table
@@ -1972,8 +1975,11 @@ public class BilliardsModule : UdonSharpBehaviour
         k_TABLE_WIDTH = data.tableWidth;
         k_TABLE_HEIGHT = data.tableHeight;
         k_CUSHION_RADIUS = data.cushionRadius;
-        k_POCKET_RADIUS = data.pocketRadius;
-        k_INNER_RADIUS = data.innerRadius;
+        k_POCKET_WIDTH_CORNER = data.pocketWidthCorner;
+        k_POCKET_HEIGHT_CORNER = data.pocketHeightCorner;
+        k_POCKET_RADIUS_SIDE = data.pocketRadiusSide;
+        k_INNER_RADIUS_CORNER = data.pocketInnerRadiusCorner;
+        k_INNER_RADIUS_SIDE = data.pocketInnerRadiusSide;
         k_FACING_ANGLE_CORNER = data.facingAngleCorner;
         k_FACING_ANGLE_SIDE = data.facingAngleSide;
         K_BAULK_LINE = data.baulkLine;
@@ -2922,12 +2928,12 @@ public class BilliardsModule : UdonSharpBehaviour
 
     public void _IndicateError()
     {
-        tableModels[tableModelLocal]._flashTableColor();
+        tableModels[tableModelLocal]._flashTableError();
     }
 
     public void _IndicateSuccess()
     {
-        tableModels[tableModelLocal]._indicateSuccess();
+        tableModels[tableModelLocal]._flashTableLight();
     }
 
     public string _SerializeGameState()
