@@ -556,7 +556,18 @@ int uniform_cue_colour;
 
     public void _ShowTimers()
     {
-        if (usingTableTimer) return;
+        if (usingTableTimer || table.localPlayerDistant) return;
+        timers[0].SetActive(true);
+        timers[1].SetActive(true);
+    }
+
+    public void _RefreshTimers()
+    {
+        if (usingTableTimer || table.localPlayerDistant)
+        {
+            _HideTimers();
+            return;
+        }
         timers[0].SetActive(true);
         timers[1].SetActive(true);
     }

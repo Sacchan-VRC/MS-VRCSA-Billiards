@@ -2889,7 +2889,10 @@ public class BilliardsModule : UdonSharpBehaviour
             float timeRemaining = timerLocal - (Networking.GetServerTimeInMilliseconds() - timerStartLocal) / 1000.0f;
             float timePercentage = timeRemaining >= 0.0f ? 1.0f - (timeRemaining / timerLocal) : 0.0f;
 
-            graphicsManager._SetTimerPercentage(timePercentage);
+            if (!localPlayerDistant)
+            {
+                graphicsManager._SetTimerPercentage(timePercentage);
+            }
 
             if (timeRemaining < 0.0f)
             {
@@ -3098,6 +3101,7 @@ public class BilliardsModule : UdonSharpBehaviour
         balls[0].transform.parent.gameObject.SetActive(!localPlayerDistant);
         debugger.SetActive(!localPlayerDistant);
         menuManager._RefreshLobby();
+        graphicsManager._RefreshTimers();
     }
 
     #region Debugger
