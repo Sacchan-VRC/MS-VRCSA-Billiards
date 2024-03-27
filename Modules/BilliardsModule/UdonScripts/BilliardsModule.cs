@@ -1237,7 +1237,8 @@ public class BilliardsModule : UdonSharpBehaviour
 
         if (turnStateLocal == 0 || turnStateLocal == 2)
         {
-            if (turnStateLocal == 2) turnStateLocal = 0; // synthetic state
+            /* if (turnStateLocal == 2) */
+            turnStateLocal = 0; // synthetic state
 
             onRemoteTurnBegin(networkingManager.timerStartSynced);
             // practiceManager._Record();
@@ -1245,7 +1246,7 @@ public class BilliardsModule : UdonSharpBehaviour
         else if (turnStateLocal == 1)
         {
             // prevent simulation from running twice if a serialization was sent during sim
-            if (stateChanged)
+            if (stateChanged || networkingManager.isUrgentSynced == 2)
                 onRemoteTurnSimulate(networkingManager.cueBallVSynced, networkingManager.cueBallWSynced);
             // practiceManager._Record();
         }
