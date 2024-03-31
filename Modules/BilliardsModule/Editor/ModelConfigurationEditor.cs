@@ -37,31 +37,6 @@ public class ModelConfigurationEditor : Editor
         return isFullSupport;
     }
 
-    private static bool Prefab_ht8b_supports(ref GameObject pf)
-    {
-        bool success = true;
-
-        if (!pf.transform.Find(".4BALL_FILL"))
-        {
-            DrawError("Prefab does not contain child object named: '.4BALL_FILL' (pocket blockers)", styleError);
-            success = false;
-        }
-
-        if (!pf.transform.Find(".RACK"))
-        {
-            DrawError("Prefab does not contain child object named: '.RACK'", styleError);
-            success = false;
-        }
-
-        if (!pf.transform.Find(".TABLE_SURFACE"))
-        {
-            DrawError("Prefab does not contain child object named: '.TABLE_SURFACE'", styleError);
-            success = false;
-        }
-
-        return success;
-    }
-
     private static void Ht8bUIGroup(string szHeader)
     {
         GUILayout.BeginVertical("HelpBox");
@@ -117,73 +92,55 @@ public class ModelConfigurationEditor : Editor
 
         base.DrawDefaultInspector();
 
-        EditorGUI.BeginChangeCheck();
-
-        ModelConfigurationData data = _editor.data;
+        ModelData data = _editor.data;
 
         if (data != null)
         {
-            data.tableModel = (GameObject)EditorGUILayout.ObjectField("Table artwork", data.tableModel, typeof(GameObject), false);
-
-            if (data.tableModel)
-            {
-                if (!Prefab_ht8b_supports(ref data.tableModel))
-                {
-                }
-            }
-            else
-            {
-                DrawError("Prefab needs to be set to check structure", styleError);
-            }
-            
-            data.collisionModel = (GameObject)EditorGUILayout.ObjectField("(VFX) Collision model", data.collisionModel, typeof(GameObject), false);
-
-            if (!data.collisionModel)
-            {
-                DrawError("Without a collision prefab, balls will instantly dissapear when pocketed!", styleWarning);
-            }
             Ht8bUIGroup("Collision info");
 
-            if (!this.cdata_displayTarget)
+            if (!cdata_displayTarget)
             {
-                this.cdata_displayTarget = _editor.transform.parent.parent.Find("intl.balls").Find("__table_refiner__").gameObject.GetComponent<CollisionVisualizer>();
+                cdata_displayTarget = _editor.transform.parent.parent.Find("intl.balls").Find("__table_refiner__").gameObject.GetComponent<CollisionVisualizer>();
+                if (cdata_displayTarget == null) { return; }
             }
 
             this.bShowCollision = EditorGUILayout.Toggle("Draw collision data", this.cdata_displayTarget.gameObject.activeSelf);
             this.cdata_displayTarget.gameObject.SetActive(this.bShowCollision);
 
-            data.tableWidth = EditorGUILayout.Slider("Width", data.tableWidth, 0.4f, 2.4f);
-            data.tableHeight = EditorGUILayout.Slider("Height", data.tableHeight, 0.4f, 2.4f);
-            data.pocketRadius = EditorGUILayout.Slider("Pocket Radius", data.pocketRadius, 0.06f, 0.4f);
-            data.cushionRadius = EditorGUILayout.Slider("Cushion Radius", data.cushionRadius, 0.01f, 0.4f);
-            data.innerRadius = EditorGUILayout.Slider("Pocket Trigger Radius", data.innerRadius, 0.03f, 0.3f);
-
-            data.cornerPocket = EditorGUILayout.Vector3Field("Corner pocket location", data.cornerPocket);
-            data.sidePocket = EditorGUILayout.Vector3Field("Side pocket location", data.sidePocket);
-
             Ht8bUIGroupEnd();
-            ModelData tableData = _editor.gameObject.GetComponent<ModelData>();
             this.cdata_displayTarget.tableWidth = data.tableWidth;
             this.cdata_displayTarget.tableHeight = data.tableHeight;
-            this.cdata_displayTarget.pocketRadius = data.pocketRadius;
+            this.cdata_displayTarget.pocketWidthCorner = data.pocketWidthCorner;
+            this.cdata_displayTarget.pocketHeightCorner = data.pocketHeightCorner;
+            this.cdata_displayTarget.pocketRadiusSide = data.pocketRadiusSide;
             this.cdata_displayTarget.cushionRadius = data.cushionRadius;
-            this.cdata_displayTarget.innerRadius = data.innerRadius;
+            this.cdata_displayTarget.pocketInnerRadiusCorner = data.pocketInnerRadiusCorner;
+            this.cdata_displayTarget.pocketInnerRadiusSide = data.pocketInnerRadiusSide;
             this.cdata_displayTarget.cornerPocket = data.cornerPocket;
             this.cdata_displayTarget.sidePocket = data.sidePocket;
-
-            _editor.data = data;
+            this.cdata_displayTarget.facingAngleCorner = data.facingAngleCorner;
+            this.cdata_displayTarget.facingAngleSide = data.facingAngleSide;
         }
+    }
 
-        GUI.enabled = true;
-
-        if (GUI.changed)
+    void OnEnable()
+    {
+        if (!cdata_displayTarget)
         {
-            EditorUtility.SetDirty(target);
+            ModelConfiguration _editor = (ModelConfiguration)target;
+            cdata_displayTarget = _editor.transform.parent.parent.Find("intl.balls").Find("__table_refiner__").gameObject.GetComponent<CollisionVisualizer>();
+            if (cdata_displayTarget == null) { return; }
         }
-
-        if (EditorGUI.EndChangeCheck())
+        cdata_displayTarget.gameObject.SetActive(true);
+    }
+    void OnDisable()
+    {
+        if (!cdata_displayTarget)
         {
-            Undo.RegisterCompleteObjectUndo(target, "edited ht8b config");
+            ModelConfiguration _editor = (ModelConfiguration)target;
+            cdata_displayTarget = _editor.transform.parent.parent.Find("intl.balls").Find("__table_refiner__").gameObject.GetComponent<CollisionVisualizer>();
+            if (cdata_displayTarget == null) { return; }
         }
+        cdata_displayTarget.gameObject.SetActive(false);
     }
 }
