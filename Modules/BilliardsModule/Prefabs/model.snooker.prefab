@@ -716,8 +716,6 @@ MonoBehaviour:
   _udonSharpBackingUdonBehaviour: {fileID: 1121263254494094316}
   TABLENAME: Snooker Table
   ballPocketedTriggerName: BallPocketed
-  indicateSuccessTriggerName: IndicateSuccess
-  flashTableColorTriggerName: FlashTableColor
   flashTableLightTriggerName: FlashTableLight
   flashTableErrorTriggerName: FlashTableError
   onGameStartedTriggerName: OnGameStarted
@@ -728,10 +726,11 @@ MonoBehaviour:
   tableWidth: 1.807
   tableHeight: 0.9115
   cushionRadius: 0.0525
-  pocketRadius: 0.1
+  pocketWidthCorner: 0.1
+  pocketHeightCorner: 0.1
   pocketRadiusSide: 0.068
-  pocketInnerRadius: 0.055
   pocketInnerRadiusCorner: 0.055
+  pocketInnerRadiusSide: 0.072
   facingAngleCorner: 135
   facingAngleSide: 104.93142
   ballRadius: 0.02625
@@ -739,13 +738,6 @@ MonoBehaviour:
   rackTrianglePosition: 0.872
   cornerPocket: {x: 1.7988, y: 0, z: 0.9045}
   sidePocket: {x: 0, y: 0, z: 0.9448}
-  pockets:
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
   baulkLine: 0.76
   blackSpotFromR: 0.324
   semiCircleRadius: 0.2921
@@ -941,7 +933,7 @@ PrefabInstance:
         type: 3}
       propertyPath: m_Materials.Array.data[0]
       value: 
-      objectReference: {fileID: 2100000, guid: 33442465ca8ccbb4eb5ef5a769e5cb9c, type: 2}
+      objectReference: {fileID: 2100000, guid: dbc35f8c79bf7e94ca4d5437799260c2, type: 2}
     - target: {fileID: -7339394412212345320, guid: 64703e4e21034d14696e2b957d365ff4,
         type: 3}
       propertyPath: m_Materials.Array.data[0]
@@ -1036,7 +1028,7 @@ PrefabInstance:
         type: 3}
       propertyPath: m_Materials.Array.data[0]
       value: 
-      objectReference: {fileID: 2100000, guid: c7e1ac46b886d61439f8c7e22806960b, type: 2}
+      objectReference: {fileID: 2100000, guid: 83c84d2e21ff5bf4db5ba1369f386ab5, type: 2}
     - target: {fileID: 5477151129534842457, guid: 64703e4e21034d14696e2b957d365ff4,
         type: 3}
       propertyPath: m_Layer

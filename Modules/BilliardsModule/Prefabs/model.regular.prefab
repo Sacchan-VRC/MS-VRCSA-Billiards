@@ -2990,8 +2990,6 @@ MonoBehaviour:
   _udonSharpBackingUdonBehaviour: {fileID: 2157089718363398246}
   TABLENAME: Pool Table
   ballPocketedTriggerName: BallPocketed
-  indicateSuccessTriggerName: IndicateSuccess
-  flashTableColorTriggerName: FlashTableColor
   flashTableLightTriggerName: FlashTableLight
   flashTableErrorTriggerName: FlashTableError
   onGameStartedTriggerName: OnGameStarted
@@ -3005,7 +3003,7 @@ MonoBehaviour:
   pocketWidthCorner: 0.107
   pocketHeightCorner: 0.0996
   pocketRadiusSide: 0.086
-  pocketInnerRadiusCorner: 0.0078
+  pocketInnerRadiusCorner: 0.078
   pocketInnerRadiusSide: 0.072
   facingAngleCorner: 137
   facingAngleSide: 104.93142
@@ -3014,13 +3012,6 @@ MonoBehaviour:
   rackTrianglePosition: 0.5334
   cornerPocket: {x: 1.09, y: 0, z: 0.633}
   sidePocket: {x: 0, y: 0, z: 0.665}
-  pockets:
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
   baulkLine: 0.5
   blackSpotFromR: 0.2
   semiCircleRadius: 0.2921
