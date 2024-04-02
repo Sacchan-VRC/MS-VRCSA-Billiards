@@ -579,26 +579,23 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
                 moved[id] = true;
 
                 Vector3 cueBallVelPrev = balls_V[0];
+
+                Vector3 velocityDelta = balls_V[id] - balls_V[checkBall]; // must be before HandleCollision
+
                 // Handle collision effects
                 HandleCollision3_4(checkBall, id, normal, delta);
 
-
+#if UNITY_EDITOR
                 /// DEBUG VISUALIZATION BLOCK
-
-
                 Vector3 relativeVelocity = balls_V[id] - balls_V[checkBall];
-                float v = Vector3.Dot(relativeVelocity, normal);
-
-
-                Vector3 normalVelocityDirection = v * normal.normalized;
+                float v = Vector3.Dot(velocityDelta, normal);
+                Vector3 normalVelocityDirection = v * normal;
                 Debug.DrawLine(balls[9].transform.position, balls[9].transform.position - normalVelocityDirection * 5f, Color.blue, 4f);
+#endif
 
+                float dot = Vector3.Dot(velocityDelta, normal);
+                g_ball_current.GetComponent<AudioSource>().PlayOneShot(hitSounds[id % 3], Mathf.Clamp01(dot));
 
-                // Prevent sound spam if it happens
-                if (balls_V[id].sqrMagnitude > 0 && balls_V[checkBall].sqrMagnitude > 0)
-                {
-                    g_ball_current.GetComponent<AudioSource>().PlayOneShot(hitSounds[id % 3], Mathf.Clamp01(normal.magnitude));
-                }
                 if (table_.isSnooker6Red)
                 {
                     if (!cueBallHasCollided && id == 0 && balls_P[0].y > 0)

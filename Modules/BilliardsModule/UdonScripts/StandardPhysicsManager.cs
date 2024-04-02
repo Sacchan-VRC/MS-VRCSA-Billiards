@@ -508,7 +508,7 @@ public class StandardPhysicsManager : UdonSharpBehaviour
                 // Prevent sound spam if it happens
                 if (balls_V[id].sqrMagnitude > 0 && balls_V[i].sqrMagnitude > 0)
                 {
-                    g_ball_current.GetComponent<AudioSource>().PlayOneShot(hitSounds[id % 3], Mathf.Clamp01(reflection.magnitude));
+                    g_ball_current.GetComponent<AudioSource>().PlayOneShot(hitSounds[id % 3], Mathf.Clamp01(dot));
                 }
                 if (table_.isSnooker6Red)
                 {
