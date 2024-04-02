@@ -779,6 +779,7 @@ public class BilliardsModule : UdonSharpBehaviour
 
         Array.Copy(playerIDsLocal, playerIDsCached, playerIDsLocal.Length);
         Array.Copy(playerIDsSynced, playerIDsLocal, playerIDsLocal.Length);
+        isPracticeMode = playerIDsLocal[1] == -1 && playerIDsLocal[3] == -1;
 
         string[] playerDetails = new string[4];
         for (int i = 0; i < 4; i++)
@@ -793,6 +794,7 @@ public class BilliardsModule : UdonSharpBehaviour
         else localTeamId = uint.MaxValue;
         cueControllers[0]._SetAuthorizedOwners(new int[] { playerIDsLocal[0], playerIDsLocal[2] });
         cueControllers[1]._SetAuthorizedOwners(new int[] { playerIDsLocal[1], playerIDsLocal[3] });
+        cueControllers[1]._RefreshRenderer();// 2nd cue is invisible in practice mode
         if (playerIDsLocal[0] == -1 && playerIDsLocal[2] == -1)
         {
             cueControllers[0]._ResetCuePosition();
@@ -1036,12 +1038,13 @@ public class BilliardsModule : UdonSharpBehaviour
     {
         if (!gameLive) return;
 
-        if (teamIdLocal == teamIdSynced) return;
+        if (teamIdLocal != teamIdSynced)
+        {
+            aud_main.PlayOneShot(snd_NewTurn, 1.0f);
+        }
 
         _LogInfo($"onRemoteTeamIdChanged newTeam={teamIdSynced}");
         teamIdLocal = teamIdSynced;
-
-        aud_main.PlayOneShot(snd_NewTurn, 1.0f);
 
         graphicsManager._UpdateTeamColor(teamIdLocal);
 
@@ -1187,7 +1190,7 @@ public class BilliardsModule : UdonSharpBehaviour
                 }
             }
         }
-        if (!_IsPlayer(Networking.LocalPlayer) && !TableVisible && !isOwner)
+        if (!_IsPlayer(Networking.LocalPlayer) && !isOwner && (!TableVisible || localPlayerDistant))
         {
             // don't bother simulating if the table isn't even visible
             _LogWarn("skipping simulation");

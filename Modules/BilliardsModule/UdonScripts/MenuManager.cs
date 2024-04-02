@@ -287,7 +287,7 @@ public class MenuManager : UdonSharpBehaviour
         if (table.isBlueTeamFull)
             join_Blue.gameObject.SetActive(false);
         else
-            join_Blue.gameObject.SetActive(!table.isPracticeMode);
+            join_Blue.gameObject.SetActive(true);
     }
     public void _RefreshRefereeDisplay()
     {
