@@ -1,5 +1,6 @@
 // #define HT8B_DRAW_REGIONS
 using System;
+using BestHTTP.SecureProtocol.Org.BouncyCastle.Asn1.Misc;
 using UdonSharp;
 using UnityEngine;
 
@@ -276,64 +277,119 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
                 // balls_W[0] = Test_RotSpeed;
             }
 #endif
-            Vector3 deltaPos = calculateDeltaPosition(sn_pocketed);
-            balls_P[0] += deltaPos;
-            moved[0] = deltaPos != Vector3.zero;
+            // Vector3 deltaPos = calculateDeltaPosition(sn_pocketed);
+            // balls_P[0] += deltaPos;
+            // moved[0] = deltaPos != Vector3.zero;
 
-            ballsMoving |= stepOneBall(0, sn_pocketed, moved, new Vector3(0, 0, 0));
+            // ballsMoving |= stepOneBall(0, sn_pocketed, moved, new Vector3(0, 0, 0));
         }
 
         // Run main simulation / inter-ball collision
 
         uint ball_bit = 0x1u;
-        for (int i = 1; i < 16; i++)
+        for (int i = 0; i < 16; i++)
         {
-            ball_bit <<= 1;
-
-            if ((ball_bit & sn_pocketed) == 0U)
+            float moveTimeLeft = k_FIXED_TIME_STEP;
+            int collidedBall = -1; // used to stop from colliding with the same ball twice in one step
+            int numSteps = 0;
+            while (moveTimeLeft > 0f)
             {
-                Vector3 deltaPos = balls_V[i] * k_FIXED_TIME_STEP;
-                balls_P[i] += deltaPos;
-                moved[i] = deltaPos != Vector3.zero;
+                numSteps++;
+                if ((ball_bit & sn_pocketed) == 0U)
+                {
+                    float deltaTime = moveTimeLeft;
+                    Vector3 BallStartPos = balls_P[i];
+                    int predictedHitBall = -1;
+                    Vector3 deltaPos = calculateDeltaPosition(sn_pocketed, i, deltaTime, ref predictedHitBall);
+                    float expectedMoveDistance = (balls_V[i] * deltaTime).magnitude;
+                    balls_P[i] += deltaPos;
 
-                ballsMoving |= stepOneBall(i, sn_pocketed, moved, new Vector3(0, 0, 0));
+                    // Here we create an array containing balls to check against for collision in stepOneBall()
+                    // Balls used to only check balls with higher id than them for collisions
+                    // but now we're running calculateDeltaPosition() on every ball, which moves balls to the surface of other balls (as opposed to being inside)
+                    // a ball wont collide with a ball that it hits from behind when both are traveling in the same direction if its ID is lower.
+                    // because it moves to it's surface, doesn't run collision detection, and then the lower ID ball is calculated next frame,
+                    // where it moves forward, moving it away from the ball the was moved to it's surface, causing there to be no collision.
+                    // so we need to always run a collision check with the ball who's surface the current ball was moved to, straight after moving it.
+                    // Create an array of ball IDs to check, which contains all IDs higher than the current ball, as well has the ball who's surface we moved to if applicable 
+                    //// old version
+                    // int dif = 15 - i;
+                    // if (predictedHitBall != -1 && predictedHitBall != collidedBall && predictedHitBall < i)
+                    // {
+                    //     ballsToCheck = new int[dif + 1];
+                    //     Array.Copy(ballsToCheckStart, i + 1, ballsToCheck, 0, dif);
+                    //     ballsToCheck[ballsToCheck.Length - 1] = predictedHitBall; // Add the ball we moved to the surface of
+                    // }
+                    // else // just higher IDs
+                    // {
+                    //     ballsToCheck = new int[dif];
+                    //     Array.Copy(ballsToCheckStart, i + 1, ballsToCheck, 0, dif);
+                    // }
+
+                    // it turns out we only need to run the collision check on one ball (the one we predicted that we'd hit!)
+                    // huge optimization!
+                    bool doColCheck = false;
+                    if (predictedHitBall != -1 && predictedHitBall != collidedBall)
+                    {
+                        ballsToCheck = new int[1];
+                        ballsToCheck[0] = predictedHitBall; // The ball we moved to the surface of
+                        doColCheck = true;
+                    }
+                    else // collision checks
+                    {
+                        ballsToCheck = new int[0];
+                    }
+
+                    collidedBall = predictedHitBall;
+
+                    if (balls_V[i] != Vector3.zero || balls_W[i] != Vector3.zero)
+                        moved[i] = updateVelocity(i, balls[i], deltaTime);
+                    else
+                        moved[i] = false;
+
+                    if (moved[i])
+                    {
+                        // because the ball predicted to collide with is now always added to the list of collision checks
+                        // we don't need to run collision checks on balls that aren't moving
+                        if (doColCheck) { stepOneBall(i, sn_pocketed, moved, deltaTime); }
+
+                        table._BeginPerf(table.PERF_PHYSICS_CUSHION);
+                        bool hitWall;
+                        if (table.is4Ball)
+                        {
+                            hitWall = _phy_ball_table_carom(i);
+                        }
+                        else
+                        {
+                            hitWall = _phy_ball_table_std(i);
+                        }
+                        table._EndPerf(table.PERF_PHYSICS_CUSHION);
+
+                        if (predictedHitBall != -1 || hitWall)
+                        {
+                            float actualMoveDistance = (balls_P[i] - BallStartPos).magnitude;
+                            if (expectedMoveDistance == 0)
+                                moveTimeLeft = 0;
+                            else
+                                moveTimeLeft *= 1 - (actualMoveDistance / expectedMoveDistance);
+                        }
+                        else moveTimeLeft = 0;
+                    }
+                    else moveTimeLeft = 0;
+
+                    ballsMoving |= moved[i];
+                }
+                else
+                {
+                    moveTimeLeft = 0;
+                }
+                if (numSteps > 2) break; // max 3 steps per ball
             }
+            ball_bit <<= 1;
         }
         table._EndPerf(table.PERF_PHYSICS_BALL);
 
-        // Check if simulation has settled
-        if (!ballsMoving)
-        {
-            table._TriggerSimulationEnded(false);
-            return;
-        }
-
-        bool canCueBallBounceOffCushion = balls_P[0].y < k_BALL_RADIUS;
-
-        table._BeginPerf(table.PERF_PHYSICS_CUSHION);
-        if (table.is4Ball)
-        {
-            if (canCueBallBounceOffCushion && moved[0]) _phy_ball_table_carom(0);
-            if (moved[13]) _phy_ball_table_carom(13);
-            if (moved[14]) _phy_ball_table_carom(14);
-            if (moved[15]) _phy_ball_table_carom(15);
-        }
-        else
-        {
-            ball_bit = 0x1U;
-            // Run edge collision
-            for (int i = 0; i < 16; i++)
-            {
-                if (moved[i] && (ball_bit & sn_pocketed) == 0U && (i != 0 || canCueBallBounceOffCushion))
-                {
-                    _phy_ball_table_std(i);
-                }
-
-                ball_bit <<= 1;
-            }
-        }
-        table._EndPerf(table.PERF_PHYSICS_CUSHION);
-
+        ball_bit = 0x1U;
         bool outOfBounds = false;
         if ((sn_pocketed & 0x01u) == 0x00u)
         {
@@ -343,6 +399,29 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
                 table._Log("out of bounds! " + balls_P[0].ToString());
                 outOfBounds = true;
             }
+        }
+        bool canCueBallBounceOffCushion = balls_P[0].y < k_BALL_RADIUS;
+        // Run triggers
+        table._BeginPerf(table.PERF_PHYSICS_POCKET);
+        for (int i = 0; i < 16; i++)
+        {
+            if (moved[i] && (ball_bit & sn_pocketed) == 0U && (i != 0 || !outOfBounds))
+            {
+                if (i != 0 || canCueBallBounceOffCushion)
+                {
+                    _phy_ball_pockets(i, balls_P);
+                }
+            }
+
+            ball_bit <<= 1;
+        }
+        table._EndPerf(table.PERF_PHYSICS_POCKET);
+
+        // Check if simulation has settled
+        if (!ballsMoving)
+        {
+            table._TriggerSimulationEnded(false);
+            return;
         }
 
         if (table.is4Ball) return;
@@ -372,55 +451,48 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
                 }
             }
         }
-
-        ball_bit = 0x1U;
-
-        // Run triggers
-        table._BeginPerf(table.PERF_PHYSICS_POCKET);
-        for (int i = 0; i < 16; i++)
-        {
-            if (moved[i] && (ball_bit & sn_pocketed) == 0U && (i != 0 || !outOfBounds))
-            {
-                if (i != 0 || canCueBallBounceOffCushion)
-                {
-                    _phy_ball_pockets(i, balls_P);
-                }
-            }
-
-            ball_bit <<= 1;
-        }
-        table._EndPerf(table.PERF_PHYSICS_POCKET);
     }
 
     // ( Since v0.2.0a ) Check if we can predict a collision before move update happens to improve accuracy
     // This function predicts if the cue ball is about to hit another ball, and if it is, it teleports it
     // to the surface of that ball, instead of letting it clip into that ball
-    private Vector3 calculateDeltaPosition(uint sn_pocketed)
+    private Vector3 calculateDeltaPosition(uint sn_pocketed, int id, float timeStep, ref int ballHit)
     {
+        ballHit = -1;
         // Get what will be the next position
-        Vector3 originalDelta = balls_V[0] * k_FIXED_TIME_STEP;
-
-        Vector3 norm = balls_V[0].normalized;
+        Vector3 originalDelta = balls_V[id] * timeStep;
+        if (originalDelta == Vector3.zero)
+        {
+            return originalDelta;
+        }
+        Vector3 norm = balls_V[id].normalized;
 
         Vector3 h;
         float lf, s, nmag;
 
         // Closest found values
-        float minlf = float.MaxValue;
-        int minid = 0;
-        float mins = 0;
+        int minid = -1;
+        float minnmag = float.MaxValue;
 
         // Loop balls look for collisions
         uint ball_bit = 0x1U;
 
-        for (int i = 1; i < 16; i++)
+        for (int i = 0; i < 16; i++)
         {
-            ball_bit <<= 1;
+            if (i == id)
+            {
+                ball_bit <<= 1;
+                continue;
+            }
 
             if ((ball_bit & sn_pocketed) != 0U)
+            {
+                ball_bit <<= 1;
                 continue;
+            }
+            ball_bit <<= 1;
 
-            h = balls_P[i] - balls_P[0];
+            h = balls_P[i] - balls_P[id];
             lf = Vector3.Dot(norm, h);
             if (lf < 0f) continue; // discard balls that are behind the movement direction
 
@@ -429,37 +501,38 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
             if (s < 0.0f) // and skips if it isn't
                 continue;
 
-            if (lf < minlf)
+            nmag = lf - Mathf.Sqrt(s);
+
+            // the old method was to check (lf < minlf) but this was incorrect because it's possible to hit a ball whos center is further away first
+            // if the closer ball would be a very glancing hit
+            if (nmag < minnmag)
             {
-                minlf = lf;
                 minid = i;
-                mins = s;
+                minnmag = nmag;
             }
         }
 
-        if (minid > 0)
+        if (minid > -1)
         {
-            nmag = minlf - Mathf.Sqrt(mins);
-
             // Assign new position if got appropriate magnitude
-            if (nmag * nmag < originalDelta.sqrMagnitude)
+            if (minnmag * minnmag < originalDelta.sqrMagnitude)
             {
-                return norm * nmag;
+                ballHit = minid;
+                return norm * minnmag;
             }
         }
 
         return originalDelta;
     }
 
+    readonly int[] ballsToCheckStart = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15 };
+    int[] ballsToCheck;
     // Advance simulation 1 step for ball id
-    private bool stepOneBall(int id, uint sn_pocketed, bool[] moved, Vector3 normal)
+    private void stepOneBall(int id, uint sn_pocketed, bool[] moved, float timeStep)
     {
         GameObject g_ball_current = balls[id];
         GameObject cueBall = balls[0];
         GameObject nine_Ball = balls[9];
-
-
-        bool isBallMoving = false;
 
 
         // ballDebugVisualizer(sn_pocketed, normal, id);
@@ -468,53 +541,42 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
         // Draw a debug line that could represent the normal velocity vector
         // Debug.DrawRay(cueBall.transform.position, nine_Ball.transform.position - cueBall.transform.position, Color.red);
 
-
-        // no point updating velocity if ball isn't moving
-        if (balls_V[id] != Vector3.zero || balls_W[id] != Vector3.zero)
-        {
-            isBallMoving = updateVelocity(id, g_ball_current);
-        }
-
-
-        moved[id] |= isBallMoving;
-
-
         // check for collisions. a non-moving ball might be collided by a moving one
-        uint ball_bit = 0x1U << id;
-        for (int i = id + 1; i < 16; i++)
+        // uint ball_bit = 0x1U << ballsToCheck[0];
+        for (int i = 0; i < ballsToCheck.Length; i++)
         {
-
-            ball_bit <<= 1;
-
+            int checkBall = ballsToCheck[i];
+            uint ball_bit = 1u << checkBall;
 
             if ((ball_bit & sn_pocketed) != 0U)
+            {
                 continue;
+            }
 
-
-            Vector3 delta = balls_P[i] - balls_P[id];
+            Vector3 delta = balls_P[checkBall] - balls_P[id];
             float dist = delta.sqrMagnitude;
 
             if (dist < k_BALL_DIAMETRESQ)
             {
                 dist = Mathf.Sqrt(dist);
-                normal = delta / dist;
+                Vector3 normal = delta / dist;
 
                 // Static resolution
                 Vector3 resolution = (k_BALL_DIAMETRE - dist) * normal;
-                balls_P[i] += resolution;
+                balls_P[checkBall] += resolution;
                 balls_P[id] -= resolution;
-                moved[i] = true;
+                moved[checkBall] = true;
                 moved[id] = true;
 
                 Vector3 cueBallVelPrev = balls_V[0];
                 // Handle collision effects
-                HandleCollision3_4(i, id, normal, delta);
+                HandleCollision3_4(checkBall, id, normal, delta);
 
 
                 /// DEBUG VISUALIZATION BLOCK
 
 
-                Vector3 relativeVelocity = balls_V[id] - balls_V[i];
+                Vector3 relativeVelocity = balls_V[id] - balls_V[checkBall];
                 float v = Vector3.Dot(relativeVelocity, normal);
 
 
@@ -523,7 +585,7 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
 
 
                 // Prevent sound spam if it happens
-                if (balls_V[id].sqrMagnitude > 0 && balls_V[i].sqrMagnitude > 0)
+                if (balls_V[id].sqrMagnitude > 0 && balls_V[checkBall].sqrMagnitude > 0)
                 {
                     g_ball_current.GetComponent<AudioSource>().PlayOneShot(hitSounds[id % 3], Mathf.Clamp01(normal.magnitude));
                 }
@@ -535,7 +597,7 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
                         // check if cue ball is moving faster in the direction of the movement of the object ball to determine if it's going to go over it.
                         // there may be unknown problems with this implementation.
                         Vector3 ballid = balls_V[id]; ballid.y = 0;
-                        Vector3 balli = balls_V[i]; balli.y = 0;
+                        Vector3 balli = balls_V[checkBall]; balli.y = 0;
                         ballid *= ballid.magnitude / balli.magnitude;
                         balli = balli.normalized;
                         float velDot = Vector3.Dot(ballid, balli);
@@ -552,11 +614,9 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
                         cueBallHasCollided = true;
                     }
                 }
-                table._TriggerCollision(id, i);
+                table._TriggerCollision(id, checkBall);
             }
         }
-
-        return isBallMoving;
     }
 
     /// Default should be 1
@@ -567,82 +627,81 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
 
     // Coefficient of Restitution
     public float e = 0.98f; // 0.98x is high quality billiard ball [the papers rangers between 0.92 to 0.98, it affects the amount of friction engament of the balls and therefore its final tagential magnitude] 
-    // 1x is perfectly elastic ball, perfectly fine to use it if desired but not realistic.
+                            // 1x is perfectly elastic ball, perfectly fine to use it if desired but not realistic.
     void HandleCollision3_4(int i, int id, Vector3 normal, Vector3 delta) // Advanced Physics V3.4
     {
-    
         /// PREPARE SOME STUFF
-    
+
         Vector3 balls_Wid_onlyY = new Vector3(0, balls_W[id].y, 0);
         Vector3 balls_Wi_onlyY = new Vector3(0, balls_W[id].y, 0); // same ID.
-    
+
         /// TEST // NOTE: this model calculates the relative velocities components separately.
         Vector3 angularVelocity = (Vector3.Cross(balls_W[id], k_BALL_RADIUS * normal)) - (Vector3.Cross(balls_W[i], k_BALL_RADIUS * normal));
         Vector3 tangentialDirection = -angularVelocity.normalized;
         float angularVelocityMagnitude = angularVelocity.magnitude;
         float scaledMagnitude = Mathf.Clamp(angularVelocityMagnitude, 0f, 1f); //0,25
         Vector3 scaledTangentialDirection = tangentialDirection * scaledMagnitude;
-    
+
         Vector3 relativeVelocity = (balls_V[id] - balls_V[i]);
-    
+
         Vector3 Vobt_MAX = balls_V[id] - (Vector3.Cross(balls_Wid_onlyY, k_BALL_RADIUS * normal) + Vector3.Cross(balls_Wi_onlyY, k_BALL_RADIUS * normal));
         Vector3 tangentialDirection_2 = Vobt_MAX.normalized;
         float tangentialDirection_Magnitude = Vobt_MAX.magnitude;
         float scaledMagnitude_2 = Mathf.Clamp(tangentialDirection_Magnitude, 0f, 35f);
         Vector3 scaledTangentialDirection_2 = tangentialDirection_2 * scaledMagnitude_2;
-    
+
         /// PART 1
         /// NORMAL IMPULSE (TRANSFERED LINEAR MOMENTUM_)
         /// F' = m*v'n
-    
+
         float J = (1 + e) / 2 * Vector3.Dot(relativeVelocity, normal);
         Vector3 Fn = normal * J;
-    
+
         // Apply normal impulse (transferred linear momentum) to update velocities
         balls_V[id] -= Fn; // Fn = ((1+e)/2)*m*v
         balls_V[i] += Fn;  // Fn = ((1+e)/2)*m*v
-    
-    
+
+
         /// PART 2
         /// LINEAR IMPULSE AND MOMENTUM IN THE TANGENT DIRECTION.
         /// OBJECT BALL SPEED IN THE TANGENTIAL DIRECTION IS GIVEN BY Vt = μ * Vn
-    
+
         //  Friction between the CB and OB during impact creates forces in the tangential direction.
-    
+
         //  Calculate friction force using the given model.
-    
+
         float mu = -muFactor * (9.951e-3f + 0.108f * Mathf.Exp(-1.088f * Vobt_MAX.magnitude));  // model 1
-        //float mu = -muFactor * (9.951e-3f + 0.108f * Mathf.Exp(-0.77f * Vobt_MAX.magnitude)); // model 2
-    
+                                                                                                //float mu = -muFactor * (9.951e-3f + 0.108f * Mathf.Exp(-0.77f * Vobt_MAX.magnitude)); // model 2
+
         //  Prepare T impulses.
-    
+
         Vector3 Ft2 = -mu * scaledTangentialDirection; // S-I-T   
         Vector3 Ft1 = mu * scaledTangentialDirection_2;// C-I-T
         Vector3 Ft = Ft1 + Ft2;
-    
+
         // apply Tagential impulses
         balls_V[id] += Ft;
         balls_V[i] -= Ft;
-    
-    
+
+
         /// PART 3
         /// ANGULAR IMPULSE (TRANSFERRED ANGULAR MOMENTUM)
         /// τ' = r × F'
-    
+
         Vector3 angularImpulse = Vector3.Cross(Ft, delta) / (k_BALL_RADIUS * k_BALL_RADIUS);
-    
+
         // Apply Linear Impulse Translation.
         balls_W[id] += angularImpulse;
         balls_W[i] += angularImpulse;
-    
-    
+
+
         /// Note
         /// /// C-I-T is 'largest' for slow stun shots speeds close to a 1/2 ball hit.
         /// at faster speed the balls surfaces dont engage well, resulting in less friction and throw. (as such the coefficient of Restitution has a crucial role)
         /// throw also changes with cut angles.
         /// 3/4 cut ('full hit') = small amount of throw.
         /// 1/4 cut ('thin hit') = slightly less throw than 'largest' throw, but more than a 'full hit'
-    
+
     }
 
     /// DEBUG
@@ -678,17 +737,17 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
     }
     ///
 
-    private bool updateVelocity(int id, GameObject ball)
+    private bool updateVelocity(int id, GameObject ball, float timeStep)
     {
+        float t = timeStep;
         bool ballMoving = false;
-        float frameGravity = k_GRAVITY * k_FIXED_TIME_STEP;
+        float frameGravity = k_GRAVITY * t;
 
         float mu_sp = k_F_SPIN;     // Coefficient of friction for spin
         float mu_s = k_F_SLIDE;     // Coefficient of friction for sliding
         float mu_r = k_F_ROLL;      // Coefficient of friction for rolling
         float g = k_GRAVITY;        // Gravitational constant
         float R = k_BALL_RADIUS;    // Ball Radius
-        float t = k_FIXED_TIME_STEP;
 
         Vector3 u0;
         Vector3 k_CONTACT_POINT = new Vector3(0.0f, -R, 0.0f);
@@ -803,14 +862,14 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
 
             balls_P[id].y = 0f;
         }
-
-        V.y -= frameGravity; /// Apply Gravity * Time so the airbone balls gets pushed back to the table.
+        if (ballMoving)
+            V.y -= frameGravity; /// Apply Gravity * Time so the airbone balls gets pushed back to the table.
 
 
         balls_W[id] = W;
         balls_V[id] = V;
 
-        ball.transform.Rotate(this.transform.TransformDirection(W.normalized), W.magnitude * k_FIXED_TIME_STEP * -Mathf.Rad2Deg, Space.World);
+        ball.transform.Rotate(this.transform.TransformDirection(W.normalized), W.magnitude * t * -Mathf.Rad2Deg, Space.World);
 
         return ballMoving;
     }
@@ -1177,8 +1236,9 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
     }
 
     // Pocketless table
-    void _phy_ball_table_carom(int id)
+    bool _phy_ball_table_carom(int id)
     {
+        bool bounced = false;
         float zz, zx;
         Vector3 A = balls_P[id];
 
@@ -1190,21 +1250,25 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
         {
             balls_P[id].x = k_pR.x * zx;
             _phy_bounce_cushion(id, Vector3.left * zx);
+            bounced = true;
         }
 
         if (A.z * zz > k_pO.z)
         {
             balls_P[id].z = k_pO.z * zz;
             _phy_bounce_cushion(id, Vector3.back * zz);
+            bounced = true;
         }
+        return bounced;
     }
 
-    void _phy_ball_table_std(int id)
+    bool _phy_ball_table_std(int id)
     {
         Vector3 A, N, _V, V, a_to_v;
         float dot;
 
         A = balls_P[id];
+        Vector3 AStart = A;
 
         _sign_pos.x = Mathf.Sign(A.x);
         _sign_pos.z = Mathf.Sign(A.z);
@@ -1489,6 +1553,8 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
         }
 
         balls_P[id] = Vector3.Scale(A, _sign_pos);
+
+        return balls_P[id] != AStart;
     }
 
     public Vector3 RaySphere_output;
