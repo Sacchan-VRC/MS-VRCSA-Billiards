@@ -938,7 +938,7 @@ int uniform_cue_colour;
             {
                 newMaterials = new Material[] { ballMaterial, shadowMaterial };
 
-                float height = table._GetTableBase().transform.Find(".TABLE_SURFACE").localPosition.y + 0.0025f;
+                float height = table._GetTableBase().transform.Find(".TABLE_SURFACE").position.y + 0.0025f;
                 shadowMaterial.SetFloat("_Floor", height);
                 shadowMaterial.SetFloat("_Scale", table.k_BALL_RADIUS / 0.03f);//0.03f is the radius of the ball's 3D mesh
             }
