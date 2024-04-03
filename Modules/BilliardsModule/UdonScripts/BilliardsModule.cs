@@ -1273,7 +1273,7 @@ public class BilliardsModule : UdonSharpBehaviour
         {
             int tmp = dstId;
             dstId = srcId;
-            srcId = dstId;
+            srcId = tmp;
         }
         if (srcId != 0) return;
 
