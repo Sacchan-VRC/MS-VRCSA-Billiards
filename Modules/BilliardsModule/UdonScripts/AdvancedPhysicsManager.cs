@@ -262,11 +262,10 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
         table._BeginPerf(table.PERF_PHYSICS_BALL);
         bool[] moved = new bool[balls.Length];
 
-        if ((sn_pocketed & 0x1U) == 0) // Cue ball is not pocketed
-        {
-            // Apply movement
 #if UNITY_EDITOR
-            if (Test_Mode)
+        if (Test_Mode)
+        {
+            if ((sn_pocketed & 0x1U) == 0) // Cue ball is not pocketed
             {
                 int Wi = Input.GetKey(KeyCode.W) ? 1 : 0; //inputs as ints
                 int Si = Input.GetKey(KeyCode.S) ? -1 : 0;
@@ -286,13 +285,8 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
                 Vector3 rotdir = new Vector3(Ii + Ki, Oi + Ui, Ji + Li) * Test_RotSpeed * k_FIXED_TIME_STEP;
                 balls_W[0] += rotdir;
             }
-#endif
-            // Vector3 deltaPos = calculateDeltaPosition(sn_pocketed);
-            // balls_P[0] += deltaPos;
-            // moved[0] = deltaPos != Vector3.zero;
-
-            // ballsMoving |= stepOneBall(0, sn_pocketed, moved, new Vector3(0, 0, 0));
         }
+#endif
 
         // Run main simulation / inter-ball collision
 
