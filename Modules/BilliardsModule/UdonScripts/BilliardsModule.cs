@@ -325,8 +325,6 @@ public class BilliardsModule : UdonSharpBehaviour
 
     private void Update()
     {
-        networkingManager._Tick();
-
         desktopManager._Tick();
         // menuManager._Tick();
 
@@ -946,6 +944,8 @@ public class BilliardsModule : UdonSharpBehaviour
         _LogInfo($"onRemoteGameEnded winningTeam={winningTeamSynced}");
 
         isLocalSimulationRunning = false;
+        if (networkingManager.delayedDeserialization)
+            networkingManager.OnDeserialization();
 
         if (tournamentRefereeLocal != -1)
         {
@@ -1435,6 +1435,8 @@ public class BilliardsModule : UdonSharpBehaviour
     {
         if (!isLocalSimulationRunning && !forceRun) return;
         isLocalSimulationRunning = false;
+        if (networkingManager.delayedDeserialization)
+            networkingManager.OnDeserialization();
 
         _LogInfo("local simulation completed");
         cameraManager._OnLocalSimEnd();
@@ -3096,6 +3098,10 @@ public class BilliardsModule : UdonSharpBehaviour
         if (nowDistant == localPlayerDistant) { return; }
         localPlayerDistant = nowDistant;
         setLOD();
+        if (networkingManager.delayedDeserialization)
+        {
+            networkingManager.OnDeserialization();
+        }
     }
 
     private void setLOD()

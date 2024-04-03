@@ -190,14 +190,26 @@ public class NetworkingManager : UdonSharpBehaviour
         processRemoteState();
     }*/
 
-    public void _Tick()
+    [NonSerialized] public bool delayedDeserialization = false;
+    public override void OnDeserialization()
     {
-        if (lastProcessedPacketId == packetIdSynced) return;
+        delayedDeserialization = false;
+
+        // if (lastProcessedPacketId == packetIdSynced) return;
         // if (!hasLocalUpdate && !hasDeferredUpdate) return;
+        if (table.localPlayerDistant)
+        {
+            delayedDeserialization = true;
+            return;
+        }
 
         if (table.isLocalSimulationRunning)
         {
-            if (isUrgentSynced == 0) return;
+            if (isUrgentSynced == 0)
+            {
+                delayedDeserialization = true;
+                return;
+            }
             else if (isUrgentSynced == 2) table.isLocalSimulationRunning = false;
         }
 
@@ -619,6 +631,7 @@ public class NetworkingManager : UdonSharpBehaviour
         isUrgentSynced = (byte)(urgent ? 2 : 0);
 
         hasBufferedMessages = true;
+        OnDeserialization();
     }
 
     public void _FlushBuffer()
