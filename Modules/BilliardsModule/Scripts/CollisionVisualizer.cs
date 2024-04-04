@@ -21,6 +21,7 @@ public class CollisionVisualizer : MonoBehaviour
     [SerializeField] public Vector3 sidePocket; // k_vF
     [SerializeField] public float facingAngleCorner;
     [SerializeField] public float facingAngleSide;
+    [SerializeField] public float k_BALL_RADIUS;
 
     [SerializeField] public bool DrawUnused;
     [SerializeField][Range(2f, 10f)] public float cornerPocketDiameter;
@@ -33,8 +34,6 @@ public class CollisionVisualizer : MonoBehaviour
 
     float k_MINOR_REGION_CONST;
     float r_k_CUSHION_RADIUS;
-
-    const float k_BALL_RADIUS = 0.03f;
 
     Vector3 k_vA = new Vector3();
     Vector3 k_vB = new Vector3();
@@ -229,7 +228,7 @@ public class CollisionVisualizer : MonoBehaviour
 
 #if HT8B_DRAW_REGIONS
 
-        r_k_CUSHION_RADIUS = cushionRadius - k_BALL_RADIUS;
+        r_k_CUSHION_RADIUS = cushionRadius;
 
         _phy_table_init();
 
@@ -260,7 +259,6 @@ public class CollisionVisualizer : MonoBehaviour
             drawCylinder(sidePocket, pocketInnerRadiusSide, Color.red);
         }
 
-        r_k_CUSHION_RADIUS = cushionRadius;
         _phy_table_init();
 #endif
 

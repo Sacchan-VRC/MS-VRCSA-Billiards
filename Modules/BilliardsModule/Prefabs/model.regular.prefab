@@ -2998,11 +2998,11 @@ MonoBehaviour:
   setTableTriggerName: SetTable
   gameModeIntName: GameMode
   tableWidth: 1.06176
-  tableHeight: 0.6006
-  cushionRadius: 0.043
+  tableHeight: 0.5995
+  cushionRadius: 0.012
   pocketWidthCorner: 0.107
-  pocketHeightCorner: 0.0996
-  pocketRadiusSide: 0.086
+  pocketHeightCorner: 0.097
+  pocketRadiusSide: 0.085
   pocketInnerRadiusCorner: 0.078
   pocketInnerRadiusSide: 0.072
   facingAngleCorner: 137

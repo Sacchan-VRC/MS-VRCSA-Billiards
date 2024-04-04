@@ -1,6 +1,5 @@
 // #define HT8B_DRAW_REGIONS
 using System;
-using BestHTTP.SecureProtocol.Org.BouncyCastle.Asn1.Misc;
 using UdonSharp;
 using UnityEngine;
 
@@ -1177,23 +1176,30 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
         k_vC_vZ_normal.x = k_vC_vZ.z;
         k_vC_vZ_normal.z = -k_vC_vZ.x;
 
+        // Adding k_BALL_RADIUS to some values breaks the visualization from HT8B_DRAW_REGIONS
+        // but it's the only way I've found to make collision work properly with different sized balls
+        // TODO: Fix it somehow
+        float r_k_CUSHION_RADIUS = k_CUSHION_RADIUS + k_BALL_RADIUS;
         // Minkowski difference
         k_pN = k_vA;
-        k_pN.z -= k_CUSHION_RADIUS;
+        k_pN.z -= k_CUSHION_RADIUS + k_BALL_RADIUS;
 
-        k_pM = k_vA + k_vA_vD_normal * k_CUSHION_RADIUS;
-        k_pL = k_vD + k_vA_vD_normal * k_CUSHION_RADIUS;
+        k_pL = k_vD + k_vA_vD_normal * r_k_CUSHION_RADIUS;
 
         k_pK = k_vD;
         k_pK.x -= k_CUSHION_RADIUS;
 
         k_pO = k_vB;
         k_pO.z -= k_CUSHION_RADIUS;
-        k_pP = k_vB + k_vB_vY_normal * k_CUSHION_RADIUS;
-        k_pQ = k_vC + k_vC_vZ_normal * k_CUSHION_RADIUS;
+        k_pP = k_vB + k_vB_vY_normal * r_k_CUSHION_RADIUS;
+        k_pQ = k_vC + k_vC_vZ_normal * r_k_CUSHION_RADIUS;
 
         k_pR = k_vC;
         k_pR.x -= k_CUSHION_RADIUS;
+
+#if HT8B_DRAW_REGIONS
+        // for drawing lines only
+        k_pM = k_vA + k_vA_vD_normal * k_CUSHION_RADIUS;
 
         k_pT = k_vX;
         k_pT.x -= k_CUSHION_RADIUS;
@@ -1203,6 +1209,7 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
 
         k_pU = k_vY + k_vB_vY_normal * k_CUSHION_RADIUS;
         k_pV = k_vZ + k_vC_vZ_normal * k_CUSHION_RADIUS;
+#endif
     }
 
     // Check pocket condition
@@ -1265,6 +1272,10 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
 
     bool _phy_ball_table_std(int id)
     {
+        if (balls_P[id].y > k_BALL_DIAMETRE * .635f)
+        {
+            return false;
+        }
         Vector3 A, N, _V, V, a_to_v;
         float dot;
 
@@ -1275,6 +1286,7 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
         _sign_pos.z = Mathf.Sign(A.z);
 
         A = Vector3.Scale(A, _sign_pos);
+        float r_k_CUSHION_RADIUS = k_CUSHION_RADIUS + k_BALL_RADIUS;
 
 #if HT8B_DRAW_REGIONS
         Debug.DrawLine(k_vA, k_vB, Color.white);
@@ -1316,10 +1328,10 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
                     Debug.DrawLine(k_vC, k_vC + k_vC_vW_normal, Color.red);
                     if (id == 0) Debug.Log("Region H");
 #endif
-                    if (A.x > k_TABLE_WIDTH - k_CUSHION_RADIUS)
+                    if (A.x > k_TABLE_WIDTH - r_k_CUSHION_RADIUS)
                     {
                         // Static resolution
-                        A.x = k_TABLE_WIDTH - k_CUSHION_RADIUS;
+                        A.x = k_TABLE_WIDTH - r_k_CUSHION_RADIUS;
 
                         // Dynamic
                         _phy_bounce_cushion(id, Vector3.Scale(k_vC_vW_normal, _sign_pos));
@@ -1337,11 +1349,11 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
                         Debug.DrawLine(k_vC, k_pQ, Color.green);
                         if (id == 0) Debug.Log("Region I ( VORONI )");
 #endif
-                        if (a_to_v.magnitude < k_CUSHION_RADIUS)
+                        if (a_to_v.magnitude < r_k_CUSHION_RADIUS)
                         {
                             // Static resolution
                             N = a_to_v.normalized;
-                            A = k_vC + N * k_CUSHION_RADIUS;
+                            A = k_vC + N * r_k_CUSHION_RADIUS;
 
                             // Dynamic
                             _phy_bounce_cushion(id, Vector3.Scale(N, _sign_pos));
@@ -1433,11 +1445,11 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
                         Debug.DrawLine(k_vB, k_pP, Color.green);
                         if (id == 0) Debug.Log("Region F ( VERONI )");
 #endif
-                        if (a_to_v.magnitude < k_CUSHION_RADIUS)
+                        if (a_to_v.magnitude < r_k_CUSHION_RADIUS)
                         {
                             // Static resolution
                             N = a_to_v.normalized;
-                            A = k_vB + N * k_CUSHION_RADIUS;
+                            A = k_vB + N * r_k_CUSHION_RADIUS;
 
                             // Dynamic
                             _phy_bounce_cushion(id, Vector3.Scale(N, _sign_pos));
@@ -1500,11 +1512,11 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
                         Debug.DrawLine(k_vD, k_vD + k_vA_vD_normal, Color.green);
                         if (id == 0) Debug.Log("Region D ( VORONI )");
 #endif
-                        if (a_to_v.magnitude < k_CUSHION_RADIUS)
+                        if (a_to_v.magnitude < r_k_CUSHION_RADIUS)
                         {
                             // Static resolution
                             N = a_to_v.normalized;
-                            A = k_vD + N * k_CUSHION_RADIUS;
+                            A = k_vD + N * r_k_CUSHION_RADIUS;
 
                             // Dynamic
                             _phy_bounce_cushion(id, Vector3.Scale(N, _sign_pos));
@@ -1541,11 +1553,11 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
                 Debug.DrawLine(k_vA, k_vA + k_vA_vD_normal, Color.green);
                 if (id == 0) Debug.Log("Region B ( VORONI )");
 #endif
-                if (a_to_v.magnitude < k_CUSHION_RADIUS)
+                if (a_to_v.magnitude < r_k_CUSHION_RADIUS)
                 {
                     // Static resolution
                     N = a_to_v.normalized;
-                    A = k_vA + N * k_CUSHION_RADIUS;
+                    A = k_vA + N * r_k_CUSHION_RADIUS;
 
                     // Dynamic
                     _phy_bounce_cushion(id, Vector3.Scale(N, _sign_pos));
