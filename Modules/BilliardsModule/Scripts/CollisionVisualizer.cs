@@ -22,6 +22,10 @@ public class CollisionVisualizer : MonoBehaviour
     [SerializeField] public float facingAngleCorner;
     [SerializeField] public float facingAngleSide;
     [SerializeField] public float k_BALL_RADIUS;
+    [SerializeField] public float k_RAIL_HEIGHT_UPPER;
+    [SerializeField] public float k_RAIL_HEIGHT_LOWER;
+    [SerializeField] public float k_RAIL_DEPTH_WIDTH;
+    [SerializeField] public float k_RAIL_DEPTH_HEIGHT;
 
     [SerializeField] public bool DrawUnused;
     [SerializeField][Range(2f, 10f)] public float cornerPocketDiameter;
@@ -69,6 +73,10 @@ public class CollisionVisualizer : MonoBehaviour
 
     Vector3 k_vA_vB_normal = new Vector3(0.0f, 0.0f, -1.0f);
     Vector3 k_vC_vW_normal = new Vector3(-1.0f, 0.0f, 0.0f);
+
+    Vector3 railCornerOuter = new Vector3();
+    Vector3 railWidthMidPoint = new Vector3();
+    Vector3 railHeightMidPoint = new Vector3();
 
     //public Vector3 k_vE = new Vector3(1.087f,0.0f,0.627f);
     //public Vector3 k_vF = new Vector3(0.0f,0.0f,0.665f);
@@ -165,6 +173,13 @@ public class CollisionVisualizer : MonoBehaviour
 
         k_pS = k_vW;
         k_pS.x -= r_k_CUSHION_RADIUS;
+
+        // Rail Height Stuff
+        railCornerOuter = Vector3.right * (tableWidth + k_RAIL_DEPTH_WIDTH) + Vector3.forward * (tableHeight + k_RAIL_DEPTH_HEIGHT);
+        railWidthMidPoint = railCornerOuter;
+        railWidthMidPoint.x = 0;
+        railHeightMidPoint = railCornerOuter;
+        railHeightMidPoint.z = 0;
     }
 
     string _obj_vec_str(Vector3 v)
@@ -235,6 +250,10 @@ public class CollisionVisualizer : MonoBehaviour
         //side pockets
         // drawPlane(k_pT, k_pK, Color.yellow);
         // drawPlane(k_pK, k_pL, Color.yellow);
+
+        drawPlane(railWidthMidPoint, railCornerOuter, Color.grey);
+        drawPlane(railHeightMidPoint, railCornerOuter, Color.grey);
+
 
         drawPlane(k_pL, k_pM, Color.yellow);
         drawPlane(k_pM, k_pN, Color.yellow);

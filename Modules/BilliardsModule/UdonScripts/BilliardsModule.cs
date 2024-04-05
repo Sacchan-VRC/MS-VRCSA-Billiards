@@ -38,6 +38,10 @@ public class BilliardsModule : UdonSharpBehaviour
     [NonSerialized] public float k_BALL_DIAMETRE; // Diameter of balls
     [NonSerialized] public float k_BALL_RADIUS; // Radius of balls
     [NonSerialized] public float k_BALL_MASS; // Mass of balls
+    [NonSerialized] public float k_RAIL_HEIGHT_UPPER;
+    [NonSerialized] public float k_RAIL_HEIGHT_LOWER;
+    [NonSerialized] public float k_RAIL_DEPTH_WIDTH;
+    [NonSerialized] public float k_RAIL_DEPTH_HEIGHT;
     [NonSerialized] public Vector3 k_vE; // corner pocket data
     [NonSerialized] public Vector3 k_vF; // side pocket data
     [NonSerialized] public Vector3 k_rack_position = new Vector3();
@@ -1206,7 +1210,7 @@ public class BilliardsModule : UdonSharpBehaviour
         ballBounced_9Ball = false;
         ballsPocketedOrig = ballsPocketedLocal;
         jumpShotFoul = false;
-        currentPhysicsManager.SendCustomEvent("_ResetJumpShotVariables");
+        currentPhysicsManager.SendCustomEvent("_ResetSimulationVariables");
         numBallsPocketedThisTurn = 0;
 
         if (Networking.LocalPlayer.playerId == ownerID || fake)
@@ -1262,7 +1266,7 @@ public class BilliardsModule : UdonSharpBehaviour
     #endregion
 
     #region PhysicsEngineCallbacks
-    public void _TriggerBounceCushion(int Id, Vector3 N)
+    public void _TriggerBounceCushion()
     {
         if (firstHit != 0)
         { ballBounced_9Ball = true; }
@@ -1994,6 +1998,10 @@ public class BilliardsModule : UdonSharpBehaviour
         k_BALL_RADIUS = data.ballRadius;
         k_BALL_DIAMETRE = k_BALL_RADIUS * 2;
         k_BALL_MASS = data.ballMass;
+        k_RAIL_HEIGHT_UPPER = data.railHeightUpper;
+        k_RAIL_HEIGHT_LOWER = data.railHeightLower;
+        k_RAIL_DEPTH_WIDTH = data.railDepthWidth;
+        k_RAIL_DEPTH_HEIGHT = data.railDepthHeight;
         k_SPOT_POSITION_X = data.rackTrianglePosition;
         k_vE = data.cornerPocket;
         k_vF = data.sidePocket;

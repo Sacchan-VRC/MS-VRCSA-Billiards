@@ -121,9 +121,12 @@ public class ModelConfigurationEditor : Editor
             this.cdata_displayTarget.sidePocket = data.sidePocket;
             this.cdata_displayTarget.facingAngleCorner = data.facingAngleCorner;
             this.cdata_displayTarget.facingAngleSide = data.facingAngleSide;
+            this.cdata_displayTarget.k_RAIL_HEIGHT_UPPER = data.railHeightUpper;
+            this.cdata_displayTarget.k_RAIL_HEIGHT_LOWER = data.railHeightLower;
+            this.cdata_displayTarget.k_RAIL_DEPTH_WIDTH = data.railDepthWidth;
+            this.cdata_displayTarget.k_RAIL_DEPTH_HEIGHT = data.railDepthHeight;
         }
     }
-
     void OnEnable()
     {
         if (!cdata_displayTarget)

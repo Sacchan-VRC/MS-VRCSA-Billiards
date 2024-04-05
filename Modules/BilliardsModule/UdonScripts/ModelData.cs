@@ -32,6 +32,10 @@ public class ModelData : UdonSharpBehaviour
     [SerializeField] public float ballRadius = 0.03f;
     [SerializeField] public float ballMass = 0.16f;
     [SerializeField] public float rackTrianglePosition = 0.5334f;
+    [SerializeField] public float railHeightUpper = 0.038002f;
+    [SerializeField] public float railHeightLower = 0.028472f;
+    [SerializeField] public float railDepthWidth = 0.12f;
+    [SerializeField] public float railDepthHeight = 0.12f;
 
     [SerializeField] public Vector3 cornerPocket = new Vector3(11.087f, 0, 10.63f); // k_vE
     [SerializeField] public Vector3 sidePocket = new Vector3(0, 0, 10.662f); // k_vF

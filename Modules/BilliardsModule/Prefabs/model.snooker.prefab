@@ -736,6 +736,10 @@ MonoBehaviour:
   ballRadius: 0.02625
   ballMass: 0.14
   rackTrianglePosition: 0.872
+  railHeightUpper: 0.038002
+  railHeightLower: 0.028472
+  railDepthWidth: 0.098
+  railDepthHeight: 0.098
   cornerPocket: {x: 1.7988, y: 0, z: 0.9045}
   sidePocket: {x: 0, y: 0, z: 0.9448}
   baulkLine: 0.76
