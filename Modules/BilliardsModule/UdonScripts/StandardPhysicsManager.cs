@@ -1065,15 +1065,21 @@ public class StandardPhysicsManager : UdonSharpBehaviour
 
     void _phy_ball_table_std(int id)
     {
-        Vector3 A, N, _V, V, a_to_v;
+        Vector3 N, _V, V, a_to_v;
         float dot;
 
-        A = balls_P[id];
+        Vector3 newPos = balls_P[id];
+        Vector3 newVel = balls_V[id];
+        Vector3 newAngVel = balls_W[id];
 
-        _sign_pos.x = Mathf.Sign(A.x);
-        _sign_pos.z = Mathf.Sign(A.z);
+        _sign_pos.x = Mathf.Sign(newPos.x);
+        _sign_pos.z = Mathf.Sign(newPos.z);
+        newPos = Vector3.Scale(newPos, _sign_pos);
+        Vector3 newPosPR = newPos;
+        newPosPR.x += k_BALL_RADIUS;
+        newPosPR.z += k_BALL_RADIUS;
 
-        A = Vector3.Scale(A, _sign_pos);
+        float r_k_CUSHION_RADIUS = k_CUSHION_RADIUS + k_BALL_RADIUS;
 
 #if HT8B_DRAW_REGIONS
         Debug.DrawLine(k_vA, k_vB, Color.white);
@@ -1103,30 +1109,31 @@ public class StandardPhysicsManager : UdonSharpBehaviour
         //    _phy_table_init();
 #endif
 
-        if (A.x > k_vA.x) // Major Regions
+        if (newPos.x > k_vA.x) // Major Regions
         {
-            if (A.x > A.z + k_MINOR_REGION_CONST) // Minor B
+            if (newPos.x > newPos.z + k_MINOR_REGION_CONST) // Minor B
             {
-                if (A.z < k_TABLE_HEIGHT - k_POCKET_HEIGHT_CORNER)
+                if (newPos.z < k_TABLE_HEIGHT - k_POCKET_HEIGHT_CORNER)
                 {
                     // Region H
 #if HT8B_DRAW_REGIONS
                     Debug.DrawLine(new Vector3(0.0f, 0.0f, 0.0f), new Vector3(k_TABLE_WIDTH, 0.0f, 0.0f), Color.red);
                     Debug.DrawLine(k_vC, k_vC + k_vC_vW_normal, Color.red);
-                    if (id == 0) Debug.Log("Region H");
 #endif
-                    if (A.x > k_TABLE_WIDTH - k_CUSHION_RADIUS)
+                    if (newPos.x > k_TABLE_WIDTH - r_k_CUSHION_RADIUS)
                     {
                         // Static resolution
-                        A.x = k_TABLE_WIDTH - k_CUSHION_RADIUS;
-
+                        newPos.x = k_TABLE_WIDTH - r_k_CUSHION_RADIUS;
                         // Dynamic
                         _phy_bounce_cushion(id, Vector3.Scale(k_vC_vW_normal, _sign_pos));
+#if HT8B_DRAW_REGIONS
+                        if (id == 0) Debug.Log("Region H");
+#endif
                     }
                 }
                 else
                 {
-                    a_to_v = A - k_vC;
+                    a_to_v = newPos - k_vC;
 
                     if (Vector3.Dot(a_to_v, k_vB_vY) > 0.0f)
                     {
@@ -1134,16 +1141,18 @@ public class StandardPhysicsManager : UdonSharpBehaviour
 #if HT8B_DRAW_REGIONS
                         Debug.DrawLine(k_vC, k_pR, Color.green);
                         Debug.DrawLine(k_vC, k_pQ, Color.green);
-                        if (id == 0) Debug.Log("Region I ( VORONI )");
 #endif
-                        if (a_to_v.magnitude < k_CUSHION_RADIUS)
+                        if (a_to_v.magnitude < r_k_CUSHION_RADIUS)
                         {
                             // Static resolution
                             N = a_to_v.normalized;
-                            A = k_vC + N * k_CUSHION_RADIUS;
+                            newPos = k_vC + N * r_k_CUSHION_RADIUS;
 
                             // Dynamic
                             _phy_bounce_cushion(id, Vector3.Scale(N, _sign_pos));
+#if HT8B_DRAW_REGIONS
+                            if (id == 0) Debug.Log("Region I ( VORONI ) (NEAR CORNER POCKET)");
+#endif
                         }
                     }
                     else
@@ -1152,77 +1161,127 @@ public class StandardPhysicsManager : UdonSharpBehaviour
 #if HT8B_DRAW_REGIONS
                         Debug.DrawLine(k_vC, k_vB, Color.red);
                         Debug.DrawLine(k_pQ, k_pV, Color.blue);
-                        if (id == 0) Debug.Log("Region J");
 #endif
-                        a_to_v = A - k_pQ;
+                        a_to_v = newPos - k_pQ;
 
-                        if (Vector3.Dot(k_vC_vZ_normal, a_to_v) < 0.0f)
+                        if (Vector3.Dot(k_vC_vZ_normal, a_to_v) < k_BALL_RADIUS)
                         {
                             // Static resolution
                             dot = Vector3.Dot(a_to_v, k_vC_vZ);
-                            A = k_pQ + dot * k_vC_vZ;
+                            newPos = k_pQ + dot * k_vC_vZ + k_vC_vZ_normal * k_BALL_RADIUS;
 
                             // Dynamic
                             _phy_bounce_cushion(id, Vector3.Scale(k_vC_vZ_normal, _sign_pos));
+#if HT8B_DRAW_REGIONS
+                            if (id == 0) Debug.Log("Region J (Inside Corner Pocket)");
+#endif
                         }
+                        /* if (!                        {
+                            Vector3 toPocketEdge = newPos - k_vE;
+                            if (Vector3.Dot(toPocketEdge, k_vE) > 0)
+                            {
+                                // actually above the corner pocket itself, collision for the back of it if you jump over it
+                                // TODO: sqrmag inner radius
+                                if (toPocketEdge.sqrMagnitude + k_BALL_DSQR > k_INNER_RADIUS_CORNER_SQ)
+                                {
+                                    Vector3 pocketNormal = toPocketEdge.normalized;
+                                    // Static resolution
+                                    newPos = k_vE + pocketNormal * k_INNER_RADIUS_CORNER - pocketNormal * k_BALL_RADIUS;
+
+                                    // Dynamic
+                                    _phy_bounce_cushion(id, Vector3.Scale(-pocketNormal, _sign_pos));
+                                                                    }
+                            }
+                        } */
                     }
                 }
             }
             else // Minor A
             {
-                if (A.x < k_vB.x)
+                if (newPos.x < k_vB.x)
                 {
                     // Region A
 #if HT8B_DRAW_REGIONS
                     Debug.DrawLine(k_vA, k_vA + k_vA_vB_normal, Color.red);
                     Debug.DrawLine(k_vB, k_vB + k_vA_vB_normal, Color.red);
-                    if (id == 0) Debug.Log("Region A");
 #endif
-                    if (A.z > k_pN.z)
+                    if (newPosPR.z > k_pN.z)
                     {
                         // Velocity based A->C delegation ( scuffed CCD )
-                        a_to_v = A - k_vA;
-                        _V = Vector3.Scale(balls_V[id], _sign_pos);
+                        a_to_v = newPos - k_vA;
+                        _V = Vector3.Scale(newVel, _sign_pos);
                         V.x = -_V.z;
                         V.y = 0.0f;
                         V.z = _V.x;
 
-                        if (A.z > k_vA.z)
+                        if (newPosPR.z > k_vA.z)
                         {
                             if (Vector3.Dot(V, a_to_v) > 0.0f)
                             {
                                 // Region C ( Delegated )
-                                a_to_v = A - k_pL;
+                                a_to_v = newPos - k_pL;
 
                                 // Static resolution
                                 dot = Vector3.Dot(a_to_v, k_vA_vD);
-                                A = k_pL + dot * k_vA_vD;
+                                newPos = k_pL + dot * k_vA_vD;
 
                                 // Dynamic
                                 _phy_bounce_cushion(id, Vector3.Scale(k_vA_vD_normal, _sign_pos));
+#if HT8B_DRAW_REGIONS
+                                if (id == 0) Debug.Log("Region C ( Delegated )");
+#endif
                             }
                             else
                             {
                                 // Static resolution
-                                A.z = k_pN.z;
+                                newPos.z = k_pN.z - k_BALL_RADIUS;
 
                                 // Dynamic
                                 _phy_bounce_cushion(id, Vector3.Scale(k_vA_vB_normal, _sign_pos));
+#if HT8B_DRAW_REGIONS
+                                if (id == 0) Debug.Log("Region A II");
+#endif
                             }
                         }
                         else
                         {
-                            // Static resolution
-                            A.z = k_pN.z;
+                            /*                             if (newPos.z > k_pN.z)
+                                                        {
+                                                            a_to_v = newPos - k_pN;
+                                                            if (Vector3.Dot(V, a_to_v) > 0.0f)
+                                                            {
+                            #if HT8B_DRAW_REGIONS
+                                                                Debug.DrawLine(k_vA, k_vA + k_vA_vB_normal, Color.green);
+                                                                Debug.DrawLine(k_vA, k_vA + k_vA_vD_normal, Color.green);
+                                                                if (id == 0) Debug.Log("Region B ( VORONI ) ( Delegated )");
+                            #endif
+                                                                // g
+                                                                // Static resolution
+                                                                N = a_to_v.normalized;
+                                                                newPos = k_vA + N * r_k_CUSHION_RADIUS;
 
-                            // Dynamic
-                            _phy_bounce_cushion(id, Vector3.Scale(k_vA_vB_normal, _sign_pos));
+                                                                // Dynamic
+                                                                _phy_bounce_cushion(id, Vector3.Scale(N, _sign_pos));
+                                                                                                                                if (id == 0) Debug.Log("Region B ( VORONI ) ( Delegated )");
+                                                            }
+                                                        }
+                                                        else */
+                            {
+                                // Static resolution
+                                newPos.z = k_pN.z - k_BALL_RADIUS;
+
+                                // Dynamic
+                                _phy_bounce_cushion(id, Vector3.Scale(k_vA_vB_normal, _sign_pos));
+#if HT8B_DRAW_REGIONS
+                                if (id == 0) Debug.Log("Region A");
+#endif
+                            }
                         }
                     }
                 }
                 else
                 {
-                    a_to_v = A - k_vB;
+                    a_to_v = newPos - k_vB;
 
                     if (Vector3.Dot(a_to_v, k_vB_vY) > 0.0f)
                     {
@@ -1230,16 +1289,18 @@ public class StandardPhysicsManager : UdonSharpBehaviour
 #if HT8B_DRAW_REGIONS
                         Debug.DrawLine(k_vB, k_pO, Color.green);
                         Debug.DrawLine(k_vB, k_pP, Color.green);
-                        if (id == 0) Debug.Log("Region F ( VERONI )");
 #endif
-                        if (a_to_v.magnitude < k_CUSHION_RADIUS)
+                        if (a_to_v.magnitude < r_k_CUSHION_RADIUS)
                         {
                             // Static resolution
                             N = a_to_v.normalized;
-                            A = k_vB + N * k_CUSHION_RADIUS;
+                            newPos = k_vB + N * r_k_CUSHION_RADIUS;
 
                             // Dynamic
                             _phy_bounce_cushion(id, Vector3.Scale(N, _sign_pos));
+#if HT8B_DRAW_REGIONS
+                            if (id == 0) Debug.Log("Region F ( VERONI ) (NEAR CORNER POCKET)");
+#endif
                         }
                     }
                     else
@@ -1248,47 +1309,68 @@ public class StandardPhysicsManager : UdonSharpBehaviour
 #if HT8B_DRAW_REGIONS
                         Debug.DrawLine(k_vB, k_vC, Color.red);
                         Debug.DrawLine(k_pP, k_pU, Color.blue);
-                        if (id == 0) Debug.Log("Region G");
 #endif
-                        a_to_v = A - k_pP;
+                        a_to_v = newPos - k_pP;
 
-                        if (Vector3.Dot(k_vB_vY_normal, a_to_v) < 0.0f)
+                        if (Vector3.Dot(k_vB_vY_normal, a_to_v) < k_BALL_RADIUS)
                         {
                             // Static resolution
                             dot = Vector3.Dot(a_to_v, k_vB_vY);
-                            A = k_pP + dot * k_vB_vY;
+                            newPos = k_pP + dot * k_vB_vY + k_vB_vY_normal * k_BALL_RADIUS;
 
                             // Dynamic
                             _phy_bounce_cushion(id, Vector3.Scale(k_vB_vY_normal, _sign_pos));
+#if HT8B_DRAW_REGIONS
+                            if (id == 0) Debug.Log("Region G (Inside Corner Pocket)");
+#endif
                         }
+                        /* if (!                        {
+                            Vector3 toPocketEdge = newPos - k_vE;
+                            if (Vector3.Dot(toPocketEdge, k_vE) > 0)
+                            {
+                                // actually above the corner pocket itself, collision for the back of it if you jump over it
+                                // TODO: sqrmag inner radius
+                                if (toPocketEdge.sqrMagnitude + k_BALL_DSQR > k_INNER_RADIUS_CORNER_SQ)
+                                {
+                                    Vector3 pocketNormal = toPocketEdge.normalized;
+                                    // Static resolution
+                                    newPos = k_vE + pocketNormal * k_INNER_RADIUS_CORNER - pocketNormal * k_BALL_RADIUS;
+
+                                    // Dynamic
+                                    _phy_bounce_cushion(id, Vector3.Scale(-pocketNormal, _sign_pos));
+                                                                    }
+                            }
+                        } */
                     }
                 }
             }
         }
         else
         {
-            a_to_v = A - k_vA;
+            a_to_v = newPos - k_vA;
 
             if (Vector3.Dot(a_to_v, k_vA_vD) > 0.0f)
             {
-                a_to_v = A - k_vD;
+                a_to_v = newPos - k_vD;
 
                 if (Vector3.Dot(a_to_v, k_vA_vD) > 0.0f)
                 {
-                    if (A.z > k_pK.z)
+                    if (newPos.z > k_pK.z)
                     {
                         // Region E
 #if HT8B_DRAW_REGIONS
                         Debug.DrawLine(k_vD, k_vD + k_vC_vW_normal, Color.red);
-                        if (id == 0) Debug.Log("Region E");
 #endif
-                        if (A.x > k_pK.x)
+                        if (newPos.x > k_pK.x)
                         {
                             // Static resolution
-                            A.x = k_pK.x;
+                            newPos.x = k_pK.x;
 
                             // Dynamic
                             _phy_bounce_cushion(id, Vector3.Scale(k_vC_vW_normal, _sign_pos));
+#if HT8B_DRAW_REGIONS
+                            if (id == 0) Debug.Log("Region E");
+#endif
                         }
                     }
                     else
@@ -1297,16 +1379,18 @@ public class StandardPhysicsManager : UdonSharpBehaviour
 #if HT8B_DRAW_REGIONS
                         Debug.DrawLine(k_vD, k_vD + k_vC_vW_normal, Color.green);
                         Debug.DrawLine(k_vD, k_vD + k_vA_vD_normal, Color.green);
-                        if (id == 0) Debug.Log("Region D ( VORONI )");
 #endif
-                        if (a_to_v.magnitude < k_CUSHION_RADIUS)
+                        if (a_to_v.magnitude < r_k_CUSHION_RADIUS)
                         {
                             // Static resolution
                             N = a_to_v.normalized;
-                            A = k_vD + N * k_CUSHION_RADIUS;
+                            newPos = k_vD + N * r_k_CUSHION_RADIUS;
 
                             // Dynamic
                             _phy_bounce_cushion(id, Vector3.Scale(N, _sign_pos));
+#if HT8B_DRAW_REGIONS
+                            if (id == 0) Debug.Log("Region D ( VORONI )");
+#endif
                         }
                     }
                 }
@@ -1317,18 +1401,20 @@ public class StandardPhysicsManager : UdonSharpBehaviour
                     Debug.DrawLine(k_vA, k_vA + k_vA_vD_normal, Color.red);
                     Debug.DrawLine(k_vD, k_vD + k_vA_vD_normal, Color.red);
                     Debug.DrawLine(k_pL, k_pM, Color.blue);
-                    if (id == 0) Debug.Log("Region C");
 #endif
-                    a_to_v = A - k_pL;
+                    a_to_v = newPos - k_pL;
 
-                    if (Vector3.Dot(k_vA_vD_normal, a_to_v) < 0.0f)
+                    if (Vector3.Dot(k_vA_vD_normal, a_to_v) < k_BALL_RADIUS)
                     {
                         // Static resolution
                         dot = Vector3.Dot(a_to_v, k_vA_vD);
-                        A = k_pL + dot * k_vA_vD;
+                        newPos = k_pL + dot * k_vA_vD + k_vA_vD_normal * k_BALL_RADIUS;
 
                         // Dynamic
                         _phy_bounce_cushion(id, Vector3.Scale(k_vA_vD_normal, _sign_pos));
+#if HT8B_DRAW_REGIONS
+                        if (id == 0) Debug.Log("Region C");
+#endif
                     }
                 }
             }
@@ -1338,21 +1424,21 @@ public class StandardPhysicsManager : UdonSharpBehaviour
 #if HT8B_DRAW_REGIONS
                 Debug.DrawLine(k_vA, k_vA + k_vA_vB_normal, Color.green);
                 Debug.DrawLine(k_vA, k_vA + k_vA_vD_normal, Color.green);
-                if (id == 0) Debug.Log("Region B ( VORONI )");
 #endif
-                if (a_to_v.magnitude < k_CUSHION_RADIUS)
+                if (a_to_v.magnitude < r_k_CUSHION_RADIUS)
                 {
                     // Static resolution
                     N = a_to_v.normalized;
-                    A = k_vA + N * k_CUSHION_RADIUS;
+                    newPos = k_vA + N * r_k_CUSHION_RADIUS;
 
                     // Dynamic
                     _phy_bounce_cushion(id, Vector3.Scale(N, _sign_pos));
+#if HT8B_DRAW_REGIONS
+                    if (id == 0) Debug.Log("Region B ( VORONI )");
+#endif
                 }
             }
         }
-
-        balls_P[id] = Vector3.Scale(A, _sign_pos);
     }
 
     public Vector3 RaySphere_output;
