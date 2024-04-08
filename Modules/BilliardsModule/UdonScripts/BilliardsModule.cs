@@ -28,6 +28,7 @@ public class BilliardsModule : UdonSharpBehaviour
     [NonSerialized] public float k_POCKET_WIDTH_CORNER; // Radius of pockets
     [NonSerialized] public float k_POCKET_HEIGHT_CORNER; // Radius of pockets
     [NonSerialized] public float k_POCKET_RADIUS_SIDE; // Radius of side pockets
+    [NonSerialized] public float k_POCKET_DEPTH_SIDE; // Depth of side pockets
     [NonSerialized] public float k_INNER_RADIUS_CORNER; // Pocket 'hitbox' cylinder
     [NonSerialized] public float k_INNER_RADIUS_SIDE; // Pocket 'hitbox' cylinder for corner pockets
     [NonSerialized] public float k_FACING_ANGLE_CORNER; // Angle of corner pocket inner walls
@@ -1992,6 +1993,7 @@ public class BilliardsModule : UdonSharpBehaviour
         k_POCKET_WIDTH_CORNER = data.pocketWidthCorner;
         k_POCKET_HEIGHT_CORNER = data.pocketHeightCorner;
         k_POCKET_RADIUS_SIDE = data.pocketRadiusSide;
+        k_POCKET_DEPTH_SIDE = data.pocketDepthSide;
         k_INNER_RADIUS_CORNER = data.pocketInnerRadiusCorner;
         k_INNER_RADIUS_SIDE = data.pocketInnerRadiusSide;
         k_FACING_ANGLE_CORNER = data.facingAngleCorner;

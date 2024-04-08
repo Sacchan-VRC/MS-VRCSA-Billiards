@@ -12,6 +12,7 @@ public class CollisionVisualizer : MonoBehaviour
     [SerializeField] public float tableHeight;
     [SerializeField] public float pocketWidthCorner;
     [SerializeField] public float pocketHeightCorner;
+    [SerializeField] public float pocketDepthSide;
     [SerializeField] public float pocketRadiusSide;
     [SerializeField] public float cushionRadius;
     [SerializeField] public float pocketInnerRadiusCorner;
@@ -104,7 +105,7 @@ public class CollisionVisualizer : MonoBehaviour
         k_vC.z = tableHeight - pocketHeightCorner;
 
         k_vD = k_vA;
-        Vector3 Rotationk_vD = new Vector3(1, 0, 0);
+        Vector3 Rotationk_vD = new Vector3(pocketDepthSide, 0, 0);
         Rotationk_vD = Quaternion.AngleAxis(-facingAngleSide, Vector3.up) * Rotationk_vD;
         k_vD += Rotationk_vD;
 
@@ -248,8 +249,8 @@ public class CollisionVisualizer : MonoBehaviour
         _phy_table_init();
 
         //side pockets
-        // drawPlane(k_pT, k_pK, Color.yellow);
-        // drawPlane(k_pK, k_pL, Color.yellow);
+        drawPlane(k_pT, k_pK, Color.yellow);
+        drawPlane(k_pK, k_pL, Color.yellow);
 
         drawPlane(railWidthMidPoint, railCornerOuter, Color.grey);
         drawPlane(railHeightMidPoint, railCornerOuter, Color.grey);
@@ -536,6 +537,7 @@ public class CollisionVisualizer : MonoBehaviour
             pocketWidthCorner = (float)table.GetProgramVariable("k_POCKET_WIDTH_CORNER");
             pocketHeightCorner = (float)table.GetProgramVariable("k_POCKET_WIDTH_CORNER");
             pocketRadiusSide = (float)table.GetProgramVariable("k_POCKET_RADIUS_SIDE");
+            pocketDepthSide = (float)table.GetProgramVariable("k_POCKET_DEPTH_SIDE");
             cushionRadius = (float)table.GetProgramVariable("k_CUSHION_RADIUS");
             pocketInnerRadiusCorner = (float)table.GetProgramVariable("k_INNER_RADIUS_CORNER");
             pocketInnerRadiusSide = (float)table.GetProgramVariable("k_INNER_RADIUS_SIDE");

@@ -3003,6 +3003,7 @@ MonoBehaviour:
   pocketWidthCorner: 0.107
   pocketHeightCorner: 0.097
   pocketRadiusSide: 0.085
+  pocketDepthSide: 0.037
   pocketInnerRadiusCorner: 0.078
   pocketInnerRadiusSide: 0.072
   facingAngleCorner: 137
@@ -3010,8 +3011,10 @@ MonoBehaviour:
   ballRadius: 0.03
   ballMass: 0.16
   rackTrianglePosition: 0.5334
-  railHeightUpper: 0.038002
-  railHeightLower: 0.0381
+  railHeightUpper: 0.04
+  railHeightLower: 0.032
+  railDepthWidth: 0.16
+  railDepthHeight: 0.17
   cornerPocket: {x: 1.09, y: 0, z: 0.633}
   sidePocket: {x: 0, y: 0, z: 0.665}
   baulkLine: 0.5

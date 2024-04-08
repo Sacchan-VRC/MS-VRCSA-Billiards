@@ -25,6 +25,7 @@ public class ModelData : UdonSharpBehaviour
     [SerializeField] public float pocketWidthCorner = 0.1f;
     [SerializeField] public float pocketHeightCorner = 0.1f;
     [SerializeField] public float pocketRadiusSide = 0.1f;
+    [SerializeField] public float pocketDepthSide = 0.04f;
     [SerializeField] public float pocketInnerRadiusCorner = 0.072f;
     [SerializeField] public float pocketInnerRadiusSide = 0.072f;
     [SerializeField] public float facingAngleCorner = 133f; // corner pocket facing angle

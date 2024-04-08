@@ -67,6 +67,7 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
     float k_POCKET_WIDTH_CORNER;
     float k_POCKET_HEIGHT_CORNER;
     float k_POCKET_RADIUS_SIDE;
+    float k_POCKET_DEPTH_SIDE;
     float k_CUSHION_RADIUS;
     float k_RAIL_HEIGHT_UPPER;
     float k_RAIL_HEIGHT_LOWER;
@@ -531,10 +532,10 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
             float vertRadiusSQR = r_k_CUSHION_RADIUS * r_k_CUSHION_RADIUS - 0.000002f;
             // draw move dir
             // Debug.DrawRay(balls[0].transform.parent.TransformPoint(Vector3.Scale(pos, _sign_pos)), balls[0].transform.parent.TransformDirection(Vector3.Scale(norm_Verts, _sign_pos) * .1f), Color.white, 1f);
-            if (_phy_ray_sphere(pos, norm_Verts, k_vC, vertRadiusSQR))
+            if (_phy_ray_sphere(pos, norm_Verts, k_vA, vertRadiusSQR))
             {
-                // Debug.DrawRay(balls[0].transform.parent.TransformPoint(RaySphere_output), Vector3.up * .3f, Color.red, 3f);
                 nmag = (pos - RaySphere_output).magnitude;
+                // Debug.DrawRay(balls[0].transform.parent.TransformPoint(RaySphere_output), Vector3.up * .3f, Color.red, 3f);
                 if (nmag < minnmag)
                 {
                     minnmag = nmag;
@@ -553,7 +554,18 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
                     minid = -1;
                 }
             }
-            if (_phy_ray_sphere(pos, norm_Verts, k_vA, vertRadiusSQR))
+            if (_phy_ray_sphere(pos, norm_Verts, k_vC, vertRadiusSQR))
+            {
+                // Debug.DrawRay(balls[0].transform.parent.TransformPoint(RaySphere_output), Vector3.up * .3f, Color.red, 3f);
+                nmag = (pos - RaySphere_output).magnitude;
+                if (nmag < minnmag)
+                {
+                    minnmag = nmag;
+                    hitVert = true;
+                    minid = -1;
+                }
+            }
+            if (_phy_ray_sphere(pos, norm_Verts, k_vD, vertRadiusSQR))
             {
                 nmag = (pos - RaySphere_output).magnitude;
                 // Debug.DrawRay(balls[0].transform.parent.TransformPoint(RaySphere_output), Vector3.up * .3f, Color.red, 3f);
@@ -564,9 +576,10 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
                     minid = -1;
                 }
             }
-            // Debug.DrawRay(balls[0].transform.parent.TransformPoint(Vector3.Scale(k_vC, _sign_pos)), Vector3.up * .3f, Color.white);
             // Debug.DrawRay(balls[0].transform.parent.TransformPoint(Vector3.Scale(k_vB, _sign_pos)), Vector3.up * .3f, Color.red);
             // Debug.DrawRay(balls[0].transform.parent.TransformPoint(Vector3.Scale(k_vA, _sign_pos)), Vector3.up * .3f, Color.green);
+            // Debug.DrawRay(balls[0].transform.parent.TransformPoint(Vector3.Scale(k_vC, _sign_pos)), Vector3.up * .3f, Color.white);
+            // Debug.DrawRay(balls[0].transform.parent.TransformPoint(Vector3.Scale(k_vD, _sign_pos)), Vector3.up * .3f, Color.green);
         }
 
         if (minid > -1 || hitVert)
@@ -1155,24 +1168,24 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
 
     private float k_MINOR_REGION_CONST;
 
-    Vector3 k_vA = new Vector3();
-    Vector3 k_vB = new Vector3();
-    Vector3 k_vC = new Vector3();
-    Vector3 k_vD = new Vector3();
+    Vector3 k_vA = new Vector3(); // side pocket vert
+    Vector3 k_vB = new Vector3(); // corner pocket vert (width)
+    Vector3 k_vC = new Vector3(); // corner pocket vert (height)
+    Vector3 k_vD = new Vector3(); // vert deep inside side pocket (basically unused)
 
     Vector3 k_vX = new Vector3();
-    Vector3 k_vY = new Vector3();
-    Vector3 k_vZ = new Vector3();
+    Vector3 k_vY = new Vector3(); // inside of corner pocket
+    Vector3 k_vZ = new Vector3(); // inside of corner pocket
     Vector3 k_vW = new Vector3();
 
     Vector3 k_pK = new Vector3();
     Vector3 k_pL = new Vector3();
     Vector3 k_pM = new Vector3();
-    Vector3 k_pN = new Vector3();
-    public Vector3 k_pO = new Vector3();
-    Vector3 k_pP = new Vector3();
-    Vector3 k_pQ = new Vector3();
-    public Vector3 k_pR = new Vector3();
+    Vector3 k_pN = new Vector3(); // side pocket vert + cushion
+    public Vector3 k_pO = new Vector3(); // corner pocket + cushion
+    Vector3 k_pP = new Vector3(); // corner pocket + cushion inside
+    Vector3 k_pQ = new Vector3(); // corner pocket + cushion inside
+    public Vector3 k_pR = new Vector3(); // corner pocket + cushion
     Vector3 k_pT = new Vector3();
     Vector3 k_pS = new Vector3();
     Vector3 k_pU = new Vector3();
@@ -1202,6 +1215,7 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
         k_POCKET_WIDTH_CORNER = table.k_POCKET_WIDTH_CORNER;
         k_POCKET_HEIGHT_CORNER = table.k_POCKET_HEIGHT_CORNER;
         k_POCKET_RADIUS_SIDE = table.k_POCKET_RADIUS_SIDE;
+        k_POCKET_DEPTH_SIDE = table.k_POCKET_DEPTH_SIDE;
         k_INNER_RADIUS_CORNER = table.k_INNER_RADIUS_CORNER;
         k_INNER_RADIUS_CORNER_SQ = k_INNER_RADIUS_CORNER * k_INNER_RADIUS_CORNER;
         k_INNER_RADIUS_SIDE = table.k_INNER_RADIUS_SIDE;
@@ -1253,7 +1267,7 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
         k_vC.z = k_TABLE_HEIGHT - k_POCKET_HEIGHT_CORNER;
 
         k_vD = k_vA;
-        Vector3 Rotationk_vD = new Vector3(1, 0, 0);
+        Vector3 Rotationk_vD = new Vector3(k_POCKET_DEPTH_SIDE, 0, 0);
         Rotationk_vD = Quaternion.AngleAxis(-k_FACING_ANGLE_SIDE, Vector3.up) * Rotationk_vD;
         k_vD += Rotationk_vD;
 
@@ -1263,12 +1277,12 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
         k_vW.z = 0.0f;
 
         k_vY = k_vB;
-        Vector3 Rotationk_vY = new Vector3(-1, 0, 0);
+        Vector3 Rotationk_vY = new Vector3(-.2f, 0, 0);
         Rotationk_vY = Quaternion.AngleAxis(k_FACING_ANGLE_CORNER, Vector3.up) * Rotationk_vY;
         k_vY += Rotationk_vY;
 
         k_vZ = k_vC;
-        Vector3 Rotationk_vZ = new Vector3(0, 0, -1);
+        Vector3 Rotationk_vZ = new Vector3(0, 0, -.2f);
         Rotationk_vZ = Quaternion.AngleAxis(-k_FACING_ANGLE_CORNER, Vector3.up) * Rotationk_vZ;
         k_vZ += Rotationk_vZ;
 
@@ -1572,7 +1586,6 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
                                 if (id == 0) Debug.Log("Region J (Over Corner Pocket)");
 #endif
                                 // actually above the corner pocket itself, collision for the back of it if you jump over it
-                                // TODO: sqrmag inner radius
                                 if (toPocketEdge.sqrMagnitude + k_BALL_DSQR > k_INNER_RADIUS_CORNER_SQ)
                                 {
                                     Vector3 pocketNormal = toPocketEdge.normalized;
@@ -1747,10 +1760,10 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
 #if HT8B_DRAW_REGIONS
                         Debug.DrawLine(k_vD, k_vD + k_vC_vW_normal, Color.red);
 #endif
-                        if (newPos.x > k_pK.x)
+                        if (newPosPR.x > k_pK.x)
                         {
                             // Static resolution
-                            newPos.x = k_pK.x;
+                            newPos.x = k_pK.x - k_BALL_RADIUS;
 
                             // Dynamic
                             _phy_bounce_cushion(ref newVel, ref newAngVel, id, Vector3.Scale(k_vC_vW_normal, _sign_pos));
@@ -1758,6 +1771,30 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
 #if HT8B_DRAW_REGIONS
                             if (id == 0) Debug.Log("Region E");
 #endif
+                        }
+                        //two collisions can take place here, I don't know a good way to divide it into regions.
+                        {
+                            Vector3 toPocketEdge = newPos - k_vF;
+                            toPocketEdge.y = k_vF.y; // flatten the calculation
+                            if (Vector3.Dot(toPocketEdge, k_vF) > 0)
+                            {
+#if HT8B_DRAW_REGIONS
+                                if (id == 0) Debug.Log("Region E (Over Side Pocket)");
+#endif
+                                // actually above the corner pocket itself, collision for the back of it if you jump over it
+                                if (toPocketEdge.sqrMagnitude + k_BALL_DSQR > k_INNER_RADIUS_SIDE_SQ)
+                                {
+                                    Vector3 pocketNormal = toPocketEdge.normalized;
+                                    // Static resolution
+                                    float y = newPos.y;
+                                    newPos = k_vF + pocketNormal * (k_INNER_RADIUS_SIDE - k_BALL_RADIUS);
+                                    newPos.y = y;
+
+                                    // Dynamic
+                                    _phy_bounce_cushion(ref newVel, ref newAngVel, id, Vector3.Scale(-pocketNormal, _sign_pos));
+                                    shouldBounce = true;
+                                }
+                            }
                         }
                     }
                     else
@@ -1806,30 +1843,6 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
 #if HT8B_DRAW_REGIONS
                         if (id == 0) Debug.Log("Region C");
 #endif
-                    }
-                    //two collisions can take place here, I don't know a good way to divide it into regions.
-                    {
-                        Vector3 toPocketEdge = newPos - k_vF;
-                        toPocketEdge.y = k_vF.y; // flatten the calculation
-                        if (Vector3.Dot(toPocketEdge, k_vF) > 0)
-                        {
-#if HT8B_DRAW_REGIONS
-                            if (id == 0) Debug.Log("Region C (Over Side Pocket)");
-#endif
-                            // actually above the corner pocket itself, collision for the back of it if you jump over it
-                            if (toPocketEdge.sqrMagnitude + k_BALL_DSQR > k_INNER_RADIUS_SIDE_SQ)
-                            {
-                                Vector3 pocketNormal = toPocketEdge.normalized;
-                                // Static resolution
-                                float y = newPos.y;
-                                newPos = k_vF + pocketNormal * (k_INNER_RADIUS_SIDE - k_BALL_RADIUS);
-                                newPos.y = y;
-
-                                // Dynamic
-                                _phy_bounce_cushion(ref newVel, ref newAngVel, id, Vector3.Scale(-pocketNormal, _sign_pos));
-                                shouldBounce = true;
-                            }
-                        }
                     }
                 }
             }

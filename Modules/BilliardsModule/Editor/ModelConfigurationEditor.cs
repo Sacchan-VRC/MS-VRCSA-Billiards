@@ -114,6 +114,7 @@ public class ModelConfigurationEditor : Editor
             this.cdata_displayTarget.pocketWidthCorner = data.pocketWidthCorner;
             this.cdata_displayTarget.pocketHeightCorner = data.pocketHeightCorner;
             this.cdata_displayTarget.pocketRadiusSide = data.pocketRadiusSide;
+            this.cdata_displayTarget.pocketDepthSide = data.pocketDepthSide;
             this.cdata_displayTarget.cushionRadius = data.cushionRadius;
             this.cdata_displayTarget.pocketInnerRadiusCorner = data.pocketInnerRadiusCorner;
             this.cdata_displayTarget.pocketInnerRadiusSide = data.pocketInnerRadiusSide;
