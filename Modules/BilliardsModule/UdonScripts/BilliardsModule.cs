@@ -217,6 +217,7 @@ public class BilliardsModule : UdonSharpBehaviour
     private int secondHit = 0;
     private int thirdHit = 0;
     private bool jumpShotFoul;
+    private bool fallOffFoul;
 
     private bool fbMadePoint = false;
     private bool fbMadeFoul = false;
@@ -1210,6 +1211,7 @@ public class BilliardsModule : UdonSharpBehaviour
         ballBounced_9Ball = false;
         ballsPocketedOrig = ballsPocketedLocal;
         jumpShotFoul = false;
+        fallOffFoul = false;
         currentPhysicsManager.SendCustomEvent("_ResetSimulationVariables");
         numBallsPocketedThisTurn = 0;
 
@@ -1411,6 +1413,7 @@ public class BilliardsModule : UdonSharpBehaviour
         {
             foulPocket = !(findLowestUnpocketedBall(ballsPocketedOrig) == firstHit) || id == 0;
         }
+        foulPocket |= fallOffFoul;
         if (foulPocket)
         {
             tableModels[tableModelLocal]._flashTableError();
@@ -1434,6 +1437,7 @@ public class BilliardsModule : UdonSharpBehaviour
     }
 
     public void _TriggerJumpShotFoul() { jumpShotFoul = true; }
+    public void _TriggerBallFallOffFoul() { fallOffFoul = true; }
 
     public void _TriggerSimulationEnded(bool forceScratch, bool forceRun = false)
     {
@@ -1509,7 +1513,7 @@ public class BilliardsModule : UdonSharpBehaviour
                     moveBallInDirUntilNotTouching(1, Vector3.right * k_BALL_RADIUS * .051f);
                 }
 
-                foulCondition = isScratch || isWrongHit;
+                foulCondition = isScratch || isWrongHit || fallOffFoul;
 
                 deferLossCondition = is8Sink;
             }
@@ -1524,7 +1528,7 @@ public class BilliardsModule : UdonSharpBehaviour
                 isOpponentSink = false;
                 deferLossCondition = false;
 
-                foulCondition = isWrongHit || isScratch || (!ballBounced_9Ball && !isObjectiveSink);
+                foulCondition = isWrongHit || isScratch || (!ballBounced_9Ball && !isObjectiveSink) || fallOffFoul;
 
                 // Win condition: Pocket 9 ball ( and do not foul )
                 winCondition = ((ballsPocketedLocal & 0x200u) == 0x200u) && !foulCondition;
@@ -1635,7 +1639,7 @@ public class BilliardsModule : UdonSharpBehaviour
                         foulCondition = true;
                     }
                 }
-                if (isScratch) { foulCondition = true; }
+                foulCondition |= isScratch || fallOffFoul;
 
                 //return balls to table before setting allBallsPocketed
                 if (redOnTable || colorTurnLocal)

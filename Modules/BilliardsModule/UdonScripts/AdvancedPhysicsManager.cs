@@ -394,6 +394,7 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
                     if (!balls_inBounds[i] && !moved[i])
                     {
                         // ball came to rest on top of the rail
+                        table._TriggerBallFallOffFoul();
                         table._TriggerPocketBall(i);
                     }
 
@@ -1351,6 +1352,7 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
         if (absA.z > tableEdge.y)
         {
             // TODO: FOUL
+            table._TriggerBallFallOffFoul();
             table._TriggerPocketBall(id);
             return;
         }
@@ -1358,6 +1360,7 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
         if (absA.x > tableEdge.x)
         {
             // TODO: FOUL
+            table._TriggerBallFallOffFoul();
             table._TriggerPocketBall(id);
             return;
         }
