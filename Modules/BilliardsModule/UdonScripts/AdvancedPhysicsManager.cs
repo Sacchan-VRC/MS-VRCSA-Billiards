@@ -12,23 +12,34 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
 #else
     private float k_MAX_DELTA = 0.1f; // Private Cont Float 0.1f max time to process per frame on pc (~8)
 #endif
-    private const float k_FIXED_TIME_STEP = 1 / 80f;    // time step in seconds per iteration
-    private float k_BALL_DSQRPE = 0.003598f;            // ball diameter squared plus epsilon // this is actually minus epsilon?
-    private float k_BALL_DIAMETRESQ = 0.0036f;          // width of ball
-    private float k_BALL_DIAMETRE = 0.06f;              // width of ball
+    private const float k_FIXED_TIME_STEP = 1 / 80f;                        // time step in seconds per iteration
+    private float k_BALL_DSQRPE = 0.003598f;                                // ball diameter squared plus epsilon // this is actually minus epsilon?
+    private float k_BALL_DIAMETRESQ = 0.0036f;                              // width of ball
+    private float k_BALL_DIAMETRE = 0.06f;                                  // width of ball
     private float k_BALL_RADIUS = 0.03f;
-    private float k_BALL_1OR = 33.3333333333f;          // 1 over ball radius
-    private const float k_GRAVITY = 9.80665f;           // Earths gravitational acceleration
-    private float k_BALL_DSQR = 0.0036f;                // ball diameter squared
-    private float k_BALL_MASS = 0.16f;                  // Weight of ball in kg
-    private float k_BALL_RSQR = 0.0009f;                // ball radius squared
-    const float k_F_SLIDE = 0.2f;                       // Friction coefficient of sliding          (Ball-Table).
-    const float k_F_ROLL = 0.008f;                      // Friction coefficient of rolling          (Ball-table)
-    const float k_F_SPIN = 0.022f;                      // Friction coefficient of Spin             (Ball-table)
-    const float k_F_SLIDE_C = 0.2f;                     // Friction coefficient of sliding Cushion  (Ball-Cushion)
-    const float k_BALL_BALL_F = 0.03f;                  // Friction coefficient between balls       (ball-ball) 0.03f
-    const float k_BALL_E = 1f;                          // Coefficient of Restitution between balls (Data suggests 0.94 to 0.96, but it seems there is an issue during calculation, Happens rarely now after some fixes.)
-    const float K_BOUNCE_FACTOR = 0.5f;                 // COR Ball-Slate Emperically determinaed by Dr.Dave billiards in his physical proprieties page as the Average value. (The maximum i would suggest is 0.7f, slate material and quality varies.
+    private float k_BALL_1OR = 33.3333333333f;                              // 1 over ball radius
+    private const float k_GRAVITY = 9.80665f;                               // Earths gravitational acceleration
+    private float k_BALL_DSQR = 0.0036f;                                    // ball diameter squared
+    private float k_BALL_MASS = 0.16f;                                      // Weight of ball in kg
+    private float k_BALL_RSQR = 0.0009f;                                    // ball radius squared
+    //const float k_BALL_BALL_F = 0.03f;                                    // Friction coefficient between balls       (ball-ball) 0.03f  
+    [SerializeField][Range(0.92f, 0.98f)] private float k_BALL_E = 0.98f;      // Coefficient of Restitution between balls (Data suggests 0.94 to 0.96, but it seems there is an issue during calculation, Happens rarely now after some fixes.)
+    
+    
+    // Ball <-> Table Variables 
+    const float k_F_SLIDE = 0.2f;                                                           // Friction coefficient of sliding          (Ball-Table)    [Update Velocity]
+    const float k_F_ROLL = 0.008f;                                                          // Friction coefficient of rolling          (Ball-table)    [Update Velocity]
+    const float k_F_SPIN = 0.022f;                                                          // Friction coefficient of Spin             (Ball-table)    [Update Velocity]
+    [Range(0.5f, 0.7f)] const float K_BOUNCE_FACTOR = 0.5f;                                 // COR Ball-Slate.                          (ball-table)    [Update Velocity]
+    //const float k_F_SLIDE_C = 0.2f;                                                       // Friction coefficient of sliding Cushion  (Ball-Cushion)  [Phys Cushion]
+    
+    
+    // Ball <-> Cushion Variables
+    [SerializeField] private bool isHanModel = true;                                        // Enables HAN5 3D Friction Cushion Model   (Ball-Cushion)  [Phys Cushion]
+    [SerializeField][Range(0.7f, 0.98f)] private float k_E_C = 0.85f;                       // COR ball-Cushion                         (Ball-Cushion)  [Phys Cushion]      [default 0.85] - Acceptable Range [0.7 - 0.98] 
+    [SerializeField][Range(0.14f, 0.24f)] private float k_F_SLIDE_C = 0.14f;                // COF slide of the Cushion                 (Ball-Cushion)  [Phys Cushion]
+    [SerializeField][Range(0.625f, 0.645f)] private float cushionHeightPercent = 0.635f;    // The point of collision from cushion nose to the ball surface is a percent of the ball Diameter [WPA regulations states this Rail Height should be 63.5%(+1) or between 62.5% ~ 64.5% (Allowed Range) Page 3 - Section 7 at https://wpapool.com/wp-content/uploads/2024/01/RECOMMENDED-EQUIPMENT-SPECIFICATIONS.pdf
+
 
     private Color markerColorYes = new Color(0.0f, 1.0f, 0.0f, 1.0f);
     private Color markerColorNo = new Color(1.0f, 0.0f, 0.0f, 1.0f);
@@ -690,11 +701,8 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
     /// However results fail to reach and match some of the plot data, [its likely because the components of Linear Velocity and Angular Velocity are separated, when in paper they are together]
     /// as such a value of 1.9942 has been emperically determined after multiple tests, this now becomes the new `advanced simple consistent` model as it attempts to fix some of the issues version 1 had.
     /// a value of 1.5x is acceptable [in case the game feels too hard for users]
-    public float muFactor = 1.9942f; // Default should be 1 but results fail to reach and match some of the plot data, as such a value of 1.9942 has been emperically set after multiple tests.
-
-    // Coefficient of Restitution
-    public float e = 0.98f; // 0.98x is high quality billiard ball [the papers rangers between 0.92 to 0.98, it affects the amount of friction engament of the balls and therefore its final tagential magnitude] 
-                            // 1x is perfectly elastic ball, perfectly fine to use it if desired but not realistic.
+    public float muFactor = 1.9942f; // Default should be 1 but results fail to reach and match some of the plot data, as such a value of 1.9942 has been emperically set after multiple tests.  
+    
     void HandleCollision3_4(int i, int id, Vector3 normal, Vector3 delta) // Advanced Physics V3.4
     {
         /// PREPARE SOME STUFF
@@ -720,7 +728,7 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
         /// PART 1
         /// NORMAL IMPULSE (TRANSFERED LINEAR MOMENTUM_)
         /// F' = m*v'n
-
+        float e = k_BALL_E;
         float J = (1 + e) / 2 * Vector3.Dot(relativeVelocity, normal);
         Vector3 Fn = normal * J;
 
@@ -1054,116 +1062,273 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
     // Apply cushion bounce
     void _phy_bounce_cushion(ref Vector3 vel, ref Vector3 angvel, int id, Vector3 N)
     {
-        // generate a fake contact point
-        Vector3 ballPos = balls_P[id];
-        float railCollisionHeight = ballPos.y + k_BALL_RADIUS;
-        if (railCollisionHeight < k_RAIL_HEIGHT_LOWER)
-            railCollisionHeight = k_RAIL_HEIGHT_LOWER - railCollisionHeight;
-        else if (railCollisionHeight > k_RAIL_HEIGHT_UPPER)
-            railCollisionHeight = k_RAIL_HEIGHT_UPPER - railCollisionHeight;
+        if (isHanModel)
+        {
+            _HANCushionModel(ref vel, ref angvel, id, N);
+        }
         else
-            railCollisionHeight = 0;
+        {
+            // generate a fake contact point
+            Vector3 ballPos = balls_P[id];
+            float railCollisionHeight = ballPos.y + k_BALL_RADIUS;
+            if (railCollisionHeight < k_RAIL_HEIGHT_LOWER)
+                railCollisionHeight = k_RAIL_HEIGHT_LOWER - railCollisionHeight;
+            else if (railCollisionHeight > k_RAIL_HEIGHT_UPPER)
+                railCollisionHeight = k_RAIL_HEIGHT_UPPER - railCollisionHeight;
+            else
+                railCollisionHeight = 0;
 
-        float normalizedHeight = railCollisionHeight / k_BALL_RADIUS;
+            float normalizedHeight = railCollisionHeight / k_BALL_RADIUS;
 
-        if (Mathf.Abs(normalizedHeight) > 1) { return; }
-        // Calculate angle of intersection in radians
-        float angle = Mathf.Acos(normalizedHeight);
+            if (Mathf.Abs(normalizedHeight) > 1) { return; }
+            // Calculate angle of intersection in radians
+            float angle = Mathf.Acos(normalizedHeight);
 
-        // Calculate x and y coordinates of intersection point
-        float conY = k_BALL_RADIUS * Mathf.Cos(angle);
-        float conZ = k_BALL_RADIUS * Mathf.Sin(angle);
-        Vector3 contactPoint = -N * conZ;
-        contactPoint.y = conY;
-        // if (ballPos.y < k_RAIL_HEIGHT_UPPER - 0.0001f)
-        //     Debug.DrawLine(balls[0].transform.parent.TransformPoint(ballPos + contactPoint), balls[0].transform.parent.TransformPoint(ballPos), Color.white, 3f);
+            // Calculate x and y coordinates of intersection point
+            float conY = k_BALL_RADIUS * Mathf.Cos(angle);
+            float conZ = k_BALL_RADIUS * Mathf.Sin(angle);
+            Vector3 contactPoint = -N * conZ;
+            contactPoint.y = conY;
+            // if (ballPos.y < k_RAIL_HEIGHT_UPPER - 0.0001f)
+            //     Debug.DrawLine(balls[0].transform.parent.TransformPoint(ballPos + contactPoint), balls[0].transform.parent.TransformPoint(ballPos), Color.white, 3f);
 
 
-        // Mathematical expressions derived from: https://billiards.colostate.edu/physics_articles/Mathavan_IMechE_2010.pdf
-        //
-        // (Note): subscript gamma, u, are used in replacement of Y and Z in these expressions because
-        // unicode does not have them.
-        //
-        // f = 2/7
-        // f₁ = 5/7
-        // 
-        // Velocity delta:
-        //   Δvₓ = −vₓ∙( f∙sin²θ + (1+e)∙cos²θ ) − Rωᵤ∙sinθ
-        //   Δvᵧ = 0
-        //   Δvᵤ = f₁∙vᵤ + fR( ωₓ∙sinθ - ωᵧ∙cosθ ) - vᵤ
-        //
-        // Aux:
-        //   Sₓ = vₓ∙sinθ - vᵧ∙cosθ+ωᵤ
-        //   Sᵧ = 0
-        //   Sᵤ = -vᵤ - ωᵧ∙cosθ + ωₓ∙cosθ
-        //   
-        //   k = (5∙Sᵤ) / ( 2∙mRA )
-        //   c = vₓ∙cosθ - vᵧ∙cosθ
-        //
-        // Angular delta:
-        //   ωₓ = k∙sinθ
-        //   ωᵧ = k∙cosθ
-        //   ωᵤ = (5/(2m))∙(-Sₓ / A + ((sinθ∙c∙(e+1)) / B)∙(cosθ - sinθ))
-        //
-        // These expressions are in the reference frame of the cushion, so V and ω inputs need to be rotated
+            // Mathematical expressions derived from: https://billiards.colostate.edu/physics_articles/Mathavan_IMechE_2010.pdf
+            //
+            // (Note): subscript gamma, u, are used in replacement of Y and Z in these expressions because
+            // unicode does not have them.
+            //
+            // f = 2/7
+            // f₁ = 5/7
+            // 
+            // Velocity delta:
+            //   Δvₓ = −vₓ∙( f∙sin²θ + (1+e)∙cos²θ ) − Rωᵤ∙sinθ
+            //   Δvᵧ = 0
+            //   Δvᵤ = f₁∙vᵤ + fR( ωₓ∙sinθ - ωᵧ∙cosθ ) - vᵤ
+            //
+            // Aux:
+            //   Sₓ = vₓ∙sinθ - vᵧ∙cosθ+ωᵤ
+            //   Sᵧ = 0
+            //   Sᵤ = -vᵤ - ωᵧ∙cosθ + ωₓ∙cosθ
+            //   
+            //   k = (5∙Sᵤ) / ( 2∙mRA )
+            //   c = vₓ∙cosθ - vᵧ∙cosθ
+            //
+            // Angular delta:
+            //   ωₓ = k∙sinθ
+            //   ωᵧ = k∙cosθ
+            //   ωᵤ = (5/(2m))∙(-Sₓ / A + ((sinθ∙c∙(e+1)) / B)∙(cosθ - sinθ))
+            //
+            // These expressions are in the reference frame of the cushion, so V and ω inputs need to be rotated
 
-        // Reject bounce if velocity is going the same way as normal
-        // this state means we tunneled, but it happens only on the corner
-        // vertexes
+            // Reject bounce if velocity is going the same way as normal
+            // this state means we tunneled, but it happens only on the corner
+            // vertexes
+            Vector3 source_v = vel;
+            if (Vector3.Dot(source_v, N) > 0.0f)
+            {
+                return;
+            }
+
+            // Rotate V, W to be in the reference frame of cushion
+            Quaternion rq = Quaternion.AngleAxis(Mathf.Atan2(-N.z, -N.x) * Mathf.Rad2Deg, Vector3.up);
+            Quaternion rb = Quaternion.Inverse(rq);
+            Vector3 V = rq * source_v;
+            Vector3 W = rq * angvel;
+
+            Vector3 V1; //= Vector3.zero; //Vector3 V1;
+            Vector3 W1; //= Vector3.zero; //Vector3 W1;
+
+            float θ, h, k, k_A, k_B, c, s_x, s_z; //Y is Up in Unity
+
+            const float e = 0.7f;
+
+            k_A = (7f / (2f * k_BALL_MASS));
+            k_B = (1f / k_BALL_MASS);
+
+            //"h" defines the Height of a cushion, sometimes defined as ϵ in other research Papers.. (we are doing "h" because better stands fo "H"eight)
+
+            //h = 7f * k_BALL_RADIUS / 5f;
+            //h = k_BALL_DIAMETRE * 0.65f;
+
+            //THETA θ = The Angle Torque the ball has to the slate from the height of the cushion Depends on height of cushion relative to the ball
+
+            //θ = Mathf.Asin(h / k_BALL_RADIUS - 1f); //-1
+            const float cosθ = 0.95976971915f; //Mathf.Cos(θ); // in use
+            const float sinθ = 0.28078832987f; //Mathf.Sin(θ); // in use
+
+            const float sinθ2 = sinθ * sinθ;
+            const float cosθ2 = cosθ * cosθ;
+
+            V1.x = -V.x * ((((2.0f / 7.0f) * sinθ2) * cosθ2) + (1 + e)) - (((2.0f / 7.0f) * k_BALL_RADIUS) * sinθ) * W.z;
+            V1.z = (5.0f / 7.0f) * V.z + ((2.0f / 7.0f) * k_BALL_RADIUS) * (W.x * sinθ - W.y * cosθ) - V.z;
+            V1.y = 0.0f;
+
+            s_x = V.x * sinθ + W.z;
+            s_z = -V.z - W.y * cosθ + W.x * sinθ;
+
+            k = s_z * (5f / 7f);
+
+            c = V.x * cosθ;
+
+            W1.x = k * sinθ;
+            W1.z = (5.0f / (2.0f * k_BALL_MASS)) * (-s_x / k_A + ((sinθ * c * 1.79f) / k_B) * (cosθ - sinθ)); ;
+            W1.y = k * cosθ;
+
+            vel += rb * V1;
+            angvel += rb * W1;
+        }
+    }
+
+    void _HANCushionModel(ref Vector3 vel, ref Vector3 angvel, int id, Vector3 N)
+    {
+
+        // Mathematical expressions derived from Professor INHWAN HAN in "Dynamics in carom and three cushion billiards" https://link.springer.com/article/10.1007/BF02919180
+        // This model accounts for friction and impulses equations 12 through 22
+        // Worksheet and revisions found at https://ekiefl.github.io/2020/04/24/pooltool-theory/#3-han-2005 in [Section III: ball-cushion interactions] by EKIEFL.
+        // Written and Second Revision done by MABEL, Trough out the notes you will find [is correct] which means the values here have been revised to match with its necessary Rotation Axis needed for Unity Coordinate System [treats Y as the UP axis].
+
+        // Hold down the Alt key and type the numbers in sequence, using the numeric keypad to get Greek Symbols
+        // Φ = Phi:    232 
+        // Θ = Theta:  233
+        // µ = mu:     230
+        // √ = Sqrt:   251
+        // ² = Exp2:   0178
+
         Vector3 source_v = vel;
-        if (Vector3.Dot(source_v, N) > 0.0f)
+        if (Vector3.Dot(source_v, N) > 0f)
         {
             return;
         }
 
-        // Rotate V, W to be in the reference frame of cushion
-        Quaternion rq = Quaternion.AngleAxis(Mathf.Atan2(-N.z, -N.x) * Mathf.Rad2Deg, Vector3.up);
+        float psi = Mathf.Atan2(-N.z, -N.x) * Mathf.Rad2Deg;    // Calculate psi (angle in radians)
+        Quaternion rq = Quaternion.AngleAxis(psi, Vector3.up);  // Create a rotation quaternion rq
+
         Quaternion rb = Quaternion.Inverse(rq);
         Vector3 V = rq * source_v;
         Vector3 W = rq * angvel;
 
-        Vector3 V1; //= Vector3.zero; //Vector3 V1;
-        Vector3 W1; //= Vector3.zero; //Vector3 W1;
+        Vector3 V1 = Vector3.zero; 
+        Vector3 W1 = Vector3.zero;
 
-        float θ, h, k, k_A, k_B, c, s_x, s_z; //Y is Up in Unity
 
-        const float e = 0.7f;
+        float θ, Φ, h, e, I, k_A, k_B, c, s_x, s_z, mu, PY, PX, PZ, P_yE, P_yS; 
 
-        k_A = (7f / (2f * k_BALL_MASS));
-        k_B = (1f / k_BALL_MASS);
 
-        //"h" defines the Height of a cushion, sometimes defined as ϵ in other research Papers.. (we are doing "h" because better stands fo "H"eight)
+        // The angle of Incident [Phi_]
+        Vector3 reflectedDirection = Vector3.Reflect(source_v, N);
+        float angleOfIncidence = Vector3.Angle(source_v, -N);
+        Φ = angleOfIncidence * Mathf.Deg2Rad;
 
-        //h = 7f * k_BALL_RADIUS / 5f;
-        //h = k_BALL_DIAMETRE * 0.65f;
+        Debug.Log("Reflected direction: " + reflectedDirection);
+        Debug.DrawRay(balls[id].transform.position, reflectedDirection, Color.yellow, 6f);
+        Debug.Log("<size=16><b><i><color=orange>AoI_Phi</color></i></b></size>: " + angleOfIncidence.ToString("<size=16><color=orange><i>00.0°Φ</i></color></size>"));
+        //Debug.DrawLine(balls[id].transform.position + N, balls[id].transform.position + reflectedDirection, Color.red, 5f);
 
-        //THETA θ = The Angle Torque the ball has to the slate from the height of the cushion Depends on height of cushion relative to the ball
 
-        //θ = Mathf.Asin(h / k_BALL_RADIUS - 1f); //-1
-        const float cosθ = 0.95976971915f; //Mathf.Cos(θ); // in use
-        const float sinθ = 0.28078832987f; //Mathf.Sin(θ); // in use
 
-        const float sinθ2 = sinθ * sinθ;
-        const float cosθ2 = cosθ * cosθ;
+        // The friction Coefficient between the ball and rail varies according to the incidence angle [Phi_ (Radians)].
+        mu = k_F_SLIDE_C * Φ;                                                                   // Dynamic
+        Debug.Log("<color=yellow><b><i><size=16>Cushion(μ):</size></i></b></color> " + mu.ToString("<size=16><b><i>0.0000μC</i></b></size>"));
 
-        V1.x = -V.x * ((((2.0f / 7.0f) * sinθ2) * cosθ2) + (1 + e)) - (((2.0f / 7.0f) * k_BALL_RADIUS) * sinθ) * W.z;
-        V1.z = (5.0f / 7.0f) * V.z + ((2.0f / 7.0f) * k_BALL_RADIUS) * (W.x * sinθ - W.y * cosθ) - V.z;
-        V1.y = 0.0f;
+        ///"h" defines the Height of a cushion, 
+        ///sometimes defined as ϵ in other research Papers.. 
+        ///(we are doing "h" because better stands fo "height")
 
-        s_x = V.x * sinθ + W.z;
-        s_z = -V.z - W.y * cosθ + W.x * sinθ;
+        //h = 0.0771525f;                                                                       // [measured from the center of the ball to the cushion]  2005  Han Height point of impact   
+        //h = (7f * k_BALL_RADIUS) / 5f;                                                        // 2010  Mathavan, the height of the contact point at the rail(i.e.I) is `h` in both snooker and pool
 
-        k = s_z * (5f / 7f);
 
-        c = V.x * cosθ;
+        h = k_BALL_DIAMETRE * cushionHeightPercent;                                             // Gives us H [Measured from table surface to the point of impact]
+        float ε = h - (balls_P[id].y + k_BALL_RADIUS);                                          // Gives us ε [Calculate the distancee between radius an H]
 
-        W1.x = k * sinθ;
-        W1.z = (5.0f / (2.0f * k_BALL_MASS)) * (-s_x / k_A + ((sinθ * c * 1.79f) / k_B) * (cosθ - sinθ)); ;
-        W1.y = k * cosθ;
+        Debug.Log("Distance from Radius to collision point ε: " + ε + " mm");
 
-        vel += rb * V1;
-        angvel += rb * W1;
+
+        // Now in Trignonometric Functions, the K_BALL_RADIUS is our Base(Adjacent) and ε is opposite to the angle.
+        // if we play around we can find the Tangent using Tan(opposite/Adjancent) and the Hypotenuse using our famous Pythagorean Theorem https://www.google.com/search?q=Pythagorean+theorem;
+        // since we need the angle THETA from the Unit Circle of the ball all we need to do is calculate the Arcsin, however i will leave some other stuff here for Rich Debuging Purposes.
+
+        /*
+        float A_ = (ε * ε);                             // Pythagorean Theorem[A²] OPPOSITE
+        float B_ = (k_BALL_RADIUS * k_BALL_RADIUS);     // Pythagorean Theorem[B²] ADJACENT
+        float C_ = ((A_ + B_) * (A_ + B_));             // Pythagorean Theorem[C²] HYPOTENUSE
+        */
+
+        θ = Mathf.Asin(ε / k_BALL_RADIUS);
+
+        Debug.Log("<color=cyan><size=16><b><i>θ</i></b></size></color>: " + θ.ToString("<color=cyan><size=16><i>00.0</i></size></color>") + " Rad <size=16>/</size>" + (θ * Mathf.Rad2Deg).ToString("<color=cyan><size=16><i>00.0</i></size></color>") + "Deg");
+        Debug.DrawRay(balls[id].transform.position - N, balls[id].transform.position * θ, Color.cyan, 5f);
+
+
+        //float θ2 = Mathf.Asin(cushionHeight / k_BALL_RADIUS - 1f);                            // θ = height of cushion relative to the ball
+        //θ = (2f / 5f);
+        // it turns out THETA is the angle from the Hypotenuse to the base adjacent in Degrees [Range between 12 to 20 degrees, DEFAULT 16]
+
+        float cosθ = Mathf.Cos(θ);
+        float sinθ = Mathf.Sin(θ);
+        float cosΦ = Mathf.Cos(Φ);
+
+        ///
+        /// Just Drawing somelines
+        float cotangent = cosθ / sinθ;
+        float cosecant = k_BALL_RADIUS / sinθ;
+        Debug.DrawLine(balls[0].transform.position * θ, balls[0].transform.position * cotangent, Color.magenta, 5f);
+        Debug.DrawLine(balls[0].transform.position * θ, balls[0].transform.position * cosecant, Color.blue, 5f);
+        ///
+
+        //*is correct* = revised values to match with its necessary Rotation Axis.
+
+        s_x = V.x * sinθ - V.y * cosθ + k_BALL_RADIUS * W.z;                                    // s_x is correct
+        s_z = -V.z - k_BALL_RADIUS * W.y * cosθ + k_BALL_RADIUS * W.x * sinθ;                   // s_z is correct
+
+
+        c = V.x * cosθ - V.y * sinθ; // 3D Assumption
+        e = k_E_C;                                                                              // Const [Default 0.85] - exert from https://essay.utwente.nl/59134/1/scriptie_J_van_Balen.pdf [Acceptable Range between 0.7 to 0.98] from https://billiards.colostate.edu/physics_articles/Mathavan_IMechE_2010.pdf 
+                                                                                                // e = (0.39f + 0.257f * V.magnitude - 0.044f * source_v.magnitude);    // Dynamic [Works best at high refresh rates, UDON1 is currently too slow]
+
+        // [Equation 16]
+        I = (2f / 5f) * k_BALL_MASS * Mathf.Pow(k_BALL_RADIUS, 2);                              // Unity Sintax C# FLOAT <- to avoid confusion, A and B are using the same order.
+
+        k_A = (7f / 2f / k_BALL_MASS);                                                          // A is Correct 
+        k_B = (1f / k_BALL_MASS);                                                               // B is Correct
+
+
+        // [Equations 17 & 20]
+        /// P_zE and P_zS (Remember, Z is up, so we write to Unity's "Y" here.
+
+        P_yE = (1f + e) * c / k_B;                                                              // P_yE is Correct
+        P_yS = (Mathf.Sqrt(Mathf.Pow(s_x, 2) + Mathf.Pow(s_z, 2)) / k_A);                       // P_yS is Correct (In case of Anomaly, do: Mathf.Sqrt(s_x * s_x + s_z * s_z) instead;
+
+        if (P_yS <= P_yE)   // Sliding and sticking case 1-1
+        {
+
+            PX =-s_x / k_A * sinθ - (1f + e) * c / k_B * cosθ;                                  // PX is Correct
+            PZ = s_z / k_A;                                                                     // PZ is correct
+            PY = s_x / k_A * cosθ - (1f + e) * c / k_B * sinθ;
+        }
+        else                // Forward Sliding Case 1-2 
+        {
+            PX =-mu * (1f + e) * c / k_B * cosΦ * sinθ - (1f + e) * c / k_B * cosθ;             // PX is Correct
+            PZ = mu * (1f + e) * c / k_B * sinθ;                                                // PZ is Correct
+            PY = mu * (1f + e) * c / k_B * cosΦ * cosθ - (1f + e) * c / k_B * sinθ;             // PY is Correct
+        }
+
+        // Update Velocity                                                                      // Update Velocity is Corret
+        V1.x = V.x += (PX / k_BALL_MASS);
+        V1.z = V.z += (PZ / k_BALL_MASS);
+        V1.y = V.y += ((PY + (c = 0f)) / k_BALL_MASS) * K_BOUNCE_FACTOR;
+
+        // Compute angular momentum changes
+        W1.x = W.x +=-k_BALL_RADIUS / I * (PZ * sinθ);
+        W1.z = W.z += k_BALL_RADIUS / I * (PX * sinθ - k_BALL_RADIUS * PY * cosθ);
+        W1.y = W.y += k_BALL_RADIUS / I * (PZ * cosθ);
+
+        // Change back to Table Reference Frame (Unrotate result)
+        vel     = rb * V1;
+        angvel  = rb * W1;
     }
+
 
 
     private float k_MINOR_REGION_CONST;
