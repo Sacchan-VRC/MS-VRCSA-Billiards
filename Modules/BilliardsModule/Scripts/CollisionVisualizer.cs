@@ -27,6 +27,7 @@ public class CollisionVisualizer : MonoBehaviour
     [SerializeField] public float k_RAIL_HEIGHT_LOWER;
     [SerializeField] public float k_RAIL_DEPTH_WIDTH;
     [SerializeField] public float k_RAIL_DEPTH_HEIGHT;
+    [SerializeField] public Transform table_Surface;
 
     [SerializeField] public bool DrawUnused;
     [SerializeField][Range(2f, 10f)] public float cornerPocketDiameter;
@@ -188,7 +189,7 @@ public class CollisionVisualizer : MonoBehaviour
         return $"v {v.x} {v.y} {v.z}\n";
     }
 
-    void drawCylinder(Vector3 at, float r, Color colour)
+    void drawCylinder(Vector3 at, float r, Color colour, float wallHeight = 0.048f)
     {
         Vector3 last = at + Vector3.forward * r;
         Vector3 cur = Vector3.zero;
@@ -199,26 +200,28 @@ public class CollisionVisualizer : MonoBehaviour
             cur.x = at.x + Mathf.Sin(angle) * r;
             cur.z = at.z + Mathf.Cos(angle) * r;
 
-            drawPlane(last, cur, colour);
+            drawPlane(last, cur, colour, wallHeight);
             last = cur;
         }
     }
 
     void _drawline_applyparent(Vector3 from, Vector3 to, Color colour)
     {
-        Debug.DrawLine(this.transform.parent.TransformPoint(from), this.transform.parent.TransformPoint(to), colour);
+        if (table_Surface)
+            Debug.DrawLine(table_Surface.TransformPoint(from), table_Surface.TransformPoint(to), colour);
     }
 
     // Reflective, stacked by n
-    void drawPlane(Vector3 from, Vector3 to, Color colour)
+    void drawPlane(Vector3 from, Vector3 to, Color colour, float wallHeight = 0.048f)
     {
         Vector3 reflect_x = new Vector3(-1.0f, 1.0f, 1.0f);
         Vector3 reflect_z = new Vector3(1.0f, 1.0f, -1.0f);
         Vector3 reflect_xz = Vector3.Scale(reflect_x, reflect_z);
 
-        for (int n = -8; n <= 8; n++)
+        float heightInterval = wallHeight / 16;
+        for (int n = 0; n < 16; n++)
         {
-            Vector3 height = Vector3.up * (float)n * 0.006f;
+            Vector3 height = Vector3.up * (heightInterval * n);
 
             _drawline_applyparent(from + height, to + height, colour);
             _drawline_applyparent(Vector3.Scale(from, reflect_x) + height, Vector3.Scale(to, reflect_x) + height, colour);
@@ -249,34 +252,34 @@ public class CollisionVisualizer : MonoBehaviour
         _phy_table_init();
 
         //side pockets
-        drawPlane(k_pT, k_pK, Color.yellow);
-        drawPlane(k_pK, k_pL, Color.yellow);
+        drawPlane(k_pT, k_pK, Color.yellow, k_RAIL_HEIGHT_UPPER);
+        drawPlane(k_pK, k_pL, Color.yellow, k_RAIL_HEIGHT_UPPER);
 
-        drawPlane(railWidthMidPoint, railCornerOuter, Color.grey);
-        drawPlane(railHeightMidPoint, railCornerOuter, Color.grey);
+        drawPlane(railWidthMidPoint, railCornerOuter, Color.grey, k_RAIL_HEIGHT_UPPER);
+        drawPlane(railHeightMidPoint, railCornerOuter, Color.grey, k_RAIL_HEIGHT_UPPER);
 
 
-        drawPlane(k_pL, k_pM, Color.yellow);
-        drawPlane(k_pM, k_pN, Color.yellow);
-        drawPlane(k_pN, k_pO, Color.yellow);
-        drawPlane(k_pO, k_pP, Color.yellow);
+        drawPlane(k_pL, k_pM, Color.yellow, k_RAIL_HEIGHT_UPPER);
+        drawPlane(k_pM, k_pN, Color.yellow, k_RAIL_HEIGHT_UPPER);
+        drawPlane(k_pN, k_pO, Color.yellow, k_RAIL_HEIGHT_UPPER);
+        drawPlane(k_pO, k_pP, Color.yellow, k_RAIL_HEIGHT_UPPER);
 
         //corner pockets
-        drawPlane(k_pP, k_pU, Color.yellow);
-        drawPlane(k_pV, k_pQ, Color.yellow);
+        drawPlane(k_pP, k_pU, Color.yellow, k_RAIL_HEIGHT_UPPER);
+        drawPlane(k_pV, k_pQ, Color.yellow, k_RAIL_HEIGHT_UPPER);
 
-        drawPlane(k_pQ, k_pR, Color.yellow);
-        drawPlane(k_pR, k_pS, Color.yellow);
+        drawPlane(k_pQ, k_pR, Color.yellow, k_RAIL_HEIGHT_UPPER);
+        drawPlane(k_pR, k_pS, Color.yellow, k_RAIL_HEIGHT_UPPER);
 
         if (_phy_ball_pockets())
         {
-            drawCylinder(cornerPocket, pocketInnerRadiusCorner, Color.green);
-            drawCylinder(sidePocket, pocketInnerRadiusSide, Color.green);
+            drawCylinder(cornerPocket, pocketInnerRadiusCorner, Color.green, k_RAIL_HEIGHT_UPPER);
+            drawCylinder(sidePocket, pocketInnerRadiusSide, Color.green, k_RAIL_HEIGHT_UPPER);
         }
         else
         {
-            drawCylinder(cornerPocket, pocketInnerRadiusCorner, Color.red);
-            drawCylinder(sidePocket, pocketInnerRadiusSide, Color.red);
+            drawCylinder(cornerPocket, pocketInnerRadiusCorner, Color.red, k_RAIL_HEIGHT_UPPER);
+            drawCylinder(sidePocket, pocketInnerRadiusSide, Color.red, k_RAIL_HEIGHT_UPPER);
         }
 
         _phy_table_init();

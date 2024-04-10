@@ -126,6 +126,11 @@ public class ModelConfigurationEditor : Editor
             this.cdata_displayTarget.k_RAIL_HEIGHT_LOWER = data.railHeightLower;
             this.cdata_displayTarget.k_RAIL_DEPTH_WIDTH = data.railDepthWidth;
             this.cdata_displayTarget.k_RAIL_DEPTH_HEIGHT = data.railDepthHeight;
+
+            Transform table_artwork = data.transform.Find("table_artwork");
+            Transform tableSurface = table_artwork.transform.Find(".TABLE_SURFACE");
+            if (tableSurface)
+            { this.cdata_displayTarget.table_Surface = tableSurface; }
         }
     }
     void OnEnable()
