@@ -26,11 +26,12 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
     [SerializeField][Range(0.92f, 0.98f)] private float k_BALL_E = 0.98f;   // Coefficient of Restitution between balls (Data suggests 0.94 to 0.96, but it seems there is an issue during calculation, Happens rarely now after some fixes.)
         
     // Ball <-> Table Variables 
-    const float k_F_SLIDE = 0.2f;                                                           // Friction coefficient of sliding          (Ball-Table)    [Update Velocity]
-    const float k_F_ROLL = 0.008f;                                                          // Friction coefficient of rolling          (Ball-table)    [Update Velocity]
-    const float k_F_SPIN = 0.022f;                                                          // Friction coefficient of Spin             (Ball-table)    [Update Velocity]
+    public float k_F_SLIDE = 0.2f;                                                          // Friction coefficient of sliding          (Ball-Table)    [Update Velocity]
+    public float k_F_ROLL = 0.008f;                                                         // Friction coefficient of rolling          (Ball-table)    [Update Velocity]
+    public float k_F_SPIN = 0.022f;                                                         // Friction coefficient of Spin             (Ball-table)    [Update Velocity]
+    public float k_F_SPIN_RATE = 15f;                                                       // Desired constant deceleration rate       (ball-table)    [Update Velocity]  https://billiards.colostate.edu/faq/physics/physical-properties/ [desired between 0.5 - 15]
     [Range(0.5f, 0.7f)] const float K_BOUNCE_FACTOR = 0.5f;                                 // COR Ball-Slate.                          (ball-table)    [Update Velocity]
-    
+    public bool isDARate = false;
     
     // Ball <-> Cushion Variables
     [SerializeField] private bool isHanModel = true;                                        // Enables HAN5 3D Friction Cushion Model   (Ball-Cushion)  [Phys Cushion]
@@ -815,11 +816,21 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
         bool ballMoving = false;
         float frameGravity = k_GRAVITY * t;
 
-        float mu_sp = k_F_SPIN;     // Coefficient of friction for spin
-        float mu_s = k_F_SLIDE;     // Coefficient of friction for sliding
-        float mu_r = k_F_ROLL;      // Coefficient of friction for rolling
-        float g = k_GRAVITY;        // Gravitational constant
-        float R = k_BALL_RADIUS;    // Ball Radius
+        float g = k_GRAVITY;                                    // Gravitational constant
+        float R = k_BALL_RADIUS;                                // Ball Radius
+        float DARate = (2f * k_F_SPIN_RATE * R) / (5f * g);     // Calculate Friction down to the Tenth digit to the right of the decimal point based on deacceleration rate
+        float mu_sp;                                            // Coefficient of friction for spin
+        float mu_s = k_F_SLIDE;                                 // Coefficient of friction for sliding
+        float mu_r = k_F_ROLL;                                  // Coefficient of friction for rolling
+
+        if (isDARate)
+        { 
+            mu_sp = DARate;
+        }
+        else
+        {
+            mu_sp = k_F_SPIN;
+        }
 
         Vector3 u0;
         Vector3 k_CONTACT_POINT = new Vector3(0.0f, -R, 0.0f);
@@ -1247,7 +1258,7 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
 
 
         // Hold down the Alt key and type the numbers in sequence, using the numeric keypad to get Greek Symbols
-        // Φ = Phi:    232 
+        // Φ = Phi:    232
         // Θ = Theta:  233
         // µ = mu:     230
         // √ = Sqrt:   251
@@ -1310,10 +1321,13 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
         //θ = Mathf.Tan(P / R);
 
 
-        float cosθ = Mathf.Cos(θ);
-        float sinθ = Mathf.Sin(θ);
-        float cosΦ = Mathf.Cos(Φ);
-        float sinΦ = Mathf.Sin(Φ);
+        float cosθ  = Mathf.Cos(θ);
+        float sinθ  = Mathf.Sin(θ);
+        float cosθ2 = (cosθ * cosθ);
+        float sinθ2 = (sinθ * sinθ);
+
+        float cosΦ  = Mathf.Cos(Φ);
+        float sinΦ  = Mathf.Sin(Φ);
 
 
         //*is correct* = revised values to match with its necessary Rotation Axis.
@@ -1345,15 +1359,15 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
 
             if (P_yS <= P_yE)   // Sliding and sticking case 1-1
             {
-                V1.x = -V.x * ((2.0f / 7.0f) * (sinθ * sinθ) + (1 + e) * (cosθ * cosθ)) - ((2.0f / 7.0f) * R * W.z * sinθ);
-                V1.z = (5f / 7f) * V.z + ((2f / 7f) * R) * (W.x * sinθ - W.y * cosθ);
-                V1.y = 0f; //V.x * ((2.0f / 7.0f) * (cosθ * cosθ) + (1.0f + e) * (sinθ * sinθ)) - (2.0f / 7.0f) * R * W.z * cosθ;
+                V1.x = -V.x * ((((2.0f / 7.0f) * sinθ2) * cosθ2) + (e)) - ((((2.0f / 7.0f) * R) * sinθ) * W.z);
+                V1.z = (5.0f / 7.0f) * V.z + ((2.0f / 7.0f) * R) * (W.x * sinθ - W.y * cosθ); //- V.z;
+                V1.y = V.x * ((2.0f / 7.0f) * (cosθ * cosθ) + (1.0f + e) * (sinθ * sinθ)) - (2.0f / 7.0f) * R * W.z * cosθ;
             }
             else                // Forward Sliding Case 1-2 
             {
-                V1.x = -V.x * (1 + e) * cosθ * (mu * cosΦ * sinθ + cosθ);
-                V1.z = V.z + mu * (1 + e) * cosθ * sinΦ * V.x;
-                V1.y = 0f; //V.x * (1f * e) * sinθ * (mu * sinΦ * cosθ + sinθ);
+                V1.x = -V.x * (e) * cosθ * (mu * cosΦ * sinθ + cosθ);
+                V1.z = (V.z + mu * (e) * cosθ * sinΦ * V.x); //- V.z;
+                V1.y = V.x * (1f * e) * sinθ * (mu * sinΦ * cosθ + sinθ);
             }
 
             // Compute angular momentum changes
