@@ -312,7 +312,7 @@ public class BilliardsModule : UdonSharpBehaviour
 
         this.transform.Find("intl.balls/guide/guide_display").GetComponent<MeshRenderer>().material.SetMatrix("_BaseTransform", this.transform.worldToLocalMatrix);
 
-        if (LoDDistance > 0)
+        if (LoDDistance > 0 && !checkingDistant)
         {
             checkingDistant = true;
             SendCustomEventDelayedSeconds(nameof(checkDistanceLoop), UnityEngine.Random.Range(0, 1f));
@@ -545,7 +545,10 @@ public class BilliardsModule : UdonSharpBehaviour
         isPlayer = false;
         int[] playerIDsLocal_new = new int[4];
         Array.Copy(playerIDsLocal, playerIDsLocal_new, 4);
-        playerIDsLocal_new[localPlayerId] = -1;
+        if (localPlayerId != -1) // true if lobby was closed
+        {
+            playerIDsLocal_new[localPlayerId] = -1;
+        }
         onRemotePlayersChanged(playerIDsLocal_new);
     }
     private float lastActionTime;
