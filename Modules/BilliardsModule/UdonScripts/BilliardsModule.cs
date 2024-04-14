@@ -1447,7 +1447,8 @@ public class BilliardsModule : UdonSharpBehaviour
     {
         if (!isLocalSimulationRunning && !forceRun) return;
         isLocalSimulationRunning = false;
-        if (networkingManager.delayedDeserialization)
+
+        if (!isLocalSimulationOurs && networkingManager.delayedDeserialization)
             networkingManager.OnDeserialization();
 
         _LogInfo("local simulation completed");

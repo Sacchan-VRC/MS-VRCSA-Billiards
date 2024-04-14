@@ -631,7 +631,6 @@ public class NetworkingManager : UdonSharpBehaviour
         isUrgentSynced = (byte)(urgent ? 2 : 0);
 
         hasBufferedMessages = true;
-        OnDeserialization();
     }
 
     public void _FlushBuffer()
@@ -643,6 +642,7 @@ public class NetworkingManager : UdonSharpBehaviour
 
         Networking.SetOwner(Networking.LocalPlayer, this.gameObject);
         this.RequestSerialization();
+        OnDeserialization();
     }
 
     public void _OnPlayerPrepareShoot()
