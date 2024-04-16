@@ -1255,6 +1255,7 @@ public class BilliardsModule : UdonSharpBehaviour
 
             onRemoteTurnBegin(networkingManager.timerStartSynced);
             // practiceManager._Record();
+            auto_colliderBaseVFX.SetActive(false);
         }
         else if (turnStateLocal == 1)
         {
@@ -2334,6 +2335,7 @@ public class BilliardsModule : UdonSharpBehaviour
         guideline.SetActive(false);
         isGuidelineValid = false;
         isReposition = false;
+        auto_colliderBaseVFX.SetActive(false);
 
         desktopManager._DenyShoot();
         graphicsManager._HideTimers();
