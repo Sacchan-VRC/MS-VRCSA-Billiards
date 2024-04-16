@@ -1,4 +1,4 @@
-﻿// #define HT8B_DRAW_REGIONS
+﻿#define HT8B_DRAW_REGIONS
 using System;
 using UdonSharp;
 using UnityEngine;
@@ -957,12 +957,12 @@ public class StandardPhysicsManager : UdonSharpBehaviour
         k_vW.z = 0.0f;
 
         k_vY = k_vB;
-        Vector3 Rotationk_vY = new Vector3(.2f, 0, 0);
+        Vector3 Rotationk_vY = new Vector3(-.2f, 0, 0);
         Rotationk_vY = Quaternion.AngleAxis(k_FACING_ANGLE_CORNER, Vector3.up) * Rotationk_vY;
         k_vY += Rotationk_vY;
 
         k_vZ = k_vC;
-        Vector3 Rotationk_vZ = new Vector3(0, 0, .2f);
+        Vector3 Rotationk_vZ = new Vector3(0, 0, -.2f);
         Rotationk_vZ = Quaternion.AngleAxis(-k_FACING_ANGLE_CORNER, Vector3.up) * Rotationk_vZ;
         k_vZ += Rotationk_vZ;
 
@@ -1225,16 +1225,18 @@ public class StandardPhysicsManager : UdonSharpBehaviour
                         V.y = 0.0f;
                         V.z = _V.x;
 
-                        if (newPosPR.z > k_vA.z)
+                        if (newPos.z > k_vA.z)
                         {
                             if (Vector3.Dot(V, a_to_v) > 0.0f)
                             {
+                                Debug.DrawRay(balls[0].transform.parent.TransformPoint(Vector3.Scale(k_vA, _sign_pos)), V * .3f, Color.red, 3f);
+                                Debug.DrawRay(balls[0].transform.parent.TransformPoint(Vector3.Scale(k_vA, _sign_pos)), a_to_v * .3f, Color.white, 3f);
                                 // Region C ( Delegated )
                                 a_to_v = newPos - k_pL;
 
                                 // Static resolution
                                 dot = Vector3.Dot(a_to_v, k_vA_vD);
-                                newPos = k_pL + dot * k_vA_vD;
+                                newPos = k_pL + dot * k_vA_vD + k_vA_vD_normal * k_BALL_RADIUS;
 
                                 // Dynamic
                                 _phy_bounce_cushion(id, Vector3.Scale(k_vA_vD_normal, _sign_pos));
@@ -1256,27 +1258,6 @@ public class StandardPhysicsManager : UdonSharpBehaviour
                         }
                         else
                         {
-                            /*                             if (newPos.z > k_pN.z)
-                                                        {
-                                                            a_to_v = newPos - k_pN;
-                                                            if (Vector3.Dot(V, a_to_v) > 0.0f)
-                                                            {
-                            #if HT8B_DRAW_REGIONS
-                                                                Debug.DrawLine(k_vA, k_vA + k_vA_vB_normal, Color.green);
-                                                                Debug.DrawLine(k_vA, k_vA + k_vA_vD_normal, Color.green);
-                                                                if (id == 0) Debug.Log("Region B ( VORONI ) ( Delegated )");
-                            #endif
-                                                                // g
-                                                                // Static resolution
-                                                                N = a_to_v.normalized;
-                                                                newPos = k_vA + N * r_k_CUSHION_RADIUS;
-
-                                                                // Dynamic
-                                                                _phy_bounce_cushion(id, Vector3.Scale(N, _sign_pos));
-                                                                                                                                if (id == 0) Debug.Log("Region B ( VORONI ) ( Delegated )");
-                                                            }
-                                                        }
-                                                        else */
                             {
                                 // Static resolution
                                 newPos.z = k_pN.z - k_BALL_RADIUS;
@@ -1450,6 +1431,7 @@ public class StandardPhysicsManager : UdonSharpBehaviour
                 }
             }
         }
+        balls_P[id] = Vector3.Scale(newPos, _sign_pos);
     }
 
     public Vector3 RaySphere_output;

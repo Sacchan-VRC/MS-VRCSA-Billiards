@@ -24,21 +24,21 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
     private float k_BALL_RSQR = 0.0009f;                                    // ball radius squared
     //const float k_BALL_BALL_F = 0.03f;                                    // Friction coefficient between balls       (ball-ball) 0.03f  
     [SerializeField][Range(0.92f, 0.98f)] private float k_BALL_E = 0.98f;   // Coefficient of Restitution between balls (Data suggests 0.94 to 0.96, but it seems there is an issue during calculation, Happens rarely now after some fixes.)
-        
+
     // Ball <-> Table Variables 
-public float k_F_SLIDE = 0.15f;                                                             // Friction coefficient of sliding          (Ball-Table)    [Update Velocity]
+    public float k_F_SLIDE = 0.15f;                                                             // Friction coefficient of sliding          (Ball-Table)    [Update Velocity]
     public float k_F_ROLL = 0.005f;                                                         // Friction coefficient of rolling          (Ball-table)    [Update Velocity]
     public float k_F_SPIN = 0.022f;                                                         // Friction coefficient of Spin             (Ball-table)    [Update Velocity]
     public float k_F_SPIN_RATE = 5f;                                                        // Desired constant deceleration rate       (ball-table)    [Update Velocity]  https://billiards.colostate.edu/faq/physics/physical-properties/ [desired between 0.5 - 15]
     [Range(0.5f, 0.7f)] const float K_BOUNCE_FACTOR = 0.5f;                                 // COR Ball-Slate.                          (ball-table)    [Update Velocity]
     public bool isDRate = true;
-    
+
     // Ball <-> Cushion Variables
     [SerializeField] private bool isHanModel = true;                                        // Enables HAN5 3D Friction Cushion Model   (Ball-Cushion)  [Phys Cushion]
     [SerializeField][Range(0.7f, 0.98f)] private float k_E_C = 0.85f;                       // COR ball-Cushion                         (Ball-Cushion)  [Phys Cushion]      [default 0.85] - Acceptable Range [0.7 - 0.98] 
-    
-    [Range(0f, 1f)]      public float k_F_SLIDE_TERM1 = 0.67f;                             // COF slide of the Cushion                 (Ball-Cushion)  [Phys Cushion]      [default 0.471]
-    [Range(0f, 0.471f)]  public float k_F_SLIDE_TERM2 = 0.2f;
+
+    [Range(0f, 1f)] public float k_F_SLIDE_TERM1 = 0.67f;                             // COF slide of the Cushion                 (Ball-Cushion)  [Phys Cushion]      [default 0.471]
+    [Range(0f, 0.471f)] public float k_F_SLIDE_TERM2 = 0.2f;
     //[SerializeField][Range(0.6f, 0.7f)] private float cushionHeightPercent = 0.635f;
 
     private Color markerColorYes = new Color(0.0f, 1.0f, 0.0f, 1.0f);
@@ -605,7 +605,6 @@ public float k_F_SLIDE = 0.15f;                                                 
 
         return originalDelta;
     }
-    public bool CCDPoints = true;
     readonly int[] ballsToCheckStart = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15 };
     int[] ballsToCheck = new int[1];
     // Advance simulation 1 step for ball id
@@ -702,7 +701,7 @@ public float k_F_SLIDE = 0.15f;                                                 
     /// as such a value of 1.9942 has been emperically determined after multiple tests, this now becomes the new `advanced simple consistent` model as it attempts to fix some of the issues version 1 had.
     /// a value of 1.5x is acceptable [in case the game feels too hard for users]
     public float muFactor = 1.9942f; // Default should be 1 but results fail to reach and match some of the plot data, as such a value of 1.9942 has been emperically set after multiple tests.  
-    
+
     void HandleCollision3_4(int i, int id, Vector3 normal, Vector3 delta) // Advanced Physics V3.4
     {
         /// PREPARE SOME STUFF
@@ -826,7 +825,7 @@ public float k_F_SLIDE = 0.15f;                                                 
         float mu_r = k_F_ROLL;                                  // Coefficient of friction for rolling
 
         if (isDRate)
-        { 
+        {
             mu_sp = DARate;
         }
         else
@@ -1155,7 +1154,7 @@ public float k_F_SLIDE = 0.15f;                                                 
 
             k_A = (7f / (2f * k_BALL_MASS));
             k_B = (1f / k_BALL_MASS);
-          
+
             const float cosθ = 0.95976971915f; //Mathf.Cos(θ); // in use
             const float sinθ = 0.28078832987f; //Mathf.Sin(θ); // in use
 
@@ -1294,10 +1293,10 @@ public float k_F_SLIDE = 0.15f;                                                 
         // The friction Coefficient between the ball and rail varies according to the incidence angle [Phi_ (Radians)].
 
         mu = k_F_SLIDE_TERM1 - k_F_SLIDE_TERM2 * Φ;                                             // Dynamic
-        
+
         //h = k_BALL_DIAMETRE * cushionHeightPercent;                                           // LEGACY Gives us H [Measured from table surface to the point of impact]
         //h = (D * cushionHeightPercent);                                                       // LEGACY
-        
+
         float P = (h - (balls_P[id].y + R));                                                    // Gives us P [Point of contact on ball surface from cushion]
 
         // Now in Trignonometric Functions, the K_BALL_RADIUS is our Base(Adjacent) and P is opposite to the angle THETA.
@@ -1321,13 +1320,13 @@ public float k_F_SLIDE = 0.15f;                                                 
         //θ = Mathf.Tan(P / R);
 
 
-        float cosθ  = Mathf.Cos(θ);
-        float sinθ  = Mathf.Sin(θ);
+        float cosθ = Mathf.Cos(θ);
+        float sinθ = Mathf.Sin(θ);
         float cosθ2 = (cosθ * cosθ);
         float sinθ2 = (sinθ * sinθ);
 
-        float cosΦ  = Mathf.Cos(Φ);
-        float sinΦ  = Mathf.Sin(Φ);
+        float cosΦ = Mathf.Cos(Φ);
+        float sinΦ = Mathf.Sin(Φ);
 
 
         //*is correct* = revised values to match with its necessary Rotation Axis.
@@ -1356,8 +1355,8 @@ public float k_F_SLIDE = 0.15f;                                                 
         if (P_yS <= P_yE)   // Sliding and sticking case 1-1
         {
             PX = -s_x / k_A * sinθ - (1f + e) * c / k_B * cosθ;                                 // PX is Correct
-            PZ = s_z  / k_A;                                                                    // PZ is correct
-            PY = s_x  / k_A * cosθ - (1f + e) * c / k_B * sinθ;
+            PZ = s_z / k_A;                                                                    // PZ is correct
+            PY = s_x / k_A * cosθ - (1f + e) * c / k_B * sinθ;
         }
         else                // Forward Sliding Case 1-2 
         {
@@ -1389,7 +1388,7 @@ public float k_F_SLIDE = 0.15f;                                                 
         W1.x += W.x - ((R / I) * mu) * PZ * sinθ;
         W1.z += W.z + ((R / I) * mu) * (PX * sinθ - PY * cosθ);
         W1.y += W.y + ((R / I) * mu) * PZ * cosθ;
-        
+
 
 
         // Change back to Table Reference Frame (Unrotate result)
@@ -1903,7 +1902,7 @@ public float k_F_SLIDE = 0.15f;                                                 
                         V.y = 0.0f;
                         V.z = _V.x;
 
-                        if (newPosPR.z > k_vA.z)
+                        if (newPos.z > k_vA.z)
                         {
                             if (Vector3.Dot(V, a_to_v) > 0.0f)
                             {
@@ -1934,7 +1933,6 @@ public float k_F_SLIDE = 0.15f;                                                 
 #endif
                             }
                         }
-                        // It may be possible to add continuous collision detection for Region B ( VORONI ) here.
                         else
                         {
                             // Static resolution
@@ -2224,7 +2222,7 @@ public float k_F_SLIDE = 0.15f;                                                 
         return false;
     }
 
-    public Vector3 RaySphere_output;
+    private Vector3 RaySphere_output;
     bool _phy_ray_sphere(Vector3 start, Vector3 dir, Vector3 sphere, float radiusSQR)
     {
         Vector3 nrm = dir.normalized;
