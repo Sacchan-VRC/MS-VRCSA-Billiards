@@ -6,7 +6,7 @@ using UnityEngine;
 [UdonBehaviourSyncMode(BehaviourSyncMode.NoVariableSync)]
 public class AdvancedPhysicsManager : UdonSharpBehaviour
 {
-    public string PHYSICSNAME = "<color=#FFD700>Advanced V0.5</color>";
+    public string PHYSICSNAME = "<color=#FFD700>Advanced V0.5H</color>";
 #if HT_QUEST
    private  float k_MAX_DELTA =  0.05f; // Private Const Float 0.05f max time to process per frame on quest (~4)
 #else
@@ -26,18 +26,20 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
     [SerializeField][Range(0.92f, 0.98f)] private float k_BALL_E = 0.98f;   // Coefficient of Restitution between balls (Data suggests 0.94 to 0.96, but it seems there is an issue during calculation, Happens rarely now after some fixes.)
         
     // Ball <-> Table Variables 
-    public float k_F_SLIDE = 0.2f;                                                          // Friction coefficient of sliding          (Ball-Table)    [Update Velocity]
-    public float k_F_ROLL = 0.008f;                                                         // Friction coefficient of rolling          (Ball-table)    [Update Velocity]
+public float k_F_SLIDE = 0.15f;                                                             // Friction coefficient of sliding          (Ball-Table)    [Update Velocity]
+    public float k_F_ROLL = 0.005f;                                                         // Friction coefficient of rolling          (Ball-table)    [Update Velocity]
     public float k_F_SPIN = 0.022f;                                                         // Friction coefficient of Spin             (Ball-table)    [Update Velocity]
-    public float k_F_SPIN_RATE = 15f;                                                       // Desired constant deceleration rate       (ball-table)    [Update Velocity]  https://billiards.colostate.edu/faq/physics/physical-properties/ [desired between 0.5 - 15]
+    public float k_F_SPIN_RATE = 5f;                                                        // Desired constant deceleration rate       (ball-table)    [Update Velocity]  https://billiards.colostate.edu/faq/physics/physical-properties/ [desired between 0.5 - 15]
     [Range(0.5f, 0.7f)] const float K_BOUNCE_FACTOR = 0.5f;                                 // COR Ball-Slate.                          (ball-table)    [Update Velocity]
-    public bool isDARate = false;
+    public bool isDRate = true;
     
     // Ball <-> Cushion Variables
     [SerializeField] private bool isHanModel = true;                                        // Enables HAN5 3D Friction Cushion Model   (Ball-Cushion)  [Phys Cushion]
     [SerializeField][Range(0.7f, 0.98f)] private float k_E_C = 0.85f;                       // COR ball-Cushion                         (Ball-Cushion)  [Phys Cushion]      [default 0.85] - Acceptable Range [0.7 - 0.98] 
-    [SerializeField][Range(0f, 0.570f)] private float k_F_SLIDE_C = 0.471f;                 // COF slide of the Cushion                 (Ball-Cushion)  [Phys Cushion]      [default 0.471]
-    //[SerializeField][Range(0.6f, 0.7f)] private float cushionHeightPercent = 0.635f;      // LEGACY - The point of collision from cushion nose to the ball surface is a percent of the ball Diameter [WPA regulations states this Rail Height should be 63.5%(+1) or between 62.5% ~ 64.5% (Allowed Range) Page 3 - Section 7 at https://wpapool.com/wp-content/uploads/2024/01/RECOMMENDED-EQUIPMENT-SPECIFICATIONS.pdf
+    
+    [Range(0f, 1f)]      public float k_F_SLIDE_TERM1 = 0.67f;                             // COF slide of the Cushion                 (Ball-Cushion)  [Phys Cushion]      [default 0.471]
+    [Range(0f, 0.471f)]  public float k_F_SLIDE_TERM2 = 0.2f;
+    //[SerializeField][Range(0.6f, 0.7f)] private float cushionHeightPercent = 0.635f;
 
     private Color markerColorYes = new Color(0.0f, 1.0f, 0.0f, 1.0f);
     private Color markerColorNo = new Color(1.0f, 0.0f, 0.0f, 1.0f);
@@ -823,7 +825,7 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
         float mu_s = k_F_SLIDE;                                 // Coefficient of friction for sliding
         float mu_r = k_F_ROLL;                                  // Coefficient of friction for rolling
 
-        if (isDARate)
+        if (isDRate)
         { 
             mu_sp = DARate;
         }
@@ -1180,8 +1182,6 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
         }
     }
 
-    public bool isHanPaper_EQ21_1_1 = true;
-    public bool isHanPaper_EQ21_S24_1_1 = false;
     public bool isCushionRichDebug = false;
     //public float momentOfInertia = (2.0f / 5.0f * 0.17f * Mathf.Pow(0.028575f, 2f));
     void _HANCushionModel(ref Vector3 vel, ref Vector3 angvel, int id, Vector3 N)
@@ -1293,8 +1293,8 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
 
         // The friction Coefficient between the ball and rail varies according to the incidence angle [Phi_ (Radians)].
 
-        mu = 0.471f - 0.241f * Φ;                                                                 // Dynamic
-    
+        mu = k_F_SLIDE_TERM1 - k_F_SLIDE_TERM2 * Φ;                                             // Dynamic
+        
         //h = k_BALL_DIAMETRE * cushionHeightPercent;                                           // LEGACY Gives us H [Measured from table surface to the point of impact]
         //h = (D * cushionHeightPercent);                                                       // LEGACY
         
@@ -1353,56 +1353,43 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
         P_yE = (1f + e) * c / k_B;                                                              // P_yE is Correct
         P_yS = (Mathf.Sqrt(Mathf.Pow(s_x, 2) + Mathf.Pow(s_z, 2)) / k_A);                       // P_yS is Correct (In case of Anomaly, do: Mathf.Sqrt(s_x * s_x + s_z * s_z) instead;
 
-
-        if (isHanPaper_EQ21_S24_1_1) // Attempt to solve for friction on Default Derived  Equation 24 Substituted to 24 ! [currently some impulse issues = bool default FALSE] !
+        if (P_yS <= P_yE)   // Sliding and sticking case 1-1
         {
-
-            if (P_yS <= P_yE)   // Sliding and sticking case 1-1
-            {
-                V1.x = -V.x * ((((2.0f / 7.0f) * sinθ2) * cosθ2) + (e)) - ((((2.0f / 7.0f) * R) * sinθ) * W.z);
-                V1.z = (5.0f / 7.0f) * V.z + ((2.0f / 7.0f) * R) * (W.x * sinθ - W.y * cosθ); //- V.z;
-                V1.y = V.x * ((2.0f / 7.0f) * (cosθ * cosθ) + (1.0f + e) * (sinθ * sinθ)) - (2.0f / 7.0f) * R * W.z * cosθ;
-            }
-            else                // Forward Sliding Case 1-2 
-            {
-                V1.x = -V.x * (e) * cosθ * (mu * cosΦ * sinθ + cosθ);
-                V1.z = (V.z + mu * (e) * cosθ * sinΦ * V.x); //- V.z;
-                V1.y = V.x * (1f * e) * sinθ * (mu * sinΦ * cosθ + sinθ);
-            }
-
-            // Compute angular momentum changes
-            W1.x = W.x + R / I * V1.z * sinθ;
-            W1.z = W.z + R / I * (V1.x * sinθ - V1.y * cosθ);
-            W1.y = W.y + R / I * V1.z * cosθ;
+            PX = -s_x / k_A * sinθ - (1f + e) * c / k_B * cosθ;                                 // PX is Correct
+            PZ = s_z  / k_A;                                                                    // PZ is correct
+            PY = s_x  / k_A * cosθ - (1f + e) * c / k_B * sinθ;
+        }
+        else                // Forward Sliding Case 1-2 
+        {
+            PX = -mu * (1f + e) * c / k_B * cosΦ * sinθ - (1f + e) * c / k_B * cosθ;            // PX is Correct
+            PZ = mu * (1f + e) * c / k_B * sinθ;                                                // PZ is Correct
+            PY = mu * (1f + e) * c / k_B * cosΦ * cosθ - (1f + e) * c / k_B * sinθ;             // PY is Correct        
         }
 
+        // Update Velocity                                                                      // Update Velocity is Corret
+        V1.x += V.x + (PX / M);
+        V1.z += V.z + (PZ / M);
+        //V1.y += V.y + ((PY + (c = 0f)) / M) * 0.15f; // Force Applyed Geometrically down to the slate [the ball usually hop less than k_BALL_BOUNCE;
 
-        if (isHanPaper_EQ21_1_1) // Natural equation 21 - working mostly correct = bool default TRUE]
-        {
+        /*
+        W1.x += W.x - (R / I) * ((-mu * (1f + e) * c / k_B * sinθ) * sinθ);
+        W1.z += W.z + (R / I) * ((mu * (1f + e) * c / k_B * cosΦ * sinθ - (1f + e) * c / k_B * cosθ) * sinθ - (mu * (1f + e) * c / k_B * cosΦ * cosθ - (1f + e) * c / k_B * sinθ) * cosθ);
+        W1.y += W.y + (R / I) * ((-mu * (1f + e) * c / k_B * sinθ) * cosθ);
+        */
 
-            if (P_yS <= P_yE)   // Sliding and sticking case 1-1
-            {
-                PX = -s_x / k_A * sinθ - (1f + e) * c / k_B * cosθ;                                 // PX is Correct
-                PZ = s_z  / k_A;                                                                    // PZ is correct
-                PY = s_x  / k_A * cosθ - (1f + e) * c / k_B * sinθ;
-            }
-            else                // Forward Sliding Case 1-2 
-            {
-                PX = -mu * (1f + e) * c / k_B * cosΦ * sinθ - (1f + e) * c / k_B * cosθ;            // PX is Correct
-                PZ = mu * (1f + e) * c / k_B * sinθ;                                                // PZ is Correct
-                PY = mu * (1f + e) * c / k_B * cosΦ * cosθ - (1f + e) * c / k_B * sinθ;             // PY is Correct        
-            }
+        /*
+        float k = s_z * (5f / 7f);
 
-            // Update Velocity                                                                      // Update Velocity is Corret
-            V1.x += V.x + (PX / M);
-            V1.z += V.z + (PZ / M);
-            V1.y += V.y + ((PY + (c = 0f)) / M) * 0.35f; // Force Applyed Geometrically down to the slate [the ball usually hop less than k_BALL_BOUNCE;
+        W1.x += W.x + (k * mu) * sinθ;
+        W1.z += W.z + (R / I) * (PX * sinθ - PY * cosθ);
+        W1.y += W.y + (k * mu) * cosθ;
+        */
 
-            // Compute angular momentum changes
-            W1.x += W.x - R / I * PZ * sinθ;
-            W1.z += W.z + R / I * (PX * sinθ - PY * cosθ);
-            W1.y += W.y + R / I * PZ * cosθ;
-        }
+        // Compute angular momentum changes
+        W1.x += W.x - ((R / I) * mu) * PZ * sinθ;
+        W1.z += W.z + ((R / I) * mu) * (PX * sinθ - PY * cosθ);
+        W1.y += W.y + ((R / I) * mu) * PZ * cosθ;
+        
 
 
         // Change back to Table Reference Frame (Unrotate result)
