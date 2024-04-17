@@ -148,6 +148,7 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
             if (table.isReposition)
             {
                 table.markerObj.transform.position = balls[0].transform.position + new Vector3(0, k_BALL_RADIUS, 0);  // Ensures the Market stays above the ball no matter the size or Scale
+                table.markerObj.transform.localScale = Vector3.one * .3f;
                 isContact = isCueBallTouching();
                 if (isContact)
                 {
@@ -195,6 +196,7 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
                         table.devhit.SetActive(true);
                     }
                     table.devhit.transform.localPosition = RaySphere_output;
+                    if (table.markerObj.activeSelf) { table.markerObj.SetActive(false); }
 
                     Vector3 q = transform_Surface.InverseTransformDirection(cuetip.transform.forward); // direction of cue in surface space
                     Vector3 o = balls_P[0]; o.y = 0;// location of ball in surface
