@@ -1,5 +1,6 @@
 ﻿#define HT8B_DRAW_REGIONS
 using System;
+using BestHTTP.SecureProtocol.Org.BouncyCastle.Crypto.Modes.Gcm;
 using UdonSharp;
 using UnityEngine;
 
@@ -389,17 +390,20 @@ public class StandardPhysicsManager : UdonSharpBehaviour
 
         // Run triggers
         table._BeginPerf(table.PERF_PHYSICS_POCKET);
-        for (int i = 0; i < 16; i++)
+        if (!table.is4Ball)
         {
-            if (moved[i] && (ball_bit & sn_pocketed) == 0U && (i != 0 || !outOfBounds))
+            for (int i = 0; i < 16; i++)
             {
-                if (i != 0 || canCueBallBounceOffCushion)
+                if (moved[i] && (ball_bit & sn_pocketed) == 0U && (i != 0 || !outOfBounds))
                 {
-                    _phy_ball_pockets(i, balls_P);
+                    if (i != 0 || canCueBallBounceOffCushion)
+                    {
+                        _phy_ball_pockets(i, balls_P);
+                    }
                 }
-            }
 
-            ball_bit <<= 1;
+                ball_bit <<= 1;
+            }
         }
         table._EndPerf(table.PERF_PHYSICS_POCKET);
     }
@@ -934,6 +938,8 @@ public class StandardPhysicsManager : UdonSharpBehaviour
         k_vE = table.k_vE;
         k_vF = table.k_vF;
 
+        float r_k_CUSHION_RADIUS = k_CUSHION_RADIUS + k_BALL_RADIUS;
+
         Collider[] collider = table.GetComponentsInChildren<Collider>();
         for (int i = 0; i < collider.Length; i++)
         {
@@ -941,7 +947,7 @@ public class StandardPhysicsManager : UdonSharpBehaviour
         }
 
         // Handy values
-        k_MINOR_REGION_CONST = table.k_TABLE_WIDTH - table.k_TABLE_HEIGHT;
+        k_MINOR_REGION_CONST = k_TABLE_WIDTH - k_TABLE_HEIGHT;
 
         // Major source vertices
         k_vA.x = k_POCKET_RADIUS_SIDE;
@@ -1000,12 +1006,12 @@ public class StandardPhysicsManager : UdonSharpBehaviour
         k_pK.x -= k_CUSHION_RADIUS;
 
         k_pO = k_vB;
-        k_pO.z -= k_CUSHION_RADIUS;
+        k_pO.z -= r_k_CUSHION_RADIUS;
         k_pP = k_vB + k_vB_vY_normal * k_CUSHION_RADIUS;
         k_pQ = k_vC + k_vC_vZ_normal * k_CUSHION_RADIUS;
 
         k_pR = k_vC;
-        k_pR.x -= k_CUSHION_RADIUS;
+        k_pR.x -= r_k_CUSHION_RADIUS;
 
 #if HT8B_DRAW_REGIONS
         // for drawing lines only
@@ -1060,26 +1066,22 @@ public class StandardPhysicsManager : UdonSharpBehaviour
     // Pocketless table
     void _phy_ball_table_carom(int id)
     {
-
         Vector3 A = balls_P[id];
         _sign_pos.x = Mathf.Sign(A.x);
         _sign_pos.z = Mathf.Sign(A.z);
         A = Vector3.Scale(A, _sign_pos);
-        Vector3 APR = A;
-        APR.x += k_BALL_RADIUS;
-        APR.z += k_BALL_RADIUS;
 
         // Setup major regions
 
-        if (APR.x * _sign_pos.x > k_pR.x)
+        if (A.x > k_pR.x)
         {
-            A.x = (k_pR.x - k_BALL_RADIUS) * _sign_pos.x;
+            A.x = k_pR.x;
             _phy_bounce_cushion(id, Vector3.left * _sign_pos.x);
         }
 
-        if (APR.z * _sign_pos.z > k_pO.z)
+        if (A.z > k_pO.z)
         {
-            A.z = (k_pO.z - k_BALL_RADIUS) * _sign_pos.z;
+            A.z = k_pO.z;
             _phy_bounce_cushion(id, Vector3.back * _sign_pos.z);
         }
         balls_P[id] = Vector3.Scale(A, _sign_pos);
