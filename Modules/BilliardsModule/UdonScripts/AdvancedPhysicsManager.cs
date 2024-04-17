@@ -57,6 +57,7 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
 
     private float accumulatedTime;
     private float lastTimestamp;
+    float pocketedTime = 0;
 
     public GameObject[] balls;
     private Vector3[] balls_P; // Displacement Vector
@@ -439,8 +440,11 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
         // Check if simulation has settled
         if (!ballsMoving)
         {
-            table._TriggerSimulationEnded(false);
-            return;
+            if (Time.time - pocketedTime > 1f)
+            {
+                table._TriggerSimulationEnded(false);
+                return;
+            }
         }
 
         if (is4Ball) return;
@@ -1632,6 +1636,7 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
                 if ((absA - k_vE).sqrMagnitude < k_INNER_RADIUS_CORNER_SQ)
                 {
                     table._TriggerPocketBall(id);
+                    pocketedTime = Time.time;
                     return;
                 }
 
@@ -1639,6 +1644,7 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
                 if ((absA - k_vF).sqrMagnitude < k_INNER_RADIUS_SIDE_SQ)
                 {
                     table._TriggerPocketBall(id);
+                    pocketedTime = Time.time;
                     return;
                 }
             }
@@ -1646,17 +1652,17 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
 
         if (absA.z > tableEdge.y)
         {
-            // TODO: FOUL
             table._TriggerBallFallOffFoul();
             table._TriggerPocketBall(id);
+            pocketedTime = Time.time;
             return;
         }
 
         if (absA.x > tableEdge.x)
         {
-            // TODO: FOUL
             table._TriggerBallFallOffFoul();
             table._TriggerPocketBall(id);
+            pocketedTime = Time.time;
             return;
         }
     }

@@ -43,6 +43,7 @@ public class StandardPhysicsManager : UdonSharpBehaviour
 
     private float accumulatedTime;
     private float lastTimestamp;
+    float pocketedTime = 0;
 
     private GameObject[] balls;
     private Vector3[] balls_P; // Displacement Vector
@@ -309,8 +310,11 @@ public class StandardPhysicsManager : UdonSharpBehaviour
         // Check if simulation has settled
         if (!ballsMoving)
         {
-            table._TriggerSimulationEnded(false);
-            return;
+            if (Time.time - pocketedTime > 1f)
+            {
+                table._TriggerSimulationEnded(false);
+                return;
+            }
         }
 
         bool canCueBallBounceOffCushion = balls_P[0].y < k_BALL_RADIUS;
@@ -345,6 +349,7 @@ public class StandardPhysicsManager : UdonSharpBehaviour
             if (Mathf.Abs(balls_P[0].x) > table.k_TABLE_WIDTH + 0.1 || Mathf.Abs(balls_P[0].z) > table.k_TABLE_HEIGHT + 0.1)
             {
                 table._TriggerPocketBall(0);
+                pocketedTime = Time.time;
                 table._Log("out of bounds! " + balls_P[0].ToString());
                 outOfBounds = true;
             }
@@ -670,7 +675,7 @@ public class StandardPhysicsManager : UdonSharpBehaviour
         return ballMoving;
     }
 
-    public void _ResetJumpShotVariables()
+    public void _ResetSimulationVariables()
     {
         jumpShotFlewOver = cueBallHasCollided = false;
     }
@@ -1024,24 +1029,28 @@ public class StandardPhysicsManager : UdonSharpBehaviour
         if ((absA - k_vE).sqrMagnitude < k_INNER_RADIUS_CORNER_SQ)
         {
             table._TriggerPocketBall(id);
+            pocketedTime = Time.time;
             return;
         }
 
         if ((absA - k_vF).sqrMagnitude < k_INNER_RADIUS_SIDE_SQ)
         {
             table._TriggerPocketBall(id);
+            pocketedTime = Time.time;
             return;
         }
 
         if (absA.z > k_vF.z)
         {
             table._TriggerPocketBall(id);
+            pocketedTime = Time.time;
             return;
         }
 
         if (absA.z > -absA.x + k_vE.x + k_vE.z)
         {
             table._TriggerPocketBall(id);
+            pocketedTime = Time.time;
             return;
         }
     }
