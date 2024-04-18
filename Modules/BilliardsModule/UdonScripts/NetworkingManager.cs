@@ -545,6 +545,7 @@ public class NetworkingManager : UdonSharpBehaviour
         bool playerRemoved = false;
         for (int i = 0; i < MAX_PLAYERS; i++)
         {
+            if (playerIDsSynced[i] == -1) continue;
             VRCPlayerApi plyr = VRCPlayerApi.GetPlayerById(playerIDsSynced[i]);
             if (plyr == null)
             {
@@ -552,8 +553,7 @@ public class NetworkingManager : UdonSharpBehaviour
                 playerIDsSynced[i] = -1;
             }
         }
-        int numPlayers = CountPlayers();
-        if (numPlayers == 0 && !table.gameLive)
+        if (CountPlayers() == 0 && !table.gameLive)
         {
             gameStateSynced = 0;
         }
@@ -562,6 +562,7 @@ public class NetworkingManager : UdonSharpBehaviour
             bufferMessages(false);
         }
     }
+
     int CountPlayers()
     {
         int result = 0;
@@ -573,6 +574,27 @@ public class NetworkingManager : UdonSharpBehaviour
             }
         }
         return result;
+    }
+
+    public void removePlayer(int playedId)
+    {
+        bool playerRemoved = false;
+        for (int i = 0; i < MAX_PLAYERS; i++)
+        {
+            if (playerIDsSynced[i] == playedId)
+            {
+                playerRemoved = true;
+                playerIDsSynced[i] = -1;
+            }
+        }
+        if (CountPlayers() == 0 && !table.gameLive)
+        {
+            gameStateSynced = 0;
+        }
+        if (playerRemoved)
+        {
+            bufferMessages(false);
+        }
     }
 
     public void _ForceLoadFromState
@@ -927,6 +949,6 @@ public class NetworkingManager : UdonSharpBehaviour
     public override void OnPlayerLeft(VRCPlayerApi player)
     {
         if (!Networking.LocalPlayer.IsOwner(gameObject)) return;
-        validatePlayers();
+        removePlayer(player.playerId);
     }
 }
