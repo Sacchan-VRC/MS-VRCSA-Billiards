@@ -407,6 +407,16 @@ public class MenuManager : UdonSharpBehaviour
         table._TriggerPhysicsChanged(selectedPhysics);
     }
 
+    public Slider cueSizeSlider;
+    public TextMeshProUGUI cueSizeText;
+    public void setCueSize()
+    {
+        float newScale = cueSizeSlider.value / 10f;
+        table.cueControllers[0].setScale(newScale);
+        table.cueControllers[1].setScale(newScale);
+        cueSizeText.text = newScale.ToString("F1");
+    }
+
     [NonSerialized] public UIButton inButton;
     public void _OnButtonPressed() { onButtonPressed(inButton); }
     private void onButtonPressed(UIButton button)

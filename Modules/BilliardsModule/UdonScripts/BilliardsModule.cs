@@ -858,6 +858,8 @@ public class BilliardsModule : UdonSharpBehaviour
         lobbyOpen = true;
         graphicsManager._OnLobbyOpened();
         menuManager._RefreshLobby();
+        cueControllers[0].resetScale();
+        cueControllers[1].resetScale();
 
         if (callbacks != null) callbacks.SendCustomEvent("_OnLobbyOpened");
     }

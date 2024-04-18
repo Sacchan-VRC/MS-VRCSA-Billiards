@@ -1,4 +1,5 @@
 ﻿using System;
+using Cysharp.Threading.Tasks.Triggers;
 using UdonSharp;
 using UnityEngine;
 using VRC.SDKBase;
@@ -28,6 +29,9 @@ public class CueController : UdonSharpBehaviour
     private bool secondaryHolding;
     [UdonSynced] private bool secondaryLocked;
     [UdonSynced] private Vector3 secondaryLockPos;
+
+    private float cueScaleMine = 1;
+    [UdonSynced] private float cueScale = 1;
 
     private Vector3 secondaryOffset;
 
@@ -79,12 +83,21 @@ public class CueController : UdonSharpBehaviour
         activeCueSkin = table._CanUseCueSkin(owner, syncedCueSkin) ? syncedCueSkin : 0;
 
         refreshCueSkin();
+        refreshCueScale();
     }
 
     private void refreshCueSkin()
     {
         renderer = this.transform.Find("body/render").GetComponent<Renderer>();
         renderer.materials[1].SetTexture("_MainTex", table.cueSkins[activeCueSkin]);
+    }
+
+    private void refreshCueScale()
+    {
+        Vector3 newscale = Vector3.one * cueScale;
+        body.transform.localScale = newscale;
+        primary.transform.localScale = newscale;
+        secondary.transform.localScale = newscale;
     }
 
     public void _SetAuthorizedOwners(int[] newOwners)
@@ -284,6 +297,7 @@ public class CueController : UdonSharpBehaviour
         primaryHolding = true;
         primaryLocked = false;
         syncedCueSkin = table.activeCueSkin;
+        cueScale = cueScaleMine;
         RequestSerialization();
         OnDeserialization();
 
@@ -399,6 +413,24 @@ public class CueController : UdonSharpBehaviour
     public void _DisableRenderer()
     {
         renderer.enabled = false;
+    }
+
+    public void setScale(float scale)
+    {
+        cueScaleMine = scale;
+        if (!Networking.IsOwner(gameObject)) return;
+        cueScale = cueScaleMine;
+        RequestSerialization();
+        OnDeserialization();
+    }
+
+    public void resetScale()
+    {
+        if (!Networking.IsOwner(gameObject)) return;
+        if (cueScale == 1) return;
+        cueScale = 1;
+        RequestSerialization();
+        OnDeserialization();
     }
 
     private void clampControllers()
