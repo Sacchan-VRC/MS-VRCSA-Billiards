@@ -1545,7 +1545,7 @@ public class BilliardsModule : UdonSharpBehaviour
                 {
                     is9Sink = false;
                     ballsPocketedLocal = ballsPocketedLocal & ~(0x200u);
-                    ballsP[9] = new Vector3((k_TABLE_WIDTH * .5f)/* 2nd diamond */, 0, 0);
+                    ballsP[9] = initialPositions[1][9];
                     //keep moving ball down the table until it's not touching any other balls
                     moveBallInDirUntilNotTouching(9, Vector3.right * .051f);
                 }
@@ -1556,6 +1556,9 @@ public class BilliardsModule : UdonSharpBehaviour
                 isOpponentSink = fbMadeFoul;
                 foulCondition = false;
                 deferLossCondition = false;
+                if (isScratch)
+                    ballsPocketedLocal |= 1u; // make the following function move the cue ball
+                fourBallReturnBalls();
 
                 winCondition = fbScoresLocal[teamIdLocal] >= 10;
             }
@@ -2340,6 +2343,41 @@ public class BilliardsModule : UdonSharpBehaviour
         desktopManager._DenyShoot();
         graphicsManager._HideTimers();
     }
+
+    public void fourBallReturnBalls()
+    {
+        bool zeroPocketed = false;
+        bool thirteenPocketed = false;
+        bool fourteenPocketed = false;
+        bool fifteenPocketed = false;
+        if (fourBallCueBallLocal == 0) // the balls get their positions and color swapped so player 2 can hit the 'yellow' cue ball
+        {
+            if ((ballsPocketedLocal & (0x1U)) > 0)
+            { ballsP[0] = initialPositions[2][0]; zeroPocketed = true; }
+            if ((ballsPocketedLocal & (0x1U << 13)) > 0)
+            { ballsP[13] = initialPositions[2][13]; thirteenPocketed = true; }
+        }
+        else
+        {
+            if ((ballsPocketedLocal & (0x1U)) > 0)
+            { ballsP[0] = initialPositions[2][13]; zeroPocketed = true; }
+            if ((ballsPocketedLocal & (0x1U << 13)) > 0)
+            { ballsP[13] = initialPositions[2][0]; thirteenPocketed = true; }
+        }
+
+        if ((ballsPocketedLocal & (0x1U << 14)) > 0)
+        { ballsP[14] = initialPositions[2][14]; fourteenPocketed = true; }
+        if ((ballsPocketedLocal & (0x1U << 15)) > 0)
+        { ballsP[15] = initialPositions[2][15]; fifteenPocketed = true; }
+
+        ballsPocketedLocal = initialBallsPocketed[2];
+        Vector3 dir = Vector3.right * k_BALL_RADIUS * .051f;
+        if (zeroPocketed) moveBallInDirUntilNotTouching(0, dir);
+        if (thirteenPocketed) moveBallInDirUntilNotTouching(13, dir);
+        if (fourteenPocketed) moveBallInDirUntilNotTouching(14, dir);
+        if (fifteenPocketed) moveBallInDirUntilNotTouching(15, dir);
+    }
+
     public string sixRedNumberToColor(int ball, bool doBreakOrder = false)
     {
         if (ball < 0 || ball > 11)
