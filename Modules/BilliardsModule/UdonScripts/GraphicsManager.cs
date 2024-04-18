@@ -947,6 +947,18 @@ int uniform_cue_colour;
         }
         dynamicProbe.size = reflBounds;
 
+        // prevent probe being rendered twice in one frame (late joiners)
+        if (!renderingProbe)
+        {
+            SendCustomEventDelayedFrames(nameof(renderProbe), 1);
+            renderingProbe = true;
+        }
+    }
+
+    bool renderingProbe = false;
+    public void renderProbe()
+    {
+        renderingProbe = false;
         table.reflection_main.RenderProbe();
     }
 }

@@ -6641,7 +6641,7 @@ MonoBehaviour:
   SynchronizePosition: 0
   AllowCollisionOwnershipTransfer: 0
   Reliable: 0
-  _syncMethod: 0
+  _syncMethod: 2
   serializedProgramAsset: {fileID: 11400000, guid: 06a1b9fefe54a834b98c0f1fa295d920,
     type: 2}
   programSource: {fileID: 11400000, guid: f38e4119e40b2e449aa3c5bb746b7098, type: 2}
@@ -9124,7 +9124,7 @@ MonoBehaviour:
   SynchronizePosition: 0
   AllowCollisionOwnershipTransfer: 0
   Reliable: 0
-  _syncMethod: 0
+  _syncMethod: 2
   serializedProgramAsset: {fileID: 11400000, guid: 06a1b9fefe54a834b98c0f1fa295d920,
     type: 2}
   programSource: {fileID: 11400000, guid: f38e4119e40b2e449aa3c5bb746b7098, type: 2}
@@ -24452,7 +24452,7 @@ ReflectionProbe:
   m_Type: 0
   m_Mode: 1
   m_RefreshMode: 2
-  m_TimeSlicingMode: 1
+  m_TimeSlicingMode: 0
   m_Resolution: 128
   m_UpdateFrequency: 0
   m_BoxSize: {x: 1.815, y: 0.60625, z: 3.46}
