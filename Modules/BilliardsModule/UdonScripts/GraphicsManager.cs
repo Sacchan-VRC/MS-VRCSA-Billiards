@@ -60,7 +60,6 @@ public class GraphicsManager : UdonSharpBehaviour
     private Color[] scorecardColors = new Color[15];
 
     private bool usColors;
-    private bool usingTableTimer;
     private bool shadowsDisabled;
 
     private GameObject[] balls;
@@ -556,14 +555,14 @@ int uniform_cue_colour;
 
     public void _ShowTimers()
     {
-        if (usingTableTimer || table.localPlayerDistant) return;
+        if (!table.timerRunning || table.localPlayerDistant) return;
         timers[0].SetActive(true);
         timers[1].SetActive(true);
     }
 
     public void _RefreshTimers()
     {
-        if (usingTableTimer || table.localPlayerDistant)
+        if (!table.timerRunning || table.localPlayerDistant)
         {
             _HideTimers();
             return;
@@ -574,12 +573,9 @@ int uniform_cue_colour;
 
     public void _SetTimerPercentage(float pct)
     {
-        if (!usingTableTimer)
+        for (int i = 0; i < timers.Length; i++)
         {
-            for (int i = 0; i < timers.Length; i++)
-            {
-                timers[i].GetComponent<MeshRenderer>().material.SetFloat("_TimeFrac", pct);
-            }
+            timers[i].GetComponent<MeshRenderer>().material.SetFloat("_TimeFrac", pct);
         }
     }
 
@@ -871,28 +867,6 @@ int uniform_cue_colour;
         {
             table.balls[13].GetComponent<MeshFilter>().sharedMesh = meshOverrideFourBall[0];
             table.balls[0].GetComponent<MeshFilter>().sharedMesh = meshOverrideFourBall[1];
-        }
-    }
-
-    public bool _IsUsingTableTimer()
-    {
-        return usingTableTimer;
-    }
-
-    public void _SetUsingTableTimer(bool usingTableTimer_)
-    {
-        usingTableTimer = usingTableTimer_;
-
-        if (table != null)
-        {
-            if (usingTableTimer)
-            {
-                _HideTimers();
-            }
-            else if (table.timerRunning)
-            {
-                _ShowTimers();
-            }
         }
     }
 
