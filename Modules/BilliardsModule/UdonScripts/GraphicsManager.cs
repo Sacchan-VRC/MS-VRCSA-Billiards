@@ -750,8 +750,50 @@ int uniform_cue_colour;
         }
     }
 
+    public void updateLOD()
+    {
+        if (table.localPlayerDistant)
+        {
+            scorecard_gameobject.SetActive(false);
+            orangeScore.gameObject.SetActive(false);
+            blueScore.gameObject.SetActive(false);
+            snookerInstruction.gameObject.SetActive(false);
+            for (int i = 0; i < playerNames.Length; i++)
+            {
+                playerNames[i].gameObject.SetActive(false);
+            }
+        }
+        else
+        {
+            if (table.gameStateLocal > 1 && (table.networkingManager.winningTeamSynced != 2)) // game has started or finished, && hasn't been reset
+            {
+                scorecard_gameobject.SetActive(true);
+                for (int i = 0; i < playerNames.Length; i++)
+                {
+                    playerNames[i].gameObject.SetActive(true);
+                }
+                if (table.isSnooker6Red)
+                {
+                    orangeScore.gameObject.SetActive(true);
+                    blueScore.gameObject.SetActive(true);
+                    snookerInstruction.gameObject.SetActive(true);
+                }
+                else
+                {
+                    orangeScore.gameObject.SetActive(false);
+                    blueScore.gameObject.SetActive(false);
+                    snookerInstruction.gameObject.SetActive(false);
+                }
+                _UpdateScorecard();
+            }
+        }
+        _RefreshTimers();
+    }
+
     public void _UpdateScorecard()
     {
+        if (table.localPlayerDistant) return;
+
         if (table.is4Ball)
         {
             scorecard.SetInt("_LeftScore", table.fbScoresLocal[0]);
@@ -827,7 +869,7 @@ int uniform_cue_colour;
             }
 
             // Add black ball if we are winning the thing
-            if (!table.gameLive)
+            if (!table.gameLive && table.winningTeamLocal < 2)
             {
                 counter0[table.winningTeamLocal] += (int)((table.ballsPocketedLocal & 0x2) >> 1);
                 if (!usColors)

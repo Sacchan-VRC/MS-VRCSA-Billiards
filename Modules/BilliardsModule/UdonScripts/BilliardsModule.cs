@@ -975,9 +975,6 @@ public class BilliardsModule : UdonSharpBehaviour
 
         if (winningTeamLocal == 2)
         {
-            winningTeamLocal = 0;
-
-            isTableOpenLocal = true;
             _LogWarn("game reset");
             graphicsManager._OnGameReset();
         }
@@ -3164,7 +3161,15 @@ public class BilliardsModule : UdonSharpBehaviour
 
         bool nowDistant = Vector3.Distance(Networking.LocalPlayer.GetPosition(), transform.position) > LoDDistance;
         if (nowDistant == localPlayerDistant) { return; }
-        localPlayerDistant = nowDistant;
+        if (isPlayer)
+        {
+            localPlayerDistant = false;
+            return;
+        }
+        else
+        {
+            localPlayerDistant = nowDistant;
+        }
         setLOD();
         if (networkingManager.delayedDeserialization)
         {
@@ -3178,7 +3183,7 @@ public class BilliardsModule : UdonSharpBehaviour
         balls[0].transform.parent.gameObject.SetActive(!localPlayerDistant);
         debugger.SetActive(!localPlayerDistant);
         menuManager._RefreshLobby();
-        graphicsManager._RefreshTimers();
+        graphicsManager.updateLOD();
     }
 
     #region Debugger

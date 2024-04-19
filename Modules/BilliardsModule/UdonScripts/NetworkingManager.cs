@@ -385,6 +385,7 @@ public class NetworkingManager : UdonSharpBehaviour
 
     public void _OnLobbyOpened()
     {
+        winningTeamSynced = 0;
         gameStateSynced = 1;
         stateIdSynced = 0;
 
