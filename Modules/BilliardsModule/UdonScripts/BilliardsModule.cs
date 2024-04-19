@@ -1615,9 +1615,9 @@ public class BilliardsModule : UdonSharpBehaviour
                         _LogInfo("6RED: Foul: No balls hit");
                         foulCondition = true;
                     }
-                    if (pocketedBallTypes == 0 || pocketedBallTypes == 2) // red or red and color
+                    if (colorTurnLocal)
                     {
-                        if (colorTurnLocal)
+                        if (pocketedBallTypes == 0 || pocketedBallTypes == 2) // red or red and color
                         {
                             _LogInfo("6RED: Foul: Red was pocketed on color turn");
                             foulCondition = true;
@@ -1625,9 +1625,9 @@ public class BilliardsModule : UdonSharpBehaviour
                             highestPocketedBallScore = 7;
                         }
                     }
-                    else if (pocketedBallTypes > 0) // color or red and color
+                    else
                     {
-                        if (!colorTurnLocal)
+                        if (pocketedBallTypes > 0) // color or red and color
                         {
                             _LogInfo("6RED: Foul: Color was pocketed on non-color turn");
                             foulCondition = true;
@@ -2390,7 +2390,7 @@ public class BilliardsModule : UdonSharpBehaviour
 
     public string sixRedNumberToColor(int ball, bool doBreakOrder = false)
     {
-        if (ball < 0 || ball > 11)
+        if (ball < 0 || ball > 12)
         {
             _LogWarn("sixRedNumberToColor: ball index out of range");
             return "Invalid";
