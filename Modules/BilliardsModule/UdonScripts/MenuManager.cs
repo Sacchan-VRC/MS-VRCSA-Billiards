@@ -83,7 +83,7 @@ public class MenuManager : UdonSharpBehaviour
         int numPlayersBlue = 0;
         for (int i = 0; i < 4; i++)
         {
-            if (!table.teamsLocal && i > 1 || (table.isPracticeMode && i % 2 != 0))
+            if (!table.teamsLocal && i > 1)
             {
                 lobbyNames[i].text = string.Empty;
                 continue;
