@@ -2260,8 +2260,7 @@ public class BilliardsModule : UdonSharpBehaviour
 
             if (Networking.IsOwner(Networking.LocalPlayer, networkingManager.gameObject))
             {
-                onRemoteTurnSimulate(Vector3.zero, Vector3.zero, true);
-                _TriggerSimulationEnded(false, true);
+                fakeFoulShot();
             }
         }
     }
@@ -2321,7 +2320,13 @@ public class BilliardsModule : UdonSharpBehaviour
     public void _SkipTurn()
     {
         if (!isMyTurn()) { return; }
-        onLocalTurnFoul(false, false);
+        fakeFoulShot();
+    }
+
+    public void fakeFoulShot()
+    {
+        onRemoteTurnSimulate(Vector3.zero, Vector3.zero, true);
+        _TriggerSimulationEnded(false, true);
     }
 
     public void _Update9BallMarker()
