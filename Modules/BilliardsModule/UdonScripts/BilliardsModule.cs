@@ -1791,6 +1791,8 @@ public class BilliardsModule : UdonSharpBehaviour
         Vector3 moveDir = ballsP[Ball] - ballsP[blockingBall];
         moveDir.y = 0;//just to be certain
         if (moveDir.sqrMagnitude == 0)
+        { moveDir = -ballsP[Ball]; }
+        if (moveDir.sqrMagnitude == 0)
         { moveDir = Vector3.left; }
         moveDir = moveDir.normalized;
         moveBallInDirUntilNotTouching(Ball, moveDir * k_BALL_RADIUS * .051f);
@@ -1826,7 +1828,7 @@ public class BilliardsModule : UdonSharpBehaviour
     private void moveBallInDirUntilNotTouching_Transform(int id, Vector3 Dir)
     {
         //keep moving ball down the table until it's not touching any other balls
-        while (CheckIfBallTouchingBall_Transform(id) > 0)
+        while (CheckIfBallTouchingBall_Transform(id) > -1)
         {
             balls[id].transform.localPosition += Dir;
         }
@@ -1835,7 +1837,7 @@ public class BilliardsModule : UdonSharpBehaviour
     {
         float ballDiameter = k_BALL_RADIUS * 2f;
         float k_BALL_DSQR = ballDiameter * ballDiameter;
-        for (int i = 1; i < 16; i++)
+        for (int i = 0; i < 16; i++)
         {
             if (i == id) { continue; }
             if (((ballsPocketedLocal >> i) & 0x1u) == 0x1u) { continue; }
@@ -2108,21 +2110,23 @@ public class BilliardsModule : UdonSharpBehaviour
         {
             balls[i].transform.localPosition = ballsP[i];
             Vector3 thisBallPos = balls[i].transform.localPosition;
-            if (thisBallPos.x > k_TABLE_WIDTH - k_CUSHION_RADIUS)
+
+            float r_k_CUSHION_RADIUS = k_CUSHION_RADIUS + k_BALL_RADIUS;
+            if (thisBallPos.x > k_TABLE_WIDTH - r_k_CUSHION_RADIUS)
             {
-                thisBallPos.x = k_TABLE_WIDTH - k_CUSHION_RADIUS;
+                thisBallPos.x = k_TABLE_WIDTH - r_k_CUSHION_RADIUS;
             }
-            else if (thisBallPos.x < -k_TABLE_WIDTH + k_CUSHION_RADIUS)
+            else if (thisBallPos.x < -k_TABLE_WIDTH + r_k_CUSHION_RADIUS)
             {
-                thisBallPos.x = -k_TABLE_WIDTH + k_CUSHION_RADIUS;
+                thisBallPos.x = -k_TABLE_WIDTH + r_k_CUSHION_RADIUS;
             }
-            if (thisBallPos.z > k_TABLE_HEIGHT - k_CUSHION_RADIUS)
+            if (thisBallPos.z > k_TABLE_HEIGHT - r_k_CUSHION_RADIUS)
             {
-                thisBallPos.z = k_TABLE_HEIGHT - k_CUSHION_RADIUS;
+                thisBallPos.z = k_TABLE_HEIGHT - r_k_CUSHION_RADIUS;
             }
-            else if (thisBallPos.z < -k_TABLE_HEIGHT + k_CUSHION_RADIUS)
+            else if (thisBallPos.z < -k_TABLE_HEIGHT + r_k_CUSHION_RADIUS)
             {
-                thisBallPos.z = -k_TABLE_HEIGHT + k_CUSHION_RADIUS;
+                thisBallPos.z = -k_TABLE_HEIGHT + r_k_CUSHION_RADIUS;
             }
             balls[i].transform.localPosition = thisBallPos;
             Vector3 moveDir = -thisBallPos.normalized;
