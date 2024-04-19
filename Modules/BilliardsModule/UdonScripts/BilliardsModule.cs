@@ -786,7 +786,9 @@ public class BilliardsModule : UdonSharpBehaviour
 
         Array.Copy(playerIDsLocal, playerIDsCached, playerIDsLocal.Length);
         Array.Copy(playerIDsSynced, playerIDsLocal, playerIDsLocal.Length);
-        isPracticeMode = playerIDsLocal[1] == -1 && playerIDsLocal[3] == -1;
+
+        if (networkingManager.gameStateSynced != 3) // don't set practice mode to true after the players are kicked when the game ends
+            isPracticeMode = playerIDsLocal[1] == -1 && playerIDsLocal[3] == -1;
 
         string[] playerDetails = new string[4];
         for (int i = 0; i < 4; i++)
@@ -946,7 +948,7 @@ public class BilliardsModule : UdonSharpBehaviour
         }
         else
         {
-            graphicsManager._SetWinners(isPracticeMode ? 0u : previewWinningTeamSynced, playerIDsLocal);
+            graphicsManager._SetWinners(/* isPracticeMode ? 0u :  */previewWinningTeamSynced, playerIDsLocal);
         }
     }
 
@@ -955,8 +957,6 @@ public class BilliardsModule : UdonSharpBehaviour
         _LogInfo($"onRemoteGameEnded winningTeam={winningTeamSynced}");
 
         isLocalSimulationRunning = false;
-        if (networkingManager.delayedDeserialization)
-            networkingManager.OnDeserialization();
 
         if (tournamentRefereeLocal != -1)
         {
@@ -985,7 +985,7 @@ public class BilliardsModule : UdonSharpBehaviour
         {
             // All players are kicked from the match when it's won, so use the previous turn's player names to show the winners (playerIDsCached)
             _LogWarn("game over, team " + winningTeamLocal + " won (" + playerIDsCached[winningTeamLocal] + " and " + playerIDsCached[winningTeamLocal + 2] + ")");
-            graphicsManager._SetWinners(isPracticeMode ? 0u : winningTeamLocal, playerIDsCached);
+            graphicsManager._SetWinners(/* isPracticeMode ? 0u :  */winningTeamLocal, playerIDsCached);
         }
 
         gameLive = false;
@@ -1051,11 +1051,10 @@ public class BilliardsModule : UdonSharpBehaviour
 
         if (teamIdLocal != teamIdSynced)
         {
+            teamIdLocal = teamIdSynced;
             aud_main.PlayOneShot(snd_NewTurn, 1.0f);
+            _LogInfo($"onRemoteTeamIdChanged newTeam={teamIdSynced}");
         }
-
-        _LogInfo($"onRemoteTeamIdChanged newTeam={teamIdSynced}");
-        teamIdLocal = teamIdSynced;
 
         graphicsManager._UpdateTeamColor(teamIdLocal);
 
