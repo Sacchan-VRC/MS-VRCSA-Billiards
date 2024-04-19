@@ -67,6 +67,8 @@ public class MenuManager : UdonSharpBehaviour
         _DisableSnookerUndoMenu();
         _DisableUndoMenu();
         _EnableStartMenu();
+
+        cueSizeText.text = (cueSizeSlider.value / 10f).ToString("F1");
     }
 
     // public void _Tick()
