@@ -3157,8 +3157,10 @@ public class BilliardsModule : UdonSharpBehaviour
 
     public void checkDistanceLoop()
     {
-        if (checkingDistant) SendCustomEventDelayedSeconds(nameof(checkDistanceLoop), 1f);
-
+        if (checkingDistant)
+            SendCustomEventDelayedSeconds(nameof(checkDistanceLoop), 1f);
+        else
+            return;
         bool nowDistant = Vector3.Distance(Networking.LocalPlayer.GetPosition(), transform.position) > LoDDistance;
         if (nowDistant == localPlayerDistant) { return; }
         if (isPlayer)
@@ -3170,11 +3172,11 @@ public class BilliardsModule : UdonSharpBehaviour
         {
             localPlayerDistant = nowDistant;
         }
-        setLOD();
         if (networkingManager.delayedDeserialization)
         {
             networkingManager.OnDeserialization();
         }
+        setLOD();
     }
 
     private void setLOD()
@@ -3183,7 +3185,7 @@ public class BilliardsModule : UdonSharpBehaviour
         balls[0].transform.parent.gameObject.SetActive(!localPlayerDistant);
         debugger.SetActive(!localPlayerDistant);
         menuManager._RefreshLobby();
-        graphicsManager.updateLOD();
+        graphicsManager._UpdateLOD();
     }
 
     #region Debugger

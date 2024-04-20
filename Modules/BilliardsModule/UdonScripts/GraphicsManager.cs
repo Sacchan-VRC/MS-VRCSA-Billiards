@@ -636,6 +636,11 @@ int uniform_cue_colour;
         scorecard_gameobject.SetActive(true);
         scorecard.SetInt("_GameMode", (int)table.gameModeLocal);
         scorecard.SetInt("_SolidsMode", 0);
+        scorecard_gameobject.SetActive(true);
+        for (int i = 0; i < playerNames.Length; i++)
+        {
+            playerNames[i].gameObject.SetActive(true);
+        }
         if (table.isSnooker6Red)
         {
             orangeScore.gameObject.SetActive(true);
@@ -754,7 +759,7 @@ int uniform_cue_colour;
         }
     }
 
-    public void updateLOD()
+    public void _UpdateLOD()
     {
         if (table.localPlayerDistant)
         {
