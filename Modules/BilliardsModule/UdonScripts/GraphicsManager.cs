@@ -21,6 +21,7 @@ public class GraphicsManager : UdonSharpBehaviour
     [SerializeField] TextMeshProUGUI[] playerNames;
 
     [SerializeField] TextMeshPro winnerText;
+    GameObject winnerText_go;
 
     [Header("Cues")]
     [SerializeField] MeshRenderer[] cueBodyRenderers;
@@ -80,6 +81,7 @@ public class GraphicsManager : UdonSharpBehaviour
             ballTransforms[i] = balls[i].transform;
         }
 
+        winnerText_go = winnerText.gameObject;
 
         Material[] materials = balls[0].GetComponent<MeshRenderer>().materials; // create a new instance for this table
         ballMaterial = materials[0];
@@ -229,10 +231,10 @@ public class GraphicsManager : UdonSharpBehaviour
 
     private void tickWinner()
     {
-        if (table.gameLive || table.lobbyOpen) return;
+        if (!winnerText_go.activeSelf) return;
 
-        winnerText.gameObject.transform.localPosition = new Vector3(0.0f, Mathf.Sin(Time.timeSinceLevelLoad) * 0.1f, 0.0f);
-        winnerText.gameObject.transform.Rotate(Vector3.up, 90.0f * Time.deltaTime);
+        winnerText_go.transform.localPosition = new Vector3(0.0f, Mathf.Sin(Time.timeSinceLevelLoad) * 0.1f, 0.0f);
+        winnerText_go.transform.Rotate(Vector3.up, 90.0f * Time.deltaTime);
     }
 
     public void _SetScorecardPlayers(int[] players)
@@ -264,12 +266,12 @@ public class GraphicsManager : UdonSharpBehaviour
             winnerText.gameObject.SetActive(true);
             winnerText.text = "Game reset!";
             numGameResets++;
-            SendCustomEventDelayedSeconds(nameof(disableGameResetText), 5);
+            SendCustomEventDelayedSeconds(nameof(disableWinnerText), 15f);
         }
     }
 
     int numGameResets = 0;
-    public void disableGameResetText()
+    public void disableWinnerText()
     {
         numGameResets--;
         if (numGameResets != 0) return;
@@ -296,6 +298,8 @@ public class GraphicsManager : UdonSharpBehaviour
         {
             winnerText.text = _FormatName(player1) + " and " + _FormatName(player2) + " win!";
         }
+        numGameResets++;
+        SendCustomEventDelayedSeconds(nameof(disableWinnerText), 15f);
     }
 
     public string _FormatName(VRCPlayerApi player)
