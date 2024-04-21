@@ -977,25 +977,16 @@ int uniform_cue_colour;
     {
         ReflectionProbe dynamicProbe = table.reflection_main;
         if (!dynamicProbe) { return; }
-        float tableDoty = Vector3.Dot(table.transform.forward, Vector3.forward);
-        float tableDotx = Vector3.Dot(table.transform.forward, Vector3.right);
-        bool tableIsSideWays = tableDotx > tableDoty;
+
+        float diagonal = Mathf.Sqrt(table.k_TABLE_HEIGHT * table.k_TABLE_HEIGHT + table.k_TABLE_WIDTH * table.k_TABLE_WIDTH) * 2;
 
         Transform probeTransform = table.reflection_main.transform;
         Transform tableBase = table._GetTableBase().transform.Find(".TABLE_SURFACE");
         probeTransform.position = tableBase.position + Vector3.up * 0.31f;
         Vector3 reflBounds = dynamicProbe.size;
         reflBounds.y = 0.6f;
-        if (tableIsSideWays)
-        {
-            reflBounds.x = table.k_TABLE_WIDTH * 2f;
-            reflBounds.z = table.k_TABLE_HEIGHT * 2f;
-        }
-        else
-        {
-            reflBounds.z = table.k_TABLE_WIDTH * 2f;
-            reflBounds.x = table.k_TABLE_HEIGHT * 2f;
-        }
+        reflBounds.x = diagonal;
+        reflBounds.z = diagonal;
         dynamicProbe.size = reflBounds;
 
         // prevent probe being rendered twice in one frame (late joiners)
