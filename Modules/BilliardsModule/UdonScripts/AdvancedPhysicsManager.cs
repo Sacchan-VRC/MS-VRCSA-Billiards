@@ -47,6 +47,7 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
     //private Vector3 k_CONTACT_POINT = new Vector3(0.0f, -0.03f, 0.0f);
 
     [SerializeField] AudioClip[] hitSounds;
+    [SerializeField] AudioClip[] bounceSounds;
     [SerializeField] public Transform transform_Surface;
 
     private AudioSource audioSource;
@@ -956,6 +957,8 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
                 else
                 {
                     balls_P[id].y = (-(balls_P[id].y - floor) * K_BOUNCE_FACTOR) + floor;
+
+                    balls[id].GetComponent<AudioSource>().PlayOneShot(bounceSounds[0], Mathf.Clamp01(V.y));
                 }
                 if (balls_transitioningBounds[id])
                 {
