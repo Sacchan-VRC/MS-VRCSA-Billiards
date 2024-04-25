@@ -1,8 +1,5 @@
-﻿
-using System;
-using UdonSharp;
+﻿using UdonSharp;
 using UnityEngine;
-using VRC.SDK3.Editor;
 
 [UdonBehaviourSyncMode(BehaviourSyncMode.None)]
 public class ModelData : UdonSharpBehaviour
@@ -43,7 +40,7 @@ public class ModelData : UdonSharpBehaviour
     [SerializeField] public Transform CueBlue;
     [SerializeField] public float DesktopUIScaleFactor = 1.08f;
 
-    [NonSerialized] public Material tableMaterial;
+    [System.NonSerialized] public Material tableMaterial;
     public void _Init()
     {
         // renderer
