@@ -420,6 +420,9 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
                 {
                     moveTimeLeft = 0;
                 }
+                // table._BeginPerf(table.PERF_PHYSICS_POCKET); // can only measure one pocket now ..
+                _phy_ball_pockets(i, balls_P, is4Ball);
+                // table._EndPerf(table.PERF_PHYSICS_POCKET);
                 if (numSteps > 2) break; // max 3 steps per ball
             }
             ball_bit <<= 1;
@@ -429,17 +432,6 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
         ball_bit = 0x1U;
 
         bool canCueBallBounceOffCushion = balls_P[0].y < k_BALL_RADIUS;
-        // Run triggers
-        table._BeginPerf(table.PERF_PHYSICS_POCKET);
-        for (int i = 0; i < 16; i++)
-        {
-            if (moved[i] && (ball_bit & sn_pocketed) == 0U)
-            {
-                _phy_ball_pockets(i, balls_P, is4Ball);
-            }
-            ball_bit <<= 1;
-        }
-        table._EndPerf(table.PERF_PHYSICS_POCKET);
         // Check if simulation has settled
         if (!ballsMoving)
         {
