@@ -118,7 +118,7 @@ Transform:
   m_GameObject: {fileID: 1943653493460861767}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0.4783076, y: 0.7967979, z: -1.019538}
+  m_LocalPosition: {x: 0.6868, y: 0.7967979, z: -1.019538}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -180,7 +180,7 @@ Transform:
   m_GameObject: {fileID: 2241850681803263754}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -0.4837049, y: 0.7967979, z: -1.019538}
+  m_LocalPosition: {x: -0.6868, y: 0.7967979, z: -1.0195}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -619,7 +619,6 @@ GameObject:
   m_Component:
   - component: {fileID: 8761911423124048442}
   - component: {fileID: 1121263254494094316}
-  - component: {fileID: 5576511295503001314}
   - component: {fileID: 2827933808177144051}
   - component: {fileID: 4585559866347780627}
   m_Layer: 22
@@ -671,27 +670,6 @@ MonoBehaviour:
   serializedPublicVariablesBytesString: Ai8AAAAAATIAAABWAFIAQwAuAFUAZABvAG4ALgBDAG8AbQBtAG8AbgAuAFUAZABvAG4AVgBhAHIAaQBhAGIAbABlAFQAYQBiAGwAZQAsACAAVgBSAEMALgBVAGQAbwBuAC4AQwBvAG0AbQBvAG4AAAAAAAYBAAAAAAAAACcBBAAAAHQAeQBwAGUAAWgAAABTAHkAcwB0AGUAbQAuAEMAbwBsAGwAZQBjAHQAaQBvAG4AcwAuAEcAZQBuAGUAcgBpAGMALgBMAGkAcwB0AGAAMQBbAFsAVgBSAEMALgBVAGQAbwBuAC4AQwBvAG0AbQBvAG4ALgBJAG4AdABlAHIAZgBhAGMAZQBzAC4ASQBVAGQAbwBuAFYAYQByAGkAYQBiAGwAZQAsACAAVgBSAEMALgBVAGQAbwBuAC4AQwBvAG0AbQBvAG4AXQBdACwAIABtAHMAYwBvAHIAbABpAGIAAQEJAAAAVgBhAHIAaQBhAGIAbABlAHMALwEAAAABaAAAAFMAeQBzAHQAZQBtAC4AQwBvAGwAbABlAGMAdABpAG8AbgBzAC4ARwBlAG4AZQByAGkAYwAuAEwAaQBzAHQAYAAxAFsAWwBWAFIAQwAuAFUAZABvAG4ALgBDAG8AbQBtAG8AbgAuAEkAbgB0AGUAcgBmAGEAYwBlAHMALgBJAFUAZABvAG4AVgBhAHIAaQBhAGIAbABlACwAIABWAFIAQwAuAFUAZABvAG4ALgBDAG8AbQBtAG8AbgBdAF0ALAAgAG0AcwBjAG8AcgBsAGkAYgABAAAABgEAAAAAAAAAAi8CAAAAAUkAAABWAFIAQwAuAFUAZABvAG4ALgBDAG8AbQBtAG8AbgAuAFUAZABvAG4AVgBhAHIAaQBhAGIAbABlAGAAMQBbAFsAUwB5AHMAdABlAG0ALgBJAG4AdAAzADIALAAgAG0AcwBjAG8AcgBsAGkAYgBdAF0ALAAgAFYAUgBDAC4AVQBkAG8AbgAuAEMAbwBtAG0AbwBuAAIAAAAGAgAAAAAAAAAnAQQAAAB0AHkAcABlAAEXAAAAUwB5AHMAdABlAG0ALgBTAHQAcgBpAG4AZwAsACAAbQBzAGMAbwByAGwAaQBiACcBCgAAAFMAeQBtAGIAbwBsAE4AYQBtAGUAAR8AAABfAF8AXwBVAGQAbwBuAFMAaABhAHIAcABCAGUAaABhAHYAaQBvAHUAcgBWAGUAcgBzAGkAbwBuAF8AXwBfACcBBAAAAHQAeQBwAGUAARYAAABTAHkAcwB0AGUAbQAuAEkAbgB0ADMAMgAsACAAbQBzAGMAbwByAGwAaQBiABcBBQAAAFYAYQBsAHUAZQACAAAABwUHBQcF
   publicVariablesUnityEngineObjects: []
   publicVariablesSerializationDataFormat: 0
---- !u!95 &5576511295503001314
-Animator:
-  serializedVersion: 5
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 8329953892555422358}
-  m_Enabled: 1
-  m_Avatar: {fileID: 0}
-  m_Controller: {fileID: 9100000, guid: d27f825e5e6992848a58f3aab72b0cb5, type: 2}
-  m_CullingMode: 0
-  m_UpdateMode: 0
-  m_ApplyRootMotion: 0
-  m_LinearVelocityBlending: 0
-  m_StabilizeFeet: 0
-  m_WarningMessage: 
-  m_HasTransformHierarchy: 1
-  m_AllowConstantClipSamplingOptimization: 1
-  m_KeepAnimatorStateOnDisable: 0
-  m_WriteDefaultValuesOnDisable: 0
 --- !u!114 &2827933808177144051
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -715,24 +693,18 @@ MonoBehaviour:
     SerializationNodes: []
   _udonSharpBackingUdonBehaviour: {fileID: 1121263254494094316}
   TABLENAME: Snooker Table
-  ballPocketedTriggerName: BallPocketed
-  flashTableLightTriggerName: FlashTableLight
-  flashTableErrorTriggerName: FlashTableError
-  onGameStartedTriggerName: OnGameStarted
-  onGameEndedTriggerName: OnGameEnded
-  setGameModeTriggerName: SetGameMode
-  setTableTriggerName: SetTable
-  gameModeIntName: GameMode
+  tableMesh: {fileID: 5313054784033644111}
   tableWidth: 1.8085
   tableHeight: 0.913
   cushionRadius: 0.024
   pocketWidthCorner: 0.0964
   pocketHeightCorner: 0.0964
-  pocketRadiusSide: 0.068
   pocketInnerRadiusCorner: 0.055
-  pocketInnerRadiusSide: 0.055
   facingAngleCorner: 135
+  pocketRadiusSide: 0.068
+  pocketDepthSide: 0.011
   facingAngleSide: 104.93142
+  pocketInnerRadiusSide: 0.055
   ballRadius: 0.02625
   ballMass: 0.14
   rackTrianglePosition: 0.872
@@ -778,7 +750,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!4 &7383932271574159393
 Transform:
   m_ObjectHideFlags: 0
@@ -787,13 +759,13 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 8741408856387000976}
   serializedVersion: 2
-  m_LocalRotation: {x: 0.000000081460335, y: 0, z: -0, w: 1}
+  m_LocalRotation: {x: -0.7071069, y: -0, z: -0.00000008940696, w: 0.70710677}
   m_LocalPosition: {x: -0, y: 0.82974714, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 6114035686318680448}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_LocalEulerAnglesHint: {x: -90, y: 0, z: 0}
 --- !u!33 &8699812455611909832
 MeshFilter:
   m_ObjectHideFlags: 0
@@ -801,7 +773,7 @@ MeshFilter:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 8741408856387000976}
-  m_Mesh: {fileID: -3188655024725290900, guid: 43192a478d1bcc1418b2b4239a425c15, type: 3}
+  m_Mesh: {fileID: -5568550031863850001, guid: 64703e4e21034d14696e2b957d365ff4, type: 3}
 --- !u!23 &1506196652940502725
 MeshRenderer:
   m_ObjectHideFlags: 0
@@ -822,7 +794,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: 28231051462747445b616dc8ecdd10f0, type: 2}
+  - {fileID: 2100000, guid: dbc35f8c79bf7e94ca4d5437799260c2, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -1006,7 +978,7 @@ PrefabInstance:
     - target: {fileID: 919132149155446097, guid: 64703e4e21034d14696e2b957d365ff4,
         type: 3}
       propertyPath: m_Name
-      value: Mabel_Snooker_Proxy_12FT
+      value: SnookerTable
       objectReference: {fileID: 0}
     - target: {fileID: 919132149155446097, guid: 64703e4e21034d14696e2b957d365ff4,
         type: 3}
@@ -1022,6 +994,16 @@ PrefabInstance:
         type: 3}
       propertyPath: m_Layer
       value: 22
+      objectReference: {fileID: 0}
+    - target: {fileID: 1897315079482341563, guid: 64703e4e21034d14696e2b957d365ff4,
+        type: 3}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1897315079482341563, guid: 64703e4e21034d14696e2b957d365ff4,
+        type: 3}
+      propertyPath: m_TagString
+      value: EditorOnly
       objectReference: {fileID: 0}
     - target: {fileID: 4870171838119436714, guid: 64703e4e21034d14696e2b957d365ff4,
         type: 3}
@@ -1051,6 +1033,12 @@ PrefabInstance:
 --- !u!4 &4823376648775894261 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: 64703e4e21034d14696e2b957d365ff4,
+    type: 3}
+  m_PrefabInstance: {fileID: 5006501938415461150}
+  m_PrefabAsset: {fileID: 0}
+--- !u!1 &5313054784033644111 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 919132149155446097, guid: 64703e4e21034d14696e2b957d365ff4,
     type: 3}
   m_PrefabInstance: {fileID: 5006501938415461150}
   m_PrefabAsset: {fileID: 0}

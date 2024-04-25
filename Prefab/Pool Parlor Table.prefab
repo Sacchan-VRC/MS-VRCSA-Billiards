@@ -5946,7 +5946,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 0.15943198, g: 0.25406447, b: 0.511, a: 1}
+  m_Color: {r: 0.16078432, g: 0.25490198, b: 0.50980395, a: 1}
   m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -7915,6 +7915,8 @@ MonoBehaviour:
   - {fileID: 8300000, guid: c5c3277a589929d49be99bc2f100aae1, type: 3}
   - {fileID: 8300000, guid: e55c033e7d8b29e409baf5343b67bead, type: 3}
   - {fileID: 8300000, guid: feebba097cc8e2d4fb236753ecd5c137, type: 3}
+  bounceSounds:
+  - {fileID: 8300000, guid: 70b124838479ce44a952b1251f336e00, type: 3}
   transform_Surface: {fileID: 1961406577989517608}
   balls: []
   Test_Mode: 0
@@ -16139,16 +16141,6 @@ MonoBehaviour:
     PrefabModifications: []
     SerializationNodes: []
   _udonSharpBackingUdonBehaviour: {fileID: 5951911174870518006}
-  k_colour_foul: {r: 1.5, g: 0, b: 0, a: 1.5}
-  k_colour_default: {r: 1.5, g: 1.5, b: 1.5, a: 1.5}
-  k_colour_off: {r: 0.01, g: 0.01, b: 0.01, a: 1}
-  k_teamColour_spots: {r: 0, g: 0.9529412, b: 1.5, a: 1.5}
-  k_teamColour_stripes: {r: 1.5, g: 0.6, b: 0, a: 1.5}
-  k_colour4Ball_team_0: {r: 1.5, g: 1.5, b: 1.5, a: 1.5}
-  k_colour4Ball_team_1: {r: 1.5, g: 1.2176472, b: 0, a: 1.5}
-  k_fabricColour_8ball: {r: 0.44339612, g: 0.44339612, b: 0.44339612, a: 1}
-  k_fabricColour_9ball: {r: 0, g: 0.5568628, b: 1, a: 1}
-  k_fabricColour_4ball: {r: 0.4039216, g: 0.4039216, b: 0.4039216, a: 1}
   textureSets:
   - {fileID: 2800000, guid: 89a905a95e8c18a4596f29fb5199fa9f, type: 3}
   - {fileID: 2800000, guid: 24b998a70f4285d498939cf3af45474f, type: 3}
@@ -16184,6 +16176,18 @@ MonoBehaviour:
   snd_spinstop: {fileID: 8300000, guid: 2078afcccf933644f8f8be8e0af53d0e, type: 3}
   snd_hitball: {fileID: 8300000, guid: e55c033e7d8b29e409baf5343b67bead, type: 3}
   LoDDistance: 10
+  k_colour_foul: {r: 1.5, g: 0, b: 0, a: 1.5}
+  k_colour_default: {r: 1.5, g: 1.5, b: 1.5, a: 1.5}
+  k_colour_off: {r: 0.01, g: 0.01, b: 0.01, a: 1}
+  k_teamColour_spots: {r: 0, g: 0.9529412, b: 1.5, a: 1.5}
+  k_teamColour_stripes: {r: 1.5, g: 0.6, b: 0, a: 1.5}
+  k_snookerTeamColour_0: {r: 0.8490566, g: 0.5783197, b: 0.17221431, a: 1}
+  k_snookerTeamColour_1: {r: 0.25467247, g: 0.6592797, b: 0.9150943, a: 1}
+  k_colour4Ball_team_0: {r: 1.5, g: 1.5, b: 1.5, a: 1.5}
+  k_colour4Ball_team_1: {r: 1.5, g: 1.2176472, b: 0, a: 1.5}
+  k_fabricColour_8ball: {r: 0.44339612, g: 0.44339612, b: 0.44339612, a: 1}
+  k_fabricColour_9ball: {r: 0, g: 0.5568628, b: 1, a: 1}
+  k_fabricColour_4ball: {r: 0.4039216, g: 0.4039216, b: 0.4039216, a: 1}
   cueControllers:
   - {fileID: 4369898792788061657}
   - {fileID: 2551853043993737570}
@@ -20633,7 +20637,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 0.15943198, g: 0.25406447, b: 0.511, a: 1}
+  m_Color: {r: 0.16078432, g: 0.25490198, b: 0.50980395, a: 1}
   m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1

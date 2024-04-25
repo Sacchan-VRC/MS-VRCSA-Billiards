@@ -42,6 +42,7 @@ public class GraphicsManager : UdonSharpBehaviour
 
     private BilliardsModule table;
 
+    private Material tableMaterial;
     private Material ballMaterial;
     private Material shadowMaterial;
 
@@ -104,10 +105,6 @@ public class GraphicsManager : UdonSharpBehaviour
         {
             meshOverrideRegular[i + 1] = balls[13 + i].GetComponent<MeshFilter>().sharedMesh;
         }
-
-        _InitializeTable();
-
-        _DisableObjects();
     }
 
     public void _InitializeTable()
@@ -116,6 +113,8 @@ public class GraphicsManager : UdonSharpBehaviour
         scorecard_gameobject = tableBase.transform.Find("scorecard").gameObject;
         scorecard = scorecard_gameobject.GetComponent<MeshRenderer>().material;
         scorecard_info = table.transform.Find("intl.scorecardinfo").gameObject;
+
+        tableMaterial = table.tableModels[table.tableModelLocal].tableMaterial;
 
         _SetShadowsDisabled(false);
         _SetUpReflectionProbe();
@@ -227,11 +226,16 @@ public class GraphicsManager : UdonSharpBehaviour
 #endif
 
         tableCurrentColour = Color.Lerp(tableCurrentColour, tableSrcColour, Time.deltaTime * multiplier);
+        tableMaterial.SetColor("_EmissionColor", tableCurrentColour);
     }
 
     private void tickWinner()
     {
         if (!winnerText_go.activeSelf) return;
+
+#if !HT_QUEST
+        _FlashTableColor(tableSrcColour * (Mathf.Sin(Time.timeSinceLevelLoad * 3.0f) * 0.5f + 1.0f));
+#endif
 
         winnerText_go.transform.localPosition = new Vector3(0.0f, Mathf.Sin(Time.timeSinceLevelLoad) * 0.1f, 0.0f);
         winnerText_go.transform.Rotate(Vector3.up, 90.0f * Time.deltaTime);
@@ -388,6 +392,21 @@ public class GraphicsManager : UdonSharpBehaviour
         fourBallPoint.transform.LookAt(Networking.LocalPlayer.GetPosition());
     }
 
+    public void _FlashTableLight()
+    {
+        tableCurrentColour *= 1.9f;
+    }
+
+    public void _FlashTableError()
+    {
+        tableCurrentColour = pColourErr;
+    }
+
+    public void _FlashTableColor(Color color)
+    {
+        tableCurrentColour = color;
+    }
+
     // Shader uniforms
     //  *udon currently does not support integer uniform identifiers
 #if USE_INT_UNIFORMS
@@ -522,6 +541,17 @@ int uniform_cue_colour;
         else if (table.is9Ball)
         {
             tableSrcColour = pColour2;
+        }
+        else if (table.isSnooker6Red)
+        {
+            if ((teamId ^ table.teamColorLocal) == 0)
+            {
+                tableSrcColour = pColour0;
+            }
+            else
+            {
+                tableSrcColour = pColour1;
+            }
         }
         else
         {
@@ -702,8 +732,8 @@ int uniform_cue_colour;
             pColourErr = table.k_colour_foul;
             pColour2 = table.k_colour_default;
 
-            pColour0 = table.k_teamColour_spots;
-            pColour1 = table.k_teamColour_stripes;
+            pColour0 = table.k_snookerTeamColour_0;
+            pColour1 = table.k_snookerTeamColour_1;
 
             ballMaterial.SetTexture("_MainTex", table.textureSets[2]);
         }

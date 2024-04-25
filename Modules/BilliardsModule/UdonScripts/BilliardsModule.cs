@@ -14,6 +14,7 @@ using VRC.Udon;
 using System;
 using Metaphira.Modules.CameraOverride;
 using TMPro;
+using System.Runtime.Remoting.Messaging;
 
 [UdonBehaviourSyncMode(BehaviourSyncMode.None)]
 public class BilliardsModule : UdonSharpBehaviour
@@ -51,24 +52,6 @@ public class BilliardsModule : UdonSharpBehaviour
     [NonSerialized] public GameObject auto_pocketblockers;
     private GameObject auto_colliderBaseVFX;
     [NonSerialized] public MeshRenderer[] tableMRs;
-
-    // table colors
-    [SerializeField][HideInInspector] public Color k_colour_foul;        // v1.6: ( 1.2, 0.0, 0.0, 1.0 )
-    [SerializeField][HideInInspector] public Color k_colour_default;     // v1.6: ( 1.0, 1.0, 1.0, 1.0 )
-    [SerializeField][HideInInspector] public Color k_colour_off = new Color(0.01f, 0.01f, 0.01f, 1.0f);
-
-    // 8/9 ball
-    [SerializeField][HideInInspector] public Color k_teamColour_spots;   // v1.6: ( 0.00, 0.75, 1.75, 1.0 )
-    [SerializeField][HideInInspector] public Color k_teamColour_stripes; // v1.6: ( 1.75, 0.25, 0.00, 1.0 )
-
-    // 4 ball
-    [SerializeField][HideInInspector] public Color k_colour4Ball_team_0; // v1.6: ( )
-    [SerializeField][HideInInspector] public Color k_colour4Ball_team_1; // v1.6: ( 2.0, 1.0, 0.0, 1.0 )
-
-    // fabrics
-    [SerializeField][HideInInspector] public Color k_fabricColour_8ball; // v1.6: ( 0.3, 0.3, 0.3, 1.0 )
-    [SerializeField][HideInInspector] public Color k_fabricColour_9ball; // v1.6: ( 0.1, 0.6, 1.0, 1.0 )
-    [SerializeField][HideInInspector] public Color k_fabricColour_4ball; // v1.6: ( 0.15, 0.75, 0.3, 1.0 )
 
     // cue guideline
     private readonly Color k_aimColour_aim = new Color(0.7f, 0.7f, 0.7f, 1.0f);
@@ -130,6 +113,30 @@ public class BilliardsModule : UdonSharpBehaviour
     [Header("Other")]
     [Tooltip("Disable menus and balls at this distance, set negative to disable")]
     public float LoDDistance = 10;
+
+    [Space(10)]
+    [Header("Table Light Colors")]
+    // table colors
+    [SerializeField] public Color k_colour_foul;        // v1.6: ( 1.2, 0.0, 0.0, 1.0 )
+    [SerializeField] public Color k_colour_default;     // v1.6: ( 1.0, 1.0, 1.0, 1.0 )
+    [SerializeField] public Color k_colour_off = new Color(0.01f, 0.01f, 0.01f, 1.0f);
+
+    // 8/9 ball
+    [SerializeField] public Color k_teamColour_spots;   // v1.6: ( 0.00, 0.75, 1.75, 1.0 )
+    [SerializeField] public Color k_teamColour_stripes; // v1.6: ( 1.75, 0.25, 0.00, 1.0 )
+
+    // Snooker
+    [SerializeField] public Color k_snookerTeamColour_0;   // v1.6: ( 0.00, 0.75, 1.75, 1.0 )
+    [SerializeField] public Color k_snookerTeamColour_1; // v1.6: ( 1.75, 0.25, 0.00, 1.0 )
+
+    // 4 ball
+    [SerializeField] public Color k_colour4Ball_team_0; // v1.6: ( )
+    [SerializeField] public Color k_colour4Ball_team_1; // v1.6: ( 2.0, 1.0, 0.0, 1.0 )
+
+    // fabrics
+    [SerializeField][HideInInspector] public Color k_fabricColour_8ball; // v1.6: ( 0.3, 0.3, 0.3, 1.0 )
+    [SerializeField][HideInInspector] public Color k_fabricColour_9ball; // v1.6: ( 0.1, 0.6, 1.0, 1.0 )
+    [SerializeField][HideInInspector] public Color k_fabricColour_4ball; // v1.6: ( 0.15, 0.75, 0.3, 1.0 )
 
     [Space(10)]
     [Header("Internal (no touching!)")]
@@ -331,6 +338,7 @@ public class BilliardsModule : UdonSharpBehaviour
 
     private void Update()
     {
+        if (localPlayerDistant) { return; }
         desktopManager._Tick();
         // menuManager._Tick();
 
@@ -740,8 +748,6 @@ public class BilliardsModule : UdonSharpBehaviour
             isSnooker6Red = gameModeLocal == 4u;
             is4Ball = isJp4Ball || isKr4Ball;
 
-            tableModels[tableModelLocal]._setGameMode(gameModeLocal);
-
             menuManager._RefreshGameMode();
         }
 
@@ -899,7 +905,6 @@ public class BilliardsModule : UdonSharpBehaviour
         applyCueAccess();
         practiceManager._Clear();
         repositionManager._OnGameStarted();
-        tableModels[tableModelLocal]._OnGameStarted();
         for (int i = 0; i < cueControllers.Length; i++) cueControllers[i]._RefreshRenderer();
 
         Array.Clear(fbScoresLocal, 0, 2);
@@ -1006,8 +1011,6 @@ public class BilliardsModule : UdonSharpBehaviour
         infReset.text = string.Empty;
 
         resetCachedData();
-
-        tableModels[tableModelLocal]._OnGameEnded();
 
         menuManager._RefreshLobby();
     }
@@ -1419,15 +1422,13 @@ public class BilliardsModule : UdonSharpBehaviour
         foulPocket |= fallOffFoul;
         if (foulPocket)
         {
-            tableModels[tableModelLocal]._flashTableError();
+            graphicsManager._FlashTableError();
         }
         else
         {
-            tableModels[tableModelLocal]._flashTableLight();
+            graphicsManager._FlashTableLight();
         }
         aud_main.PlayOneShot(snd_Sink, 1.0f);
-
-        tableModels[tableModelLocal].onBallPocketed();
 
         // VFX ( make ball move )
         Rigidbody body = balls[id].GetComponent<Rigidbody>();
@@ -2044,8 +2045,6 @@ public class BilliardsModule : UdonSharpBehaviour
         cueControllers[1]._RefreshTable();
 
         desktopManager._RefreshTable();
-
-        tableModels[tableModelLocal]._setTable(gameModeLocal);
 
         Transform guideDisplay = guideline.gameObject.transform.Find("guide_display");
         Vector3 gdlp = guideDisplay.localPosition; gdlp.y = 0;
@@ -3007,12 +3006,12 @@ public class BilliardsModule : UdonSharpBehaviour
 
     public void _IndicateError()
     {
-        tableModels[tableModelLocal]._flashTableError();
+        graphicsManager._FlashTableError();
     }
 
     public void _IndicateSuccess()
     {
-        tableModels[tableModelLocal]._flashTableLight();
+        graphicsManager._FlashTableLight();
     }
 
     public string _SerializeGameState()
