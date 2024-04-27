@@ -540,7 +540,9 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
         bool hitVert = false;
         if (doVerts && pos.y < k_RAIL_HEIGHT_UPPER)
         {
-            // now compare against the 3(x4) collision vertices on the table
+            // now raycast against the 4(x4) collision vertices on the table
+            // this is imperfect because we're raycasting against a sphere instead of a cylinder.
+            // bouncing off a table vertice while airborne may be less accurate.
             _sign_pos.x = Mathf.Sign(pos.x);
             _sign_pos.z = Mathf.Sign(pos.z);
             pos = Vector3.Scale(pos, _sign_pos);
@@ -1820,7 +1822,10 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
                 }
                 else
                 {
-                    a_to_v = newPos - k_vC;
+                    Vector3 point = k_vC;
+                    //turn point cylinder-like
+                    point.y = Mathf.Min(newPos.y, k_RAIL_HEIGHT_UPPER);
+                    a_to_v = newPos - point;
 
                     if (Vector3.Dot(a_to_v, k_vB_vY) > 0.0f)
                     {
@@ -1833,7 +1838,9 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
                         {
                             // Static resolution
                             N = a_to_v.normalized;
+                            float y = newPos.y;
                             newPos = k_vC + N * r_k_CUSHION_RADIUS;
+                            newPos.y = y;
 
                             // Dynamic
                             _phy_bounce_cushion(ref newVel, ref newAngVel, id, Vector3.Scale(N, _sign_pos));
@@ -1959,11 +1966,14 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
                 }
                 else
                 {
-                    a_to_v = newPos - k_vB;
+                    Vector3 point = k_vB;
+                    //turn point cylinder-like
+                    point.y = Mathf.Min(newPos.y, k_RAIL_HEIGHT_UPPER);
+                    a_to_v = newPos - point;
 
                     if (Vector3.Dot(a_to_v, k_vB_vY) > 0.0f)
                     {
-                        // Region F ( VERONI ) (NEAR CORNER POCKET)
+                        // Region F ( VORONI ) (NEAR CORNER POCKET)
 #if HT8B_DRAW_REGIONS
                         Debug.DrawLine(k_vB, k_pO, Color.green);
                         Debug.DrawLine(k_vB, k_pP, Color.green);
@@ -1972,13 +1982,15 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
                         {
                             // Static resolution
                             N = a_to_v.normalized;
+                            float y = newPos.y;
                             newPos = k_vB + N * r_k_CUSHION_RADIUS;
+                            newPos.y = y;
 
                             // Dynamic
                             _phy_bounce_cushion(ref newVel, ref newAngVel, id, Vector3.Scale(N, _sign_pos));
                             shouldBounce = true;
 #if HT8B_DRAW_REGIONS
-                            if (id == 0) Debug.Log("Region F ( VERONI ) (NEAR CORNER POCKET)");
+                            if (id == 0) Debug.Log("Region F ( VORONI ) (NEAR CORNER POCKET)");
 #endif
                         }
                     }
@@ -2036,11 +2048,17 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
         }
         else
         {
-            a_to_v = newPos - k_vA;
+            Vector3 point = k_vA;
+            //turn point cylinder-like
+            point.y = Mathf.Min(newPos.y, k_RAIL_HEIGHT_UPPER);
+            a_to_v = newPos - point;
 
             if (Vector3.Dot(a_to_v, k_vA_vD) > 0.0f)
             {
-                a_to_v = newPos - k_vD;
+                point = k_vD;
+                //turn point cylinder-like
+                point.y = Mathf.Min(newPos.y, k_RAIL_HEIGHT_UPPER);
+                a_to_v = newPos - point;
 
                 if (Vector3.Dot(a_to_v, k_vA_vD) > 0.0f)
                 {
@@ -2098,7 +2116,9 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
                         {
                             // Static resolution
                             N = a_to_v.normalized;
+                            float y = newPos.y;
                             newPos = k_vD + N * r_k_CUSHION_RADIUS;
+                            newPos.y = y;
 
                             // Dynamic
                             _phy_bounce_cushion(ref newVel, ref newAngVel, id, Vector3.Scale(N, _sign_pos));
@@ -2147,7 +2167,9 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
                 {
                     // Static resolution
                     N = a_to_v.normalized;
+                    float y = newPos.y;
                     newPos = k_vA + N * r_k_CUSHION_RADIUS;
+                    newPos.y = y;
 
                     // Dynamic
                     _phy_bounce_cushion(ref newVel, ref newAngVel, id, Vector3.Scale(N, _sign_pos));
