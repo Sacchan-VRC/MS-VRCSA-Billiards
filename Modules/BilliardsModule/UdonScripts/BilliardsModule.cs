@@ -102,6 +102,7 @@ public class BilliardsModule : UdonSharpBehaviour
     [Header("Sound Effects")]
     [SerializeField] AudioClip snd_Intro;
     [SerializeField] AudioClip snd_Sink;
+    [SerializeField] AudioClip snd_OutOfBounds;
     [SerializeField] AudioClip snd_NewTurn;
     [SerializeField] AudioClip snd_PointMade;
     [SerializeField] public AudioClip snd_btn;
@@ -1349,7 +1350,7 @@ public class BilliardsModule : UdonSharpBehaviour
     }
 
     private int numBallsPocketedThisTurn;
-    public void _TriggerPocketBall(int id)
+    public void _TriggerPocketBall(int id, bool outOfBounds)
     {
         uint total = 0U;
 
@@ -1428,7 +1429,10 @@ public class BilliardsModule : UdonSharpBehaviour
         {
             graphicsManager._FlashTableLight();
         }
-        aud_main.PlayOneShot(snd_Sink, 1.0f);
+        if (outOfBounds)
+        { if (snd_OutOfBounds) aud_main.PlayOneShot(snd_OutOfBounds, 1.0f); }
+        else
+        { if (snd_Sink) aud_main.PlayOneShot(snd_Sink, 1.0f); }
 
         // VFX ( make ball move )
         Rigidbody body = balls[id].GetComponent<Rigidbody>();

@@ -161,7 +161,7 @@ public class LegacyPhysicsManager : UdonSharpBehaviour
                         table.devhit.SetActive(true);
                     }
                     table.devhit.transform.localPosition = RaySphere_output;
-                    
+
                     cue_shotdir = cue_vdir;
                     cue_shotdir.y = 0.0f;
 
@@ -272,7 +272,7 @@ public class LegacyPhysicsManager : UdonSharpBehaviour
         {
             if (Mathf.Abs(balls_P[0].x) > table.k_TABLE_WIDTH + 0.1 || Mathf.Abs(balls_P[0].z) > table.k_TABLE_HEIGHT + 0.1)
             {
-                table._TriggerPocketBall(0);
+                table._TriggerPocketBall(0, true);
                 table._Log("out of bounds! " + balls_P[0].ToString());
                 outOfBounds = true;
             }
@@ -527,7 +527,7 @@ public class LegacyPhysicsManager : UdonSharpBehaviour
     public Vector3 dkTargetPos;            // Target for desktop aiming
 #endif
 
-    
+
     [NonSerialized] public bool outIsTouching;
     public void _IsCueBallTouching()
     {
@@ -809,25 +809,25 @@ public class LegacyPhysicsManager : UdonSharpBehaviour
 
         if ((absA - k_vE).sqrMagnitude < k_INNER_RADIUS_SQ)
         {
-            table._TriggerPocketBall(id);
+            table._TriggerPocketBall(id, false);
             return;
         }
 
         if ((absA - k_vF).sqrMagnitude < k_INNER_RADIUS_SQ)
         {
-            table._TriggerPocketBall(id);
+            table._TriggerPocketBall(id, false);
             return;
         }
 
         if (absA.z > k_vF.z)
         {
-            table._TriggerPocketBall(id);
+            table._TriggerPocketBall(id, true);
             return;
         }
 
         if (absA.z > -absA.x + k_vE.x + k_vE.z)
         {
-            table._TriggerPocketBall(id);
+            table._TriggerPocketBall(id, true);
             return;
         }
     }

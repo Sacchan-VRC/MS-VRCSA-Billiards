@@ -351,7 +351,7 @@ public class StandardPhysicsManager : UdonSharpBehaviour
         {
             if (Mathf.Abs(balls_P[0].x) > table.k_TABLE_WIDTH + 0.1 || Mathf.Abs(balls_P[0].z) > table.k_TABLE_HEIGHT + 0.1)
             {
-                table._TriggerPocketBall(0);
+                table._TriggerPocketBall(0, true);
                 pocketedTime = Time.time;
                 table._Log("out of bounds! " + balls_P[0].ToString());
                 outOfBounds = true;
@@ -1036,28 +1036,28 @@ public class StandardPhysicsManager : UdonSharpBehaviour
 
         if ((absA - k_vE).sqrMagnitude < k_INNER_RADIUS_CORNER_SQ)
         {
-            table._TriggerPocketBall(id);
+            table._TriggerPocketBall(id, false);
             pocketedTime = Time.time;
             return;
         }
 
         if ((absA - k_vF).sqrMagnitude < k_INNER_RADIUS_SIDE_SQ)
         {
-            table._TriggerPocketBall(id);
+            table._TriggerPocketBall(id, false);
             pocketedTime = Time.time;
             return;
         }
 
         if (absA.z > k_vF.z)
         {
-            table._TriggerPocketBall(id);
+            table._TriggerPocketBall(id, true);
             pocketedTime = Time.time;
             return;
         }
 
         if (absA.z > -absA.x + k_vE.x + k_vE.z)
         {
-            table._TriggerPocketBall(id);
+            table._TriggerPocketBall(id, true);
             pocketedTime = Time.time;
             return;
         }

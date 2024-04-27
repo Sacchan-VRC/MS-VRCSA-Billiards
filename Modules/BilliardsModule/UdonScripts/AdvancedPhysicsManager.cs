@@ -1638,7 +1638,7 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
                 absA.y = k_vE.y;
                 if ((absA - k_vE).sqrMagnitude < k_INNER_RADIUS_CORNER_SQ)
                 {
-                    table._TriggerPocketBall(id);
+                    table._TriggerPocketBall(id, false);
                     pocketedTime = Time.time;
                     return true;
                 }
@@ -1646,7 +1646,7 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
                 absA.y = k_vF.y;
                 if ((absA - k_vF).sqrMagnitude < k_INNER_RADIUS_SIDE_SQ)
                 {
-                    table._TriggerPocketBall(id);
+                    table._TriggerPocketBall(id, false);
                     pocketedTime = Time.time;
                     return true;
                 }
@@ -1656,7 +1656,7 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
         if (absA.z > tableEdge.y)
         {
             table._TriggerBallFallOffFoul();
-            table._TriggerPocketBall(id);
+            table._TriggerPocketBall(id, true);
             pocketedTime = Time.time;
             return true;
         }
@@ -1664,7 +1664,7 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
         if (absA.x > tableEdge.x)
         {
             table._TriggerBallFallOffFoul();
-            table._TriggerPocketBall(id);
+            table._TriggerPocketBall(id, true);
             pocketedTime = Time.time;
             return true;
         }
