@@ -691,31 +691,12 @@ public class NetworkingManager : UdonSharpBehaviour
         return (ushort)(data[pos] | (((uint)data[pos + 1]) << 8));
     }
 
-    // 4 char string from Vector2. Encodes floats in: [ -range, range ] to 0-65535
-    private void encodeVec3Part(byte[] data, int pos, Vector3 vec, float range)
-    {
-        encodeU16(data, pos, (ushort)((vec.x / range) * I16_MAXf + I16_MAXf));
-        encodeU16(data, pos + 2, (ushort)((vec.z / range) * I16_MAXf + I16_MAXf));
-    }
-
     // 6 char string from Vector3. Encodes floats in: [ -range, range ] to 0-65535
     private void encodeVec3Full(byte[] data, int pos, Vector3 vec, float range)
     {
         encodeU16(data, pos, (ushort)((Mathf.Clamp(vec.x, -range, range) / range) * I16_MAXf + I16_MAXf));
         encodeU16(data, pos + 2, (ushort)((Mathf.Clamp(vec.y, -range, range) / range) * I16_MAXf + I16_MAXf));
         encodeU16(data, pos + 4, (ushort)((Mathf.Clamp(vec.z, -range, range) / range) * I16_MAXf + I16_MAXf));
-    }
-
-    // Decode 4 chars at index to Vector3 (x,z). Decodes from 0-65535 to [ -range, range ]
-    private Vector3 decodeVec3Part(byte[] data, int start, float range)
-    {
-        ushort _x = decodeU16(data, start);
-        ushort _y = decodeU16(data, start + 2);
-
-        float x = ((_x - I16_MAXf) / I16_MAXf) * range;
-        float y = ((_y - I16_MAXf) / I16_MAXf) * range;
-
-        return new Vector3(x, 0.0f, y);
     }
 
     // Decode 6 chars at index to Vector3. Decodes from 0-65535 to [ -range, range ]
@@ -780,10 +761,10 @@ public class NetworkingManager : UdonSharpBehaviour
 
         for (int i = 0; i < 16; i++)
         {
-            ballsPSynced[i] = decodeVec3Part(gameState, i * 4, 2.5f);
+            ballsPSynced[i] = decodeVec3Full(gameState, i * 4, 2.5f);
         }
         cueBallVSynced = decodeVec3Full(gameState, 0x40, 50.0f);
-        cueBallWSynced = decodeVec3Part(gameState, 0x46, 500.0f);
+        cueBallWSynced = decodeVec3Full(gameState, 0x46, 500.0f);
 
         uint spec = decodeU16(gameState, 0x4C);
         uint state = decodeU16(gameState, 0x4E);
@@ -840,7 +821,7 @@ public class NetworkingManager : UdonSharpBehaviour
             ballsPSynced[i] = decodeVec3Full(gameState, i * 6, 2.5f);
         }
         cueBallVSynced = decodeVec3Full(gameState, 0x60, 50.0f);
-        cueBallWSynced = decodeVec3Part(gameState, 0x66, 500.0f);
+        cueBallWSynced = decodeVec3Full(gameState, 0x66, 500.0f);
 
         ballsPocketedSynced = decodeU16(gameState, 0x6C);
         teamIdSynced = gameState[0x6E];
