@@ -477,6 +477,7 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
     private Vector3 calculateDeltaPosition(uint sn_pocketed, int id, float timeStep, ref int ballHit, bool doVerts)
     {
         ballHit = -1;
+        Vector3 pos = balls_P[id];
         // Get what will be the next position
         Vector3 originalDelta = balls_V[id] * timeStep;
         if (originalDelta == Vector3.zero)
@@ -510,7 +511,7 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
             }
             ball_bit <<= 1;
 
-            h = balls_P[i] - balls_P[id];
+            h = balls_P[i] - pos;
             lf = Vector3.Dot(norm, h);
             if (lf < 0f) continue; // discard balls that are behind the movement direction
 
@@ -531,10 +532,9 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
         }
 
         bool hitVert = false;
-        if (doVerts)
+        if (doVerts && pos.y < k_RAIL_HEIGHT_UPPER)
         {
             // now compare against the 3(x4) collision vertices on the table
-            Vector3 pos = balls_P[id];
             _sign_pos.x = Mathf.Sign(pos.x);
             _sign_pos.z = Mathf.Sign(pos.z);
             pos = Vector3.Scale(pos, _sign_pos);
