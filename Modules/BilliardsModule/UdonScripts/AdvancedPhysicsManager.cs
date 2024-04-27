@@ -395,23 +395,32 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
                         }
                         else moveTimeLeft = 0;
 
-                        moved[i] = updateVelocity(i, balls[i], deltaTime - moveTimeLeft);
+                        // table._BeginPerf(table.PERF_PHYSICS_POCKET); // can only measure one at a time now ..
+                        if (_phy_ball_pockets(i, balls_P, is4Ball))
+                        {
+                            moveTimeLeft = 0;
+                            moved[i] = false;
+                        }
+                        else
+                        {
+                            moved[i] = updateVelocity(i, balls[i], deltaTime - moveTimeLeft);
 
-                        // because the ball predicted to collide with is now always added to the list of collision checks
-                        // we don't need to run collision checks on balls that aren't moving
-                        if (doColCheck) { stepOneBall(i, sn_pocketed, moved, deltaTime); }
+                            // because the ball predicted to collide with is now always added to the list of collision checks
+                            // we don't need to run collision checks on balls that aren't moving
+                            if (doColCheck) { stepOneBall(i, sn_pocketed, moved, deltaTime); }
+
+                            if (!balls_inBounds[i] && !moved[i])
+                            {
+                                // ball came to rest on top of the rail
+                                table._TriggerBallFallOffFoul();
+                                table._TriggerPocketBall(i, true);
+                            }
+                        }
                     }
                     else
                     {
                         moveTimeLeft = 0;
                         moved[i] = false;
-                    }
-
-                    if (!balls_inBounds[i] && !moved[i])
-                    {
-                        // ball came to rest on top of the rail
-                        table._TriggerBallFallOffFoul();
-                        table._TriggerPocketBall(i);
                     }
 
                     ballsMoving |= moved[i];
@@ -420,9 +429,6 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
                 {
                     moveTimeLeft = 0;
                 }
-                // table._BeginPerf(table.PERF_PHYSICS_POCKET); // can only measure one pocket now ..
-                _phy_ball_pockets(i, balls_P, is4Ball);
-                // table._EndPerf(table.PERF_PHYSICS_POCKET);
                 if (numSteps > 2) break; // max 3 steps per ball
             }
             ball_bit <<= 1;
@@ -1621,7 +1627,7 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
     }
 
     // Check pocket condition
-    void _phy_ball_pockets(int id, Vector3[] balls_P, bool is4ball)
+    bool _phy_ball_pockets(int id, Vector3[] balls_P, bool is4ball)
     {
         Vector3 A = balls_P[id];
         Vector3 absA = new Vector3(Mathf.Abs(A.x), 0, Mathf.Abs(A.z));
@@ -1634,7 +1640,7 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
                 {
                     table._TriggerPocketBall(id);
                     pocketedTime = Time.time;
-                    return;
+                    return true;
                 }
 
                 absA.y = k_vF.y;
@@ -1642,7 +1648,7 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
                 {
                     table._TriggerPocketBall(id);
                     pocketedTime = Time.time;
-                    return;
+                    return true;
                 }
             }
         }
@@ -1652,7 +1658,7 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
             table._TriggerBallFallOffFoul();
             table._TriggerPocketBall(id);
             pocketedTime = Time.time;
-            return;
+            return true;
         }
 
         if (absA.x > tableEdge.x)
@@ -1660,8 +1666,9 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
             table._TriggerBallFallOffFoul();
             table._TriggerPocketBall(id);
             pocketedTime = Time.time;
-            return;
+            return true;
         }
+        return false;
     }
 
     // Pocketless table
