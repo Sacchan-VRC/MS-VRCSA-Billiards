@@ -1060,7 +1060,7 @@ GameObject:
   m_Component:
   - component: {fileID: 4637735814628072575}
   m_Layer: 17
-  m_Name: CueSmoothnessSlider
+  m_Name: CueSmoothingSlider
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -1240,8 +1240,8 @@ MonoBehaviour:
   TeamsToggle_button: {fileID: 4857117681822218618}
   GuidelineToggle_button: {fileID: 1145788197053840310}
   LockingToggle_button: {fileID: 8960562240389788262}
-  cueSmoothingSlider: {fileID: 0}
-  cueSmoothingText: {fileID: 0}
+  cueSmoothingSlider: {fileID: 3209140627306595017}
+  cueSmoothingText: {fileID: 8272890369969155696}
   cueSizeSlider: {fileID: 5011880567414525548}
   cueSizeText: {fileID: 6074914418469254209}
 --- !u!114 &4980671310766924265
@@ -11854,7 +11854,7 @@ GameObject:
   - component: {fileID: 759103757097765105}
   - component: {fileID: 8272890369969155696}
   m_Layer: 17
-  m_Name: SmoothnessText
+  m_Name: SmoothingText
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -23886,7 +23886,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: Cue Smoothness
+  m_text: Cue Smoothing
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}

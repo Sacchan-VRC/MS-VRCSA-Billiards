@@ -33,7 +33,7 @@ public class CueController : UdonSharpBehaviour
     private float cueScaleMine = 1;
     [UdonSynced] private float cueScale = 1;
     private float cueSmoothingLocal = 1;
-    private float cueSmoothing = 1;
+    private float cueSmoothing = 30;
 
     private Vector3 secondaryOffset;
 
