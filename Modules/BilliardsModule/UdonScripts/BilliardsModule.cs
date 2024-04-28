@@ -2210,7 +2210,7 @@ public class BilliardsModule : UdonSharpBehaviour
         {
             uint sink_orange = 0;
             uint sink_blue = 0;
-            uint pmask = ballsPocketedLocal >> 2;
+            uint pmask = (ballsPocketedLocal ^ ballsPocketedOrig) >> 2; // only check balls that were pocketed this turn
 
             for (int i = 0; i < 7; i++)
             {
