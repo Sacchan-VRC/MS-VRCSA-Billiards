@@ -409,6 +409,16 @@ public class MenuManager : UdonSharpBehaviour
         table._TriggerPhysicsChanged(selectedPhysics);
     }
 
+    public Slider cueSmoothingSlider;
+    public TextMeshProUGUI cueSmoothingText;
+    public void setCueSmoothing()
+    {
+        float newSmoothing = cueSmoothingSlider.value / 10f;
+        table.cueControllers[0].setSmoothing(newSmoothing);
+        table.cueControllers[1].setSmoothing(newSmoothing);
+        cueSmoothingText.text = newSmoothing.ToString("F1");
+    }
+
     public Slider cueSizeSlider;
     public TextMeshProUGUI cueSizeText;
     public void setCueSize()

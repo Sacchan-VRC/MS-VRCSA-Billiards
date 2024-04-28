@@ -32,6 +32,8 @@ public class CueController : UdonSharpBehaviour
 
     private float cueScaleMine = 1;
     [UdonSynced] private float cueScale = 1;
+    private float cueSmoothingLocal = 1;
+    private float cueSmoothing = 1;
 
     private Vector3 secondaryOffset;
 
@@ -98,6 +100,16 @@ public class CueController : UdonSharpBehaviour
         body.transform.localScale = newscale;
         primary.transform.localScale = newscale;
         secondary.transform.localScale = newscale;
+    }
+
+    private void refreshCueSmoothing()
+    {
+        if (!Networking.LocalPlayer.IsOwner(gameObject) || !primaryHolding)
+        {
+            cueSmoothing = 30;
+            return;
+        }
+        cueSmoothing = 30 * cueSmoothingLocal;
     }
 
     public void _SetAuthorizedOwners(int[] newOwners)
@@ -249,9 +261,9 @@ public class CueController : UdonSharpBehaviour
         // we can't remove this because this directly affects physics
         // must occur at the end after we've finished updating the transform's position
         // otherwise vrchat will try to change it because it's a pickup
-        lagPrimaryPosition = Vector3.Lerp(lagPrimaryPosition, primary.transform.position, 1 - Mathf.Pow(0.5f, Time.fixedDeltaTime * 24.0f));
+        lagPrimaryPosition = Vector3.Lerp(lagPrimaryPosition, primary.transform.position, 1 - Mathf.Pow(0.5f, Time.fixedDeltaTime * cueSmoothing));
         if (!secondaryLocked)
-            lagSecondaryPosition = Vector3.Lerp(lagSecondaryPosition, secondary.transform.position, 1 - Mathf.Pow(0.5f, Time.fixedDeltaTime * 24.0f));
+            lagSecondaryPosition = Vector3.Lerp(lagSecondaryPosition, secondary.transform.position, 1 - Mathf.Pow(0.5f, Time.fixedDeltaTime * cueSmoothing));
     }
 
     private Vector3 clamp(Vector3 input, float minX, float maxX, float minY, float maxY, float minZ, float maxZ)
@@ -301,6 +313,8 @@ public class CueController : UdonSharpBehaviour
         RequestSerialization();
         OnDeserialization();
 
+        refreshCueSmoothing();
+
         table._OnPickupCue();
 
         if (!holderIsDesktop) secondaryController._Show();
@@ -312,6 +326,8 @@ public class CueController : UdonSharpBehaviour
         syncedHolderIsDesktop = false;
         RequestSerialization();
         OnDeserialization();
+
+        refreshCueSmoothing();
 
         // hide secondary
         if (!holderIsDesktop) secondaryController._Hide();
@@ -413,6 +429,12 @@ public class CueController : UdonSharpBehaviour
     public void _DisableRenderer()
     {
         renderer.enabled = false;
+    }
+
+    public void setSmoothing(float smoothing)
+    {
+        cueSmoothingLocal = smoothing;
+        refreshCueSmoothing();
     }
 
     public void setScale(float scale)
