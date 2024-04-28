@@ -1127,7 +1127,7 @@ public class BilliardsModule : UdonSharpBehaviour
         bool myTurn = isMyTurn();
         if (isSnooker6Red)//enable SnookerUndo button if foul
         {
-            if (fourBallCueBallLocal > 0 && foulStateLocal > 0 && foulStateLocal != 6 && myTurn)
+            if (fourBallCueBallLocal > 0 && foulStateLocal > 0 && foulStateLocal != 6 && myTurn && networkingManager.turnStateSynced != 1)
             {
                 menuManager._EnableSnookerUndoMenu();
             }
