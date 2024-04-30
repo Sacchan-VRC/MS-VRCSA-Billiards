@@ -335,7 +335,7 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
                     float deltaTime = moveTimeLeft;
                     Vector3 ballStartPos = balls_P[i];
                     int predictedHitBall = -1;
-                    Vector3 deltaPos = calculateDeltaPosition(sn_pocketed, i, deltaTime, ref predictedHitBall, !is4Ball);
+                    Vector3 deltaPos = calculateDeltaPosition(sn_pocketed, i, deltaTime, ref predictedHitBall, !is4Ball && collidedBall > -2);
                     float expectedMoveDistance = (balls_V[i] * deltaTime).magnitude;
                     balls_P[i] += deltaPos;
 
@@ -364,7 +364,7 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
                     // it turns out we only need to run the collision check on one ball (the one we predicted that we'd hit!)
                     // huge optimization!
                     bool doColCheck = false;
-                    if (predictedHitBall != -1 && predictedHitBall != collidedBall)
+                    if (predictedHitBall > -1 && predictedHitBall != collidedBall)
                     {
                         ballsToCheck[0] = predictedHitBall; // The ball we moved to the surface of
                         doColCheck = true;
@@ -497,7 +497,7 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
         float lf, s, nmag;
 
         // Closest found values
-        int minid = -1;
+        int hitid = -1;
         float minnmag = float.MaxValue;
 
         // Loop balls look for collisions
@@ -533,19 +533,24 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
             // if the closer ball would be a very glancing hit
             if (nmag < minnmag)
             {
-                minid = i;
+                hitid = i;
                 minnmag = nmag;
             }
         }
 
         bool hitVert = false;
-        if (doVerts && pos.y < k_RAIL_HEIGHT_UPPER)
+        if (doVerts && pos.y < k_RAIL_HEIGHT_UPPER) // doVerts is only true if one wasn't hit last substep
         {
-            // now raycast against the 4(x4) collision vertices on the table
-            // this is imperfect because we're raycasting against a sphere instead of a cylinder.
-            // bouncing off a table vertice while airborne may be less accurate.
+            // raycast against the 4+1 collision vertices on the table
+
             _sign_pos.x = Mathf.Sign(pos.x);
             _sign_pos.z = Mathf.Sign(pos.z);
+
+            // match height of ball and vertices within the raycasts to make it more cylinder-like
+            // this isn't quite correct because it's casting against a spehre and the ray direction can have a y componant.
+            // most of the velocity will almost certainly be lateral though, so this shouldn't be much of an issue.
+            pos.y = 0;
+
             pos = Vector3.Scale(pos, _sign_pos);
             Vector3 norm_Verts = Vector3.Scale(norm, _sign_pos);
             float vertRadiusSQR = r_k_CUSHION_RADIUS * r_k_CUSHION_RADIUS - 0.000002f;
@@ -559,7 +564,19 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
                 {
                     minnmag = nmag;
                     hitVert = true;
-                    minid = -1;
+                    hitid = -2;
+                }
+            }
+            // since k_vA is so close to the center of the table, it's possible to cross to it's mirror position in one frame with a fast enough ball. (this is the +1)
+            if (_phy_ray_sphere(pos, norm_Verts, k_vA_Mirror, vertRadiusSQR))
+            {
+                nmag = (pos - RaySphere_output).magnitude;
+                // Debug.DrawRay(balls[0].transform.parent.TransformPoint(RaySphere_output), Vector3.up * .3f, Color.red, 3f);
+                if (nmag < minnmag)
+                {
+                    minnmag = nmag;
+                    hitVert = true;
+                    hitid = -3;
                 }
             }
             if (_phy_ray_sphere(pos, norm_Verts, k_vB, vertRadiusSQR))
@@ -570,7 +587,7 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
                 {
                     minnmag = nmag;
                     hitVert = true;
-                    minid = -1;
+                    hitid = -4;
                 }
             }
             if (_phy_ray_sphere(pos, norm_Verts, k_vC, vertRadiusSQR))
@@ -581,7 +598,7 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
                 {
                     minnmag = nmag;
                     hitVert = true;
-                    minid = -1;
+                    hitid = -5;
                 }
             }
             if (_phy_ray_sphere(pos, norm_Verts, k_vD, vertRadiusSQR))
@@ -592,7 +609,7 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
                 {
                     minnmag = nmag;
                     hitVert = true;
-                    minid = -1;
+                    hitid = -6;
                 }
             }
             // Debug.DrawRay(balls[0].transform.parent.TransformPoint(Vector3.Scale(k_vB, _sign_pos)), Vector3.up * .3f, Color.red);
@@ -601,12 +618,12 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
             // Debug.DrawRay(balls[0].transform.parent.TransformPoint(Vector3.Scale(k_vD, _sign_pos)), Vector3.up * .3f, Color.green);
         }
 
-        if (minid > -1 || hitVert)
+        if (hitid > -1 || hitVert)
         {
             // Assign new position if got appropriate magnitude
             if (minnmag * minnmag < originalDelta.sqrMagnitude)
             {
-                ballHit = minid;
+                ballHit = hitid;
                 return norm * minnmag;
             }
         }
@@ -1463,6 +1480,7 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
     private float k_MINOR_REGION_CONST;
 
     Vector3 k_vA = new Vector3(); // side pocket vert
+    Vector3 k_vA_Mirror = new Vector3(); // side pocket vert
     Vector3 k_vB = new Vector3(); // corner pocket vert (width)
     Vector3 k_vC = new Vector3(); // corner pocket vert (height)
     Vector3 k_vD = new Vector3(); // vert deep inside side pocket (basically unused)
@@ -1553,6 +1571,7 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
         // Major source vertices
         k_vA.x = k_POCKET_RADIUS_SIDE;
         k_vA.z = k_TABLE_HEIGHT;
+        k_vA_Mirror = k_vA + new Vector3(k_vA.x * -2, 0, 0);
 
         k_vB.x = k_TABLE_WIDTH - k_POCKET_WIDTH_CORNER;
         k_vB.z = k_TABLE_HEIGHT;
@@ -1838,7 +1857,7 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
                 {
                     Vector3 point = k_vC;
                     //turn point cylinder-like
-                    point.y = Mathf.Min(newPos.y, k_RAIL_HEIGHT_UPPER);
+                    point.y = newPos.y;
                     a_to_v = newPos - point;
 
                     if (Vector3.Dot(a_to_v, k_vB_vY) > 0.0f)
@@ -1982,7 +2001,7 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
                 {
                     Vector3 point = k_vB;
                     //turn point cylinder-like
-                    point.y = Mathf.Min(newPos.y, k_RAIL_HEIGHT_UPPER);
+                    point.y = newPos.y;
                     a_to_v = newPos - point;
 
                     if (Vector3.Dot(a_to_v, k_vB_vY) > 0.0f)
@@ -2064,14 +2083,14 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
         {
             Vector3 point = k_vA;
             //turn point cylinder-like
-            point.y = Mathf.Min(newPos.y, k_RAIL_HEIGHT_UPPER);
+            point.y = newPos.y;
             a_to_v = newPos - point;
 
             if (Vector3.Dot(a_to_v, k_vA_vD) > 0.0f)
             {
                 point = k_vD;
                 //turn point cylinder-like
-                point.y = Mathf.Min(newPos.y, k_RAIL_HEIGHT_UPPER);
+                point.y = newPos.y;
                 a_to_v = newPos - point;
 
                 if (Vector3.Dot(a_to_v, k_vA_vD) > 0.0f)
