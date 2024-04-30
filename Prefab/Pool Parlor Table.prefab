@@ -8069,6 +8069,8 @@ MonoBehaviour:
   - {fileID: 8300000, guid: feebba097cc8e2d4fb236753ecd5c137, type: 3}
   bounceSounds:
   - {fileID: 8300000, guid: 70b124838479ce44a952b1251f336e00, type: 3}
+  cushionSounds:
+  - {fileID: 8300000, guid: 70b124838479ce44a952b1251f336e00, type: 3}
   transform_Surface: {fileID: 1961406577989517608}
   balls: []
   Test_Mode: 0
@@ -16491,7 +16493,7 @@ MonoBehaviour:
   cameraModule: {fileID: 3415554049421944631}
   snd_Intro: {fileID: 8300000, guid: f36f285a62b99d8449cf1685083885b8, type: 3}
   snd_Sink: {fileID: 8300000, guid: 58d4d3f70b3918e43af5bf6701874286, type: 3}
-  snd_OutOfBounds: {fileID: 8300000, guid: 58d4d3f70b3918e43af5bf6701874286, type: 3}
+  snd_OutOfBounds: {fileID: 0}
   snd_NewTurn: {fileID: 8300000, guid: 79f25f3cae8364e459effd5656179f5b, type: 3}
   snd_PointMade: {fileID: 8300000, guid: 7e018d0d5157def489cd0c21dcc6605f, type: 3}
   snd_btn: {fileID: 8300000, guid: 615c1a837da5b064d94ae184777f887a, type: 3}

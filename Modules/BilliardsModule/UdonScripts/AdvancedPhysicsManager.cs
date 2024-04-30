@@ -48,6 +48,7 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
 
     [SerializeField] AudioClip[] hitSounds;
     [SerializeField] AudioClip[] bounceSounds;
+    [SerializeField] AudioClip[] cushionSounds;
     [SerializeField] public Transform transform_Surface;
 
     private AudioSource audioSource;
@@ -374,18 +375,18 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
                     if (balls_V[i] != Vector3.zero || balls_W[i] != Vector3.zero)
                     {
                         table._BeginPerf(table.PERF_PHYSICS_CUSHION);
-                        bool hitWall;
+                        bool hitCushion;
                         if (is4Ball)
                         {
-                            hitWall = _phy_ball_table_carom(i);
+                            hitCushion = _phy_ball_table_carom(i);
                         }
                         else
                         {
-                            hitWall = _phy_ball_table_std(i);
+                            hitCushion = _phy_ball_table_std(i);
                         }
                         table._EndPerf(table.PERF_PHYSICS_CUSHION);
 
-                        if (predictedHitBall != -1 || hitWall)
+                        if (predictedHitBall != -1 || hitCushion)
                         {
                             float actualMoveDistance = (balls_P[i] - ballStartPos).magnitude;
                             if (expectedMoveDistance == 0)
@@ -403,7 +404,7 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
                         }
                         else
                         {
-                            moved[i] = updateVelocity(i, balls[i], deltaTime - moveTimeLeft);
+                            moved[i] = updateVelocity(i, balls[i], deltaTime - moveTimeLeft, hitCushion);
 
                             // because the ball predicted to collide with is now always added to the list of collision checks
                             // we don't need to run collision checks on balls that aren't moving
@@ -818,7 +819,7 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
     }
     ///
 
-    private bool updateVelocity(int id, GameObject ball, float timeStep)
+    private bool updateVelocity(int id, GameObject ball, float timeStep, bool hitWall)
     {
         float t = timeStep;
         bool ballMoving = false;
@@ -957,8 +958,10 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
                 else
                 {
                     balls_P[id].y = (-(balls_P[id].y - floor) * K_BOUNCE_FACTOR) + floor;
-
-                    balls[id].GetComponent<AudioSource>().PlayOneShot(bounceSounds[0], Mathf.Clamp01(V.y));
+                    if (V.y > 0.2 && !hitWall)
+                    {
+                        balls[id].GetComponent<AudioSource>().PlayOneShot(bounceSounds[UnityEngine.Random.Range(0, bounceSounds.Length - 1)], Mathf.Clamp01(V.y));
+                    }
                 }
                 if (balls_transitioningBounds[id])
                 {
@@ -981,7 +984,8 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
                 railPoint.z *= Mathf.Sign(balls_P[id].z);
             }
             railPoint.y = k_RAIL_HEIGHT_UPPER - k_BALL_RADIUS;
-            transitionCollision(id, ref V);
+            Vector3 N = Vector3.zero;
+            transitionCollision(id, ref V, ref N);
         }
         if (balls_P[id].y > 0)
             V.y -= frameGravity; /// Apply Gravity * Time so the airbone balls gets pushed back to the table.
@@ -1688,6 +1692,7 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
         _sign_pos.z = Mathf.Sign(newPos.z);
         newPos = Vector3.Scale(newPos, _sign_pos);
         // Setup major regions
+        Vector3 N = Vector3.zero;
 
         Vector3 newVel = balls_V[id];
         Vector3 newAngVel = balls_W[id];
@@ -1695,17 +1700,18 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
         if (newPos.x > k_pR.x)
         {
             newPos.x = k_pR.x;
-            _phy_bounce_cushion(ref newVel, ref newAngVel, id, Vector3.left * _sign_pos.x);
+            N = Vector3.left;
+            _phy_bounce_cushion(ref newVel, ref newAngVel, id, N * _sign_pos.x);
             shouldBounce = true;
         }
 
         if (newPos.z > k_pO.z)
         {
             newPos.z = k_pO.z;
-            _phy_bounce_cushion(ref newVel, ref newAngVel, id, Vector3.back * _sign_pos.z);
+            N = Vector3.back;
+            _phy_bounce_cushion(ref newVel, ref newAngVel, id, N * _sign_pos.z);
             shouldBounce = true;
         }
-
         if (shouldBounce)
         {
             if (balls_inBounds[id])
@@ -1741,7 +1747,15 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
         if (balls_transitioningBounds[id])
         {
             //collide with railPoint
-            shouldBounce = transitionCollision(id, ref balls_V[id]);
+            shouldBounce = transitionCollision(id, ref balls_V[id], ref N);
+        }
+        if (shouldBounce)
+        {
+            float bounceVolume = Vector3.Dot(N, newPos);
+            if (bounceVolume > 0.2f)
+            {
+                balls[id].GetComponent<AudioSource>().PlayOneShot(cushionSounds[UnityEngine.Random.Range(0, cushionSounds.Length - 1)], Mathf.Clamp01(bounceVolume));
+            }
         }
         return shouldBounce;
     }
@@ -1755,7 +1769,7 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
         }
         bool shouldBounce = false;
 
-        Vector3 N, _V, V, a_to_v;
+        Vector3 N = Vector3.zero, _V, V, a_to_v;
         float dot;
 
         Vector3 newPos = balls_P[id];
@@ -2207,12 +2221,12 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
             {
                 // stays out of bounds, detects if it's transitioning
                 shouldBounce = false;
-                newPos = Vector3.Scale(newPos, _sign_pos);
+                Vector3 pos = Vector3.Scale(newPos, _sign_pos);
 
-                Vector3 moveDistance = balls_P[id] - newPos;
+                Vector3 moveDistance = balls_P[id] - pos;
                 float moveDistanceMag = moveDistance.magnitude;
                 balls_transitioningBounds[id] = moveDistanceMag < k_BALL_RADIUS;
-                railPoint = newPos + k_BALL_RADIUS * moveDistance.normalized;
+                railPoint = pos + k_BALL_RADIUS * moveDistance.normalized;
                 railPoint.y = k_RAIL_HEIGHT_UPPER - k_BALL_RADIUS;
                 // visualize nearest rail edge when on top of it
                 // Debug.DrawRay(balls[0].transform.parent.TransformPoint(railPoint), Vector3.up * .3f, Color.white, 3f);
@@ -2227,27 +2241,35 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
         if (balls_transitioningBounds[id])
         {
             //collide with railPoint
-            shouldBounce = transitionCollision(id, ref balls_V[id]);
+            shouldBounce = transitionCollision(id, ref balls_V[id], ref N);
         }
 
+        if (shouldBounce)
+        {
+            float bounceVolume = Vector3.Dot(N, newPos);
+            if (bounceVolume > 0.2f)
+            {
+                balls[id].GetComponent<AudioSource>().PlayOneShot(cushionSounds[UnityEngine.Random.Range(0, cushionSounds.Length - 1)], Mathf.Clamp01(bounceVolume));
+            }
+        }
         return shouldBounce;
     }
 
-    private bool transitionCollision(int id, ref Vector3 Speed)
+    private bool transitionCollision(int id, ref Vector3 Speed, ref Vector3 N)
     {
         Vector3 delta = railPoint - balls_P[id];
         float dist = delta.magnitude;
         if (dist < k_BALL_RADIUS)
         {
-            Vector3 normal = delta / dist;
+            N = delta / dist;
 
             // Static resolution
-            Vector3 resolution = (k_BALL_RADIUS - dist) * normal;
+            Vector3 resolution = (k_BALL_RADIUS - dist) * N;
             balls_P[id] -= resolution;
 
-            float dot = Vector3.Dot(Speed, normal);
+            float dot = Vector3.Dot(Speed, N);
 
-            Vector3 reflection = normal * dot;
+            Vector3 reflection = N * dot;
             Speed -= reflection;
             return true;
         }
