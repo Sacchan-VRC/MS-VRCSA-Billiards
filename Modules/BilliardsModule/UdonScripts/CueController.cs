@@ -96,10 +96,7 @@ public class CueController : UdonSharpBehaviour
 
     private void refreshCueScale()
     {
-        Vector3 newscale = Vector3.one * cueScale;
-        body.transform.localScale = newscale;
-        primary.transform.localScale = newscale;
-        secondary.transform.localScale = newscale;
+        body.transform.localScale = new Vector3(1, 1, cueScale);
     }
 
     private void refreshCueSmoothing()
