@@ -224,9 +224,11 @@ public class GraphicsManager : UdonSharpBehaviour
 #else
         const float multiplier = 3.0f;
 #endif
-
         tableCurrentColour = Color.Lerp(tableCurrentColour, tableSrcColour, Time.deltaTime * multiplier);
-        tableMaterial.SetColor("_EmissionColor", tableCurrentColour);
+        if (tableMaterial)
+        {
+            tableMaterial.SetColor("_EmissionColor", tableCurrentColour);
+        }
     }
 
     private void tickWinner()
