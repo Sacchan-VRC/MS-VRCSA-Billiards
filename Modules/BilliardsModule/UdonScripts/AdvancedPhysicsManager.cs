@@ -6,7 +6,7 @@ using UnityEngine;
 [UdonBehaviourSyncMode(BehaviourSyncMode.NoVariableSync)]
 public class AdvancedPhysicsManager : UdonSharpBehaviour
 {
-    public string PHYSICSNAME = "<color=#FFD700>Advanced V0.5H</color>";
+    public string PHYSICSNAME = "<color=#FFD700>Advanced V0.5I</color>";
 #if HT_QUEST
    private  float k_MAX_DELTA =  0.05f; // Private Const Float 0.05f max time to process per frame on quest (~4)
 #else
@@ -26,8 +26,8 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
     [SerializeField][Range(0.92f, 0.98f)] private float k_BALL_E = 0.98f;   // Coefficient of Restitution between balls (Data suggests 0.94 to 0.96, but it seems there is an issue during calculation, Happens rarely now after some fixes.)
 
     // Ball <-> Table Variables 
-    public float k_F_SLIDE = 0.15f;                                                             // Friction coefficient of sliding          (Ball-Table)    [Update Velocity]
-    public float k_F_ROLL = 0.005f;                                                         // Friction coefficient of rolling          (Ball-table)    [Update Velocity]
+    public float k_F_SLIDE = 0.2f;                                                             // Friction coefficient of sliding          (Ball-Table)    [Update Velocity]
+    public float k_F_ROLL = 0.008f;                                                         // Friction coefficient of rolling          (Ball-table)    [Update Velocity]
     public float k_F_SPIN = 0.022f;                                                         // Friction coefficient of Spin             (Ball-table)    [Update Velocity]
     public float k_F_SPIN_RATE = 5f;                                                        // Desired constant deceleration rate       (ball-table)    [Update Velocity]  https://billiards.colostate.edu/faq/physics/physical-properties/ [desired between 0.5 - 15]
     [Range(0.5f, 0.7f)] const float K_BOUNCE_FACTOR = 0.5f;                                 // COR Ball-Slate.                          (ball-table)    [Update Velocity]
@@ -35,10 +35,10 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
 
     // Ball <-> Cushion Variables
     [SerializeField] private bool isHanModel = true;                                        // Enables HAN5 3D Friction Cushion Model   (Ball-Cushion)  [Phys Cushion]
-    [SerializeField][Range(0.7f, 0.98f)] private float k_E_C = 0.85f;                       // COR ball-Cushion                         (Ball-Cushion)  [Phys Cushion]      [default 0.85] - Acceptable Range [0.7 - 0.98] 
+    [SerializeField][Range(0.5f, 0.98f)] private float k_E_C = 0.85f;                       // COR ball-Cushion                         (Ball-Cushion)  [Phys Cushion]      [default 0.85] - Acceptable Range [0.7 - 0.98] 
 
-    [Range(0f, 1f)] public float k_F_SLIDE_TERM1 = 0.67f;                             // COF slide of the Cushion                 (Ball-Cushion)  [Phys Cushion]      [default 0.471]
-    [Range(0f, 0.471f)] public float k_F_SLIDE_TERM2 = 0.2f;
+    [Range(0f, 1f)] public float k_F_SLIDE_TERM1 = 0.471f;                             // COF slide of the Cushion                 (Ball-Cushion)  [Phys Cushion]      [default 0.471]
+    [Range(0f, 1f)] public float k_F_SLIDE_TERM2 = 0.241f;
     //[SerializeField][Range(0.6f, 0.7f)] private float cushionHeightPercent = 0.635f;
 
     private Color markerColorYes = new Color(0.0f, 1.0f, 0.0f, 1.0f);
@@ -1211,7 +1211,8 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
         }
     }
 
-    public bool isCushionRichDebug = false;
+    public bool isCushionRichDebug = false;         // for Debug Check
+    public bool PYSisEqualorLowerThanPYE = false;   // for Debug Check
     //public float momentOfInertia = (2.0f / 5.0f * 0.17f * Mathf.Pow(0.028575f, 2f));
     void _HANCushionModel(ref Vector3 vel, ref Vector3 angvel, int id, Vector3 N)
     {
@@ -1327,7 +1328,7 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
         //h = k_BALL_DIAMETRE * cushionHeightPercent;                                           // LEGACY Gives us H [Measured from table surface to the point of impact]
         //h = (D * cushionHeightPercent);                                                       // LEGACY
 
-        float P = (h - (balls_P[id].y + R));                                                    // Gives us P [Point of contact on ball surface from cushion]
+        //float P = (h - (balls_P[id].y + R));                                                    // Gives us P [Point of contact on ball surface from cushion]
 
         // Now in Trignonometric Functions, the K_BALL_RADIUS is our Base(Adjacent) and P is opposite to the angle THETA.
         // if we play around we can find the Tangent using Tan(opposite/Adjancent) and the Hypotenuse using our famous Pythagorean Theorem https://www.google.com/search?q=Pythagorean+theorem;
@@ -1346,8 +1347,7 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
         */
 
 
-        θ = Mathf.Asin(P / R);
-        //θ = Mathf.Tan(P / R);
+        θ = Mathf.Asin(h / (R - 1f)); // Directly passing h to Asin
 
 
         float cosθ = Mathf.Cos(θ);
@@ -1365,7 +1365,7 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
         s_z = -V.z - R * W.y * cosθ + R * W.x * sinθ;                                           // s_z is correct
 
 
-        c = V.x * cosθ;// - V.y * sinθ; // 3D Assumption
+        c = V.x * cosθ - V.y * sinθ; // 3D Assumption
         e = k_E_C;                                                                              // Const [Default 0.85] - exert from https://essay.utwente.nl/59134/1/scriptie_J_van_Balen.pdf [Acceptable Range between 0.7 to 0.98] from https://billiards.colostate.edu/physics_articles/Mathavan_IMechE_2010.pdf 
                                                                                                 // e = (0.39f + 0.257f * V.magnitude - 0.044f * source_v.magnitude);    // Dynamic [Works best at high refresh rates, UDON1 is currently too slow]
 
@@ -1379,20 +1379,29 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
         // [Equations 17 & 20]
         /// P_zE and P_zS (Remember, Z is up, so we write to Unity's "Y" here.
 
-        P_yE = (1f + e) * c / k_B;                                                              // P_yE is Correct
-        P_yS = (Mathf.Sqrt(Mathf.Pow(s_x, 2) + Mathf.Pow(s_z, 2)) / k_A);                       // P_yS is Correct (In case of Anomaly, do: Mathf.Sqrt(s_x * s_x + s_z * s_z) instead;
+        P_yE = Mathf.Abs((1f + e) * c / k_B);                                                              // P_yE is Correct
+        P_yS = Mathf.Abs((Mathf.Sqrt(Mathf.Pow(s_x, 2) + Mathf.Pow(s_z, 2)) / k_A));                       // P_yS is Correct (In case of Anomaly, do: Mathf.Sqrt(s_x * s_x + s_z * s_z) instead;
+
+        // not passing these debugs to rich debug bool yet, because i really need to investigate them.
+        Debug.Log("<size=16>P_yS</size>: "+P_yS.ToString("<size=16>0.00000000</size>)");
+        Debug.Log("<size=16>P_yE</size>: "+P_yE.ToString("<size=16>0.00000000</size>)");
+        Debug.Log(PYSisEqualorLowerThanPYE);
 
         if (P_yS <= P_yE)   // Sliding and sticking case 1-1
         {
-            PX = -s_x / k_A * sinθ - (1f + e) * c / k_B * cosθ;                                 // PX is Correct
+            PX =-s_x / k_A * sinθ - (1f + e) * c / k_B * cosθ;                                 // PX is Correct
             PZ = s_z / k_A;                                                                    // PZ is correct
             PY = s_x / k_A * cosθ - (1f + e) * c / k_B * sinθ;
+
+            public bool PYSisEqualorLowerThanPYE = true;
         }
         else                // Forward Sliding Case 1-2 
         {
-            PX = -mu * (1f + e) * c / k_B * cosΦ * sinθ - (1f + e) * c / k_B * cosθ;            // PX is Correct
+            PX =-mu * (1f + e) * c / k_B * cosΦ * sinθ - (1f + e) * c / k_B * cosθ;             // PX is Correct
             PZ = mu * (1f + e) * c / k_B * sinθ;                                                // PZ is Correct
             PY = mu * (1f + e) * c / k_B * cosΦ * cosθ - (1f + e) * c / k_B * sinθ;             // PY is Correct        
+            
+            public bool PYSisEqualorLowerThanPYE = false;
         }
 
         // Update Velocity                                                                      // Update Velocity is Corret
@@ -1400,26 +1409,10 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
         V1.z += V.z + (PZ / M);
         //V1.y += V.y + ((PY + (c = 0f)) / M) * 0.15f; // Force Applyed Geometrically down to the slate [the ball usually hop less than k_BALL_BOUNCE;
 
-        /*
-        W1.x += W.x - (R / I) * ((-mu * (1f + e) * c / k_B * sinθ) * sinθ);
-        W1.z += W.z + (R / I) * ((mu * (1f + e) * c / k_B * cosΦ * sinθ - (1f + e) * c / k_B * cosθ) * sinθ - (mu * (1f + e) * c / k_B * cosΦ * cosθ - (1f + e) * c / k_B * sinθ) * cosθ);
-        W1.y += W.y + (R / I) * ((-mu * (1f + e) * c / k_B * sinθ) * cosθ);
-        */
-
-        /*
-        float k = s_z * (5f / 7f);
-
-        W1.x += W.x + (k * mu) * sinθ;
-        W1.z += W.z + (R / I) * (PX * sinθ - PY * cosθ);
-        W1.y += W.y + (k * mu) * cosθ;
-        */
-
         // Compute angular momentum changes
-        W1.x += W.x - ((R / I) * mu) * PZ * sinθ;
-        W1.z += W.z + ((R / I) * mu) * (PX * sinθ - PY * cosθ);
-        W1.y += W.y + ((R / I) * mu) * PZ * cosθ;
-
-
+        W1.x += W.x - (R / I) * PZ * sinθ;
+        W1.z += W.z + (R / I) * (PX * sinθ - PY * cosθ);
+        W1.y += W.y + (R / I) * PZ * cosθ;
 
         // Change back to Table Reference Frame (Unrotate result)
         vel = rb * V1;
