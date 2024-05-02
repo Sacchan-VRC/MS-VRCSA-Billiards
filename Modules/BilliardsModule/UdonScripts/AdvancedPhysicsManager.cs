@@ -1382,26 +1382,21 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
         P_yE = Mathf.Abs((1f + e) * c / k_B);                                                              // P_yE is Correct
         P_yS = Mathf.Abs((Mathf.Sqrt(Mathf.Pow(s_x, 2) + Mathf.Pow(s_z, 2)) / k_A));                       // P_yS is Correct (In case of Anomaly, do: Mathf.Sqrt(s_x * s_x + s_z * s_z) instead;
 
-        // not passing these debugs to rich debug bool yet, because i really need to investigate them.
-        Debug.Log("<size=16>P_yS</size>: "+P_yS.ToString("<size=16>0.00000000</size>)");
-        Debug.Log("<size=16>P_yE</size>: "+P_yE.ToString("<size=16>0.00000000</size>)");
-        Debug.Log(PYSisEqualorLowerThanPYE);
-
         if (P_yS <= P_yE)   // Sliding and sticking case 1-1
         {
-            PX =-s_x / k_A * sinθ - (1f + e) * c / k_B * cosθ;                                 // PX is Correct
+            PX = -s_x / k_A * sinθ - (1f + e) * c / k_B * cosθ;                                 // PX is Correct
             PZ = s_z / k_A;                                                                    // PZ is correct
             PY = s_x / k_A * cosθ - (1f + e) * c / k_B * sinθ;
 
-            public bool PYSisEqualorLowerThanPYE = true;
+            PYSisEqualorLowerThanPYE = true;
         }
         else                // Forward Sliding Case 1-2 
         {
-            PX =-mu * (1f + e) * c / k_B * cosΦ * sinθ - (1f + e) * c / k_B * cosθ;             // PX is Correct
+            PX = -mu * (1f + e) * c / k_B * cosΦ * sinθ - (1f + e) * c / k_B * cosθ;             // PX is Correct
             PZ = mu * (1f + e) * c / k_B * sinθ;                                                // PZ is Correct
             PY = mu * (1f + e) * c / k_B * cosΦ * cosθ - (1f + e) * c / k_B * sinθ;             // PY is Correct        
-            
-            public bool PYSisEqualorLowerThanPYE = false;
+
+            PYSisEqualorLowerThanPYE = false;
         }
 
         // Update Velocity                                                                      // Update Velocity is Corret
@@ -1421,6 +1416,11 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
 
         if (isCushionRichDebug) // Choose to display some information about the cushion and Draw some lines (bool default = FALSE) [May cause stall in Unity Editor if there are Multiple collisions happening at once]
         {
+
+            Debug.Log("<size=16>P_yS</size>: " + P_yS.ToString("<size=16>0.00000000</size>)"));
+            Debug.Log("<size=16>P_yE</size>: " + P_yE.ToString("<size=16>0.00000000</size>)"));
+            Debug.Log(PYSisEqualorLowerThanPYE);
+
             /// For PHI angle
             //Debug.Log("Reflected direction_Vectors: " + reflectedDirection);
             Debug.DrawRay(balls[id].transform.position, reflectedDirection, Color.yellow, 6f);
@@ -1436,9 +1436,6 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
                 Debug.Log(" <size=32><color=yellow><b><i>! Warning !</size></color></b></i>");
                 Debug.Log("<size=14><color=yellow><b><i>Cushion Height (Ch) needs to be within 35.71875mm and 40.0000mm range or else balls may behave outside of its Physical Dynamic Specification</size></color></b></i>");
             }
-
-
-            Debug.Log("<size=16><color=#ffe4e1><b><i>Radius-P: </i></b></color></size> " + (P * 1000f).ToString("<size=16><color=#ffe4e1><b><i>00.00mm</i></b></color></size>") + " mm");
 
             /// For THETA angle
             Debug.Log("<color=white><size=16><b><i>θ</i></b></size></color>: " + θ.ToString("<color=cyan><size=16><i>00.0</i></size></color>") + " Rad <size=16>/</size>" + (θ * Mathf.Rad2Deg).ToString("<color=cyan><size=16><i>00.0</i></size></color>") + "Deg");
