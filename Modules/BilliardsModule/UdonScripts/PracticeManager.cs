@@ -1,6 +1,5 @@
 ﻿
 using System;
-using System.Net.Http.Headers;
 using UdonSharp;
 
 [UdonBehaviourSyncMode(BehaviourSyncMode.None)]
