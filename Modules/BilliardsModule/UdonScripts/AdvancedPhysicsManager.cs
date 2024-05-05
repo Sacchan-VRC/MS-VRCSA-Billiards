@@ -24,7 +24,7 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
     private float k_BALL_RSQR = 0.0009f;                                    // ball radius squared
     //const float k_BALL_BALL_F = 0.03f;                                    // Friction coefficient between balls       (ball-ball) 0.03f  
     [SerializeField][Range(0.92f, 0.98f)] private float k_BALL_E = 0.98f;   // Coefficient of Restitution between balls (Data suggests 0.94 to 0.96, but it seems there is an issue during calculation, Happens rarely now after some fixes.)
-    public bool = ballRichDebug = false; // for Debug Check
+    public bool ballRichDebug = false; // for Debug Check
 
     // Ball <-> Table Variables 
     [NonSerializedAttribute] public float k_F_SLIDE = 0.2f;                                                         // Friction coefficient of sliding          (Ball-Table)    [Update Velocity]
