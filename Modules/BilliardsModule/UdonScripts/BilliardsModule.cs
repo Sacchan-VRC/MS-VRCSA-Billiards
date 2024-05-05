@@ -986,8 +986,16 @@ public class BilliardsModule : UdonSharpBehaviour
         }
         else
         {
+            string p1str = "No one";
+            string p2str = "No one";
+            VRCPlayerApi winner1 = VRCPlayerApi.GetPlayerById(playerIDsCached[winningTeamLocal]);
+            if (winner1 != null)
+                p1str = winner1.displayName;
+            VRCPlayerApi winner2 = VRCPlayerApi.GetPlayerById(playerIDsCached[winningTeamLocal + 2]);
+            if (winner2 != null)
+                p2str = winner2.displayName;
             // All players are kicked from the match when it's won, so use the previous turn's player names to show the winners (playerIDsCached)
-            _LogWarn("game over, team " + winningTeamLocal + " won (" + playerIDsCached[winningTeamLocal] + " and " + playerIDsCached[winningTeamLocal + 2] + ")");
+            _LogWarn("game over, team " + winningTeamLocal + " won (" + p1str + " and " + p2str + ")");
             graphicsManager._SetWinners(/* isPracticeMode ? 0u :  */winningTeamLocal, playerIDsCached);
         }
 
