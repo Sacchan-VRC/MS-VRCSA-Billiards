@@ -23,7 +23,7 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
     private float k_BALL_MASS = 0.16f;                                      // Weight of ball in kg
     private float k_BALL_RSQR = 0.0009f;                                    // ball radius squared
     //const float k_BALL_BALL_F = 0.03f;                                    // Friction coefficient between balls       (ball-ball) 0.03f  
-    [SerializeField][Range(0.92f, 0.98f)] private float k_BALL_E = 0.98f;   // Coefficient of Restitution between balls (Data suggests 0.94 to 0.96, but it seems there is an issue during calculation, Happens rarely now after some fixes.)
+    [NonSerializedAttribute][Range(0.92f, 0.98f)] public float k_BALL_E = 0.98f;   // Coefficient of Restitution between balls (Data suggests 0.94 to 0.96, but it seems there is an issue during calculation, Happens rarely now after some fixes.)
     public bool ballRichDebug = false; // for Debug Check
 
     // Ball <-> Table Variables 
@@ -734,7 +734,7 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
     /// However results fail to reach and match some of the plot data, [its likely because the components of Linear Velocity and Angular Velocity are separated, when in paper they are together]
     /// as such a value of 1.9942 has been emperically determined after multiple tests, this now becomes the new `advanced simple consistent` model as it attempts to fix some of the issues version 1 had.
     /// a value of 1.5x is acceptable [in case the game feels too hard for users]
-    public float muFactor = 1.9942f; // Default should be 1 but results fail to reach and match some of the plot data, as such a value of 1.9942 has been emperically set after multiple tests.  
+    [NonSerializedAttribute] public float muFactor = 1.9942f; // Default should be 1 but results fail to reach and match some of the plot data, as such a value of 1.9942 has been emperically set after multiple tests.  
 
     void HandleCollision3_4(int i, int id, Vector3 normal, Vector3 delta) // Advanced Physics V3.4
     {
