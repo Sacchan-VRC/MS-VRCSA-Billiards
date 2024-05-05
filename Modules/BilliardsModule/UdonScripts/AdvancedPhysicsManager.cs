@@ -1212,7 +1212,6 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
     }
 
     public bool isCushionRichDebug = false;         // for Debug Check
-    public bool PYSisEqualorLowerThanPYE = false;   // for Debug Check
     //public float momentOfInertia = (2.0f / 5.0f * 0.17f * Mathf.Pow(0.028575f, 2f));
     void _HANCushionModel(ref Vector3 vel, ref Vector3 angvel, int id, Vector3 N)
     {
@@ -1328,7 +1327,7 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
         //h = k_BALL_DIAMETRE * cushionHeightPercent;                                           // LEGACY Gives us H [Measured from table surface to the point of impact]
         //h = (D * cushionHeightPercent);                                                       // LEGACY
 
-        //float P = (h - (balls_P[id].y + R));                                                    // Gives us P [Point of contact on ball surface from cushion]
+        float P = (h - (balls_P[id].y + R));                                                    // Gives us P [Point of contact on ball surface from cushion]
 
         // Now in Trignonometric Functions, the K_BALL_RADIUS is our Base(Adjacent) and P is opposite to the angle THETA.
         // if we play around we can find the Tangent using Tan(opposite/Adjancent) and the Hypotenuse using our famous Pythagorean Theorem https://www.google.com/search?q=Pythagorean+theorem;
@@ -1347,7 +1346,7 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
         */
 
 
-        θ = Mathf.Asin(h / (R - 1f)); // Directly passing h to Asin
+        θ = Mathf.Asin(P / (R - 1f)); // Directly pass h to Asin replacing P in case there are issues with NaN (if Doing so, you must also have V1.y set to 0);
 
 
         float cosθ = Mathf.Cos(θ);
@@ -1365,14 +1364,14 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
         s_z = -V.z - R * W.y * cosθ + R * W.x * sinθ;                                           // s_z is correct
 
 
-        c = V.x * cosθ - V.y * sinθ; // 3D Assumption
+        c = (V.x * cosθ) - (V.y * sinθ);                                                        // 3D Assumption
         e = k_E_C;                                                                              // Const [Default 0.85] - exert from https://essay.utwente.nl/59134/1/scriptie_J_van_Balen.pdf [Acceptable Range between 0.7 to 0.98] from https://billiards.colostate.edu/physics_articles/Mathavan_IMechE_2010.pdf 
                                                                                                 // e = (0.39f + 0.257f * V.magnitude - 0.044f * source_v.magnitude);    // Dynamic [Works best at high refresh rates, UDON1 is currently too slow]
 
         // [Equation 16]
         I = (2f / 5f) * M * Mathf.Pow(R, 2);                                                    // Unity Sintax C# FLOAT <- to avoid confusion, A and B are using the same order.
-
-        k_A = (7f / 2f / M);                                                                    // A is Correct 
+        //k_A = (7f / 2f / M);                                                                  // A is Correct
+        k_A = 1f / M + R * R / I; 
         k_B = (1f / M);                                                                         // B is Correct
 
 
@@ -1387,22 +1386,24 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
             PX = -s_x / k_A * sinθ - (1f + e) * c / k_B * cosθ;                                 // PX is Correct
             PZ = s_z / k_A;                                                                    // PZ is correct
             PY = s_x / k_A * cosθ - (1f + e) * c / k_B * sinθ;
-
-            PYSisEqualorLowerThanPYE = true;
         }
         else                // Forward Sliding Case 1-2 
         {
             PX = -mu * (1f + e) * c / k_B * cosΦ * sinθ - (1f + e) * c / k_B * cosθ;             // PX is Correct
             PZ = mu * (1f + e) * c / k_B * sinθ;                                                // PZ is Correct
-            PY = mu * (1f + e) * c / k_B * cosΦ * cosθ - (1f + e) * c / k_B * sinθ;             // PY is Correct        
-
-            PYSisEqualorLowerThanPYE = false;
+            PX =-mu * (1f + e) * c / k_B * cosΦ * sinθ - (1f + e) * c / k_B * cosθ;             // PX is Correct
+            PZ = mu * (1f + e) * c / k_B * sinΦ;                                                // PZ is Correct
+            PY = mu * (1f + e) * c / k_B * cosΦ * cosθ - (1f + e) * c / k_B * sinθ;             // PY is Correct    
         }
 
         // Update Velocity                                                                      // Update Velocity is Corret
         V1.x += V.x + (PX / M);
         V1.z += V.z + (PZ / M);
-        //V1.y += V.y + ((PY + (c = 0f)) / M) * 0.15f; // Force Applyed Geometrically down to the slate [the ball usually hop less than k_BALL_BOUNCE;
+        if(θ >= 0)
+        {
+            V1.y += V.y + (-PY / M); // Force Applyed Geometrically down to the slate [the ball usually hop less than k_BALL_BOUNCE;
+        }
+        else{V1.y += 0f;}
 
         // Compute angular momentum changes
         W1.x += W.x - (R / I) * PZ * sinθ;
@@ -1419,7 +1420,6 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
 
             Debug.Log("<size=16>P_yS</size>: " + P_yS.ToString("<size=16>0.00000000</size>)"));
             Debug.Log("<size=16>P_yE</size>: " + P_yE.ToString("<size=16>0.00000000</size>)"));
-            Debug.Log(PYSisEqualorLowerThanPYE);
 
             /// For PHI angle
             //Debug.Log("Reflected direction_Vectors: " + reflectedDirection);
@@ -1460,6 +1460,18 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
             Debug.Log("<color=white>CSCθ is: </color> " + COT.ToString("<color=white>0.0000000 RAD</color>") + (COT * Mathf.Rad2Deg).ToString("<color=white>0000 DEG</color>"));
             Debug.DrawLine(balls[0].transform.position, balls[0].transform.position * COT, Color.white, 5f); 
             */
+
+            Debug.Log("<size=16>P_yS</size>: "+P_yS.ToString("<size=16>0.00000000</size>)"));
+            Debug.Log("<size=16>P_yE</size>: "+P_yE.ToString("<size=16>0.00000000</size>)"));
+            if(P_yS <= P_yE)
+            {
+                Debug.Log("<size=16>True!</size>");
+            }
+            else
+            {
+                Debug.Log("<size=16>False!</size>");
+            }
+
         }
 
 
