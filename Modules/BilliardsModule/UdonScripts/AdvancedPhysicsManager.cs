@@ -24,6 +24,7 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
     private float k_BALL_RSQR = 0.0009f;                                    // ball radius squared
     //const float k_BALL_BALL_F = 0.03f;                                    // Friction coefficient between balls       (ball-ball) 0.03f  
     [SerializeField][Range(0.92f, 0.98f)] private float k_BALL_E = 0.98f;   // Coefficient of Restitution between balls (Data suggests 0.94 to 0.96, but it seems there is an issue during calculation, Happens rarely now after some fixes.)
+    public bool = ballRichDebug = false; // for Debug Check
 
     // Ball <-> Table Variables 
     [NonSerializedAttribute] public float k_F_SLIDE = 0.2f;                                                         // Friction coefficient of sliding          (Ball-Table)    [Update Velocity]
@@ -31,7 +32,7 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
     [NonSerializedAttribute] public float k_F_SPIN = 0.022f;                                                        // Friction coefficient of Spin             (Ball-table)    [Update Velocity]
     [NonSerializedAttribute] public float k_F_SPIN_RATE = 5f;                                                       // Desired constant deceleration rate       (ball-table)    [Update Velocity]  https://billiards.colostate.edu/faq/physics/physical-properties/ [desired between 0.5 - 15]
     [NonSerializedAttribute][Range(0.5f, 0.7f)] public float K_BOUNCE_FACTOR = 0.5f;                                // COR Ball-Slate.                          (ball-table)    [Update Velocity]
-    public bool isDRate = true;
+    [NonSerializedAttribute] public bool isDRate = true;
 
     // Ball <-> Cushion Variables
     [NonSerializedAttribute] public bool isHanModel = true;                                                         // Enables HAN5 3D Friction Cushion Model   (Ball-Cushion)  [Phys Cushion]
@@ -39,7 +40,7 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
     [NonSerializedAttribute][Range(0.5f, 0.98f)] public float k_E_C = 0.85f;                                        // COR ball-Cushion                         (Ball-Cushion)  [Phys Cushion]      [default 0.85] - Acceptable Range [0.7 - 0.98] 
     [NonSerializedAttribute][Range(0.2f, 0.4f)] public float k_Cushion_MU = 0.2f;
     [NonSerializedAttribute] public bool isCushionFrictionConstant = false;
-
+    public bool isCushionRichDebug = false; // for Debug Check
 
     //[Range(0f, 1f)] public float k_F_SLIDE_TERM1 = 0.471f;                                                        // COF slide of the Cushion                 (Ball-Cushion)  [Phys Cushion]
     //[Range(0f, 1f)] public float k_F_SLIDE_TERM2 = 0.241f;
@@ -1219,7 +1220,6 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
         }
     }
 
-    public bool isCushionRichDebug = false;         // for Debug Check
     //public float momentOfInertia = (2.0f / 5.0f * 0.17f * Mathf.Pow(0.028575f, 2f));
     void _HANCushionModel(ref Vector3 vel, ref Vector3 angvel, int id, Vector3 N)
     {
