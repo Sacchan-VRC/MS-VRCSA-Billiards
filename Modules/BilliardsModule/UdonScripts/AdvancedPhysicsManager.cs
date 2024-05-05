@@ -26,19 +26,23 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
     [SerializeField][Range(0.92f, 0.98f)] private float k_BALL_E = 0.98f;   // Coefficient of Restitution between balls (Data suggests 0.94 to 0.96, but it seems there is an issue during calculation, Happens rarely now after some fixes.)
 
     // Ball <-> Table Variables 
-    public float k_F_SLIDE = 0.2f;                                                             // Friction coefficient of sliding          (Ball-Table)    [Update Velocity]
-    public float k_F_ROLL = 0.008f;                                                         // Friction coefficient of rolling          (Ball-table)    [Update Velocity]
-    public float k_F_SPIN = 0.022f;                                                         // Friction coefficient of Spin             (Ball-table)    [Update Velocity]
-    public float k_F_SPIN_RATE = 5f;                                                        // Desired constant deceleration rate       (ball-table)    [Update Velocity]  https://billiards.colostate.edu/faq/physics/physical-properties/ [desired between 0.5 - 15]
-    [Range(0.5f, 0.7f)] const float K_BOUNCE_FACTOR = 0.5f;                                 // COR Ball-Slate.                          (ball-table)    [Update Velocity]
+    [NonSerializedAttribute] public float k_F_SLIDE = 0.2f;                                                         // Friction coefficient of sliding          (Ball-Table)    [Update Velocity]
+    [NonSerializedAttribute] public float k_F_ROLL = 0.008f;                                                        // Friction coefficient of rolling          (Ball-table)    [Update Velocity]
+    [NonSerializedAttribute] public float k_F_SPIN = 0.022f;                                                        // Friction coefficient of Spin             (Ball-table)    [Update Velocity]
+    [NonSerializedAttribute] public float k_F_SPIN_RATE = 5f;                                                       // Desired constant deceleration rate       (ball-table)    [Update Velocity]  https://billiards.colostate.edu/faq/physics/physical-properties/ [desired between 0.5 - 15]
+    [NonSerializedAttribute][Range(0.5f, 0.7f)] public float K_BOUNCE_FACTOR = 0.5f;                                // COR Ball-Slate.                          (ball-table)    [Update Velocity]
     public bool isDRate = true;
 
     // Ball <-> Cushion Variables
-    [SerializeField] private bool isHanModel = true;                                        // Enables HAN5 3D Friction Cushion Model   (Ball-Cushion)  [Phys Cushion]
-    [SerializeField][Range(0.5f, 0.98f)] private float k_E_C = 0.85f;                       // COR ball-Cushion                         (Ball-Cushion)  [Phys Cushion]      [default 0.85] - Acceptable Range [0.7 - 0.98] 
+    [NonSerializedAttribute] public bool isHanModel = true;                                                         // Enables HAN5 3D Friction Cushion Model   (Ball-Cushion)  [Phys Cushion]
+    [NonSerializedAttribute] public bool isDynamicRestitution = false;
+    [NonSerializedAttribute][Range(0.5f, 0.98f)] public float k_E_C = 0.85f;                                        // COR ball-Cushion                         (Ball-Cushion)  [Phys Cushion]      [default 0.85] - Acceptable Range [0.7 - 0.98] 
+    [NonSerializedAttribute][Range(0.2f, 0.4f)] public float k_Cushion_MU = 0.2f;
+    [NonSerializedAttribute] public bool isCushionFrictionConstant = false;
 
-    [Range(0f, 1f)] public float k_F_SLIDE_TERM1 = 0.471f;                             // COF slide of the Cushion                 (Ball-Cushion)  [Phys Cushion]      [default 0.471]
-    [Range(0f, 1f)] public float k_F_SLIDE_TERM2 = 0.241f;
+
+    //[Range(0f, 1f)] public float k_F_SLIDE_TERM1 = 0.471f;                                                        // COF slide of the Cushion                 (Ball-Cushion)  [Phys Cushion]
+    //[Range(0f, 1f)] public float k_F_SLIDE_TERM2 = 0.241f;
     //[SerializeField][Range(0.6f, 0.7f)] private float cushionHeightPercent = 0.635f;
 
     private Color markerColorYes = new Color(0.0f, 1.0f, 0.0f, 1.0f);
@@ -682,10 +686,14 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
 
 #if UNITY_EDITOR
                 /// DEBUG VISUALIZATION BLOCK
-                Vector3 relativeVelocity = balls_V[id] - balls_V[checkBall];
-                float v = Vector3.Dot(velocityDelta, normal);
-                Vector3 normalVelocityDirection = v * normal;
-                Debug.DrawLine(balls[9].transform.position, balls[9].transform.position - normalVelocityDirection * 5f, Color.blue, 4f);
+                if(ballRichDebug)
+                {
+                    Vector3 relativeVelocity = balls_V[id] - balls_V[checkBall];
+                    float v = Vector3.Dot(velocityDelta, normal);
+                    Vector3 normalVelocityDirection = v * normal;
+                    Debug.DrawLine(balls[9].transform.position, balls[9].transform.position - normalVelocityDirection * 5f, Color.blue, 4f);
+                    Debug.DrawLine(balls[9].transform.position, balls[9].transform.position + normalVelocityDirection * 5f, Color.blue, 4f);
+                } else {return;}
 #endif
 
                 float dot = Vector3.Dot(velocityDelta, normal);
@@ -1322,7 +1330,11 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
 
         // The friction Coefficient between the ball and rail varies according to the incidence angle [Phi_ (Radians)].
 
-        mu = k_F_SLIDE_TERM1 - k_F_SLIDE_TERM2 * Φ;                                             // Dynamic
+        if (isCushionFrictionConstant)
+        {
+            mu =  k_Cushion_MU * Φ; // Constant                                             
+        }
+        else { mu = 0.471f - 0.241f * (psi * Mathf.Deg2Rad); } // Dynamic
 
         //h = k_BALL_DIAMETRE * cushionHeightPercent;                                           // LEGACY Gives us H [Measured from table surface to the point of impact]
         //h = (D * cushionHeightPercent);                                                       // LEGACY
@@ -1360,40 +1372,42 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
 
         //*is correct* = revised values to match with its necessary Rotation Axis.
 
-        s_x = V.x * sinθ - V.y * cosθ + R * W.z;                                                // s_x is correct
-        s_z = -V.z - R * W.y * cosθ + R * W.x * sinθ;                                           // s_z is correct
+        s_x = V.x * sinθ - V.y * cosθ + R * W.z;                                                    // s_x is correct
+        s_z = -V.z - R * W.y * cosθ + R * W.x * sinθ;                                               // s_z is correct
 
 
-        c = (V.x * cosθ) - (V.y * sinθ);                                                        // 3D Assumption
-        e = k_E_C;                                                                              // Const [Default 0.85] - exert from https://essay.utwente.nl/59134/1/scriptie_J_van_Balen.pdf [Acceptable Range between 0.7 to 0.98] from https://billiards.colostate.edu/physics_articles/Mathavan_IMechE_2010.pdf 
-                                                                                                // e = (0.39f + 0.257f * V.magnitude - 0.044f * source_v.magnitude);    // Dynamic [Works best at high refresh rates, UDON1 is currently too slow]
+        c = (V.x * cosθ) - (V.y * sinθ);                                                            // 3D Assumption
+        if (isDynamicRestitution)
+        {
+            e = Mathf.Clamp((0.39f + 0.257f * V.magnitude - 0.044f * V.magnitude), 0.6f, 0.95f);    // Dynamic [Works best at high refresh rates, UDON1 is currently too slow]
+        }
+        else { e = k_E_C; } // Const [Default 0.85] - exert from https://essay.utwente.nl/59134/1/scriptie_J_van_Balen.pdf [Acceptable Range between 0.7 to 0.98] from https://billiards.colostate.edu/physics_articles/Mathavan_IMechE_2010.pdf 
+
 
         // [Equation 16]
-        I = (2f / 5f) * M * Mathf.Pow(R, 2);                                                    // Unity Sintax C# FLOAT <- to avoid confusion, A and B are using the same order.
-        //k_A = (7f / 2f / M);                                                                  // A is Correct
-        k_A = 1f / M + R * R / I; 
-        k_B = (1f / M);                                                                         // B is Correct
+        I = 2f / 5f * M * R * R;                                                                    // Moment of Inertia
+        //k_A = (7f / 2f / M);                                                                      // A is Correct
+        k_A = 1f / M + R * R / I;                                                                   // Slightly Accurate A
+        k_B = 1f / M;                                                                               // B is Correct
 
 
         // [Equations 17 & 20]
         /// P_zE and P_zS (Remember, Z is up, so we write to Unity's "Y" here.
 
-        P_yE = Mathf.Abs((1f + e) * c / k_B);                                                              // P_yE is Correct
-        P_yS = Mathf.Abs((Mathf.Sqrt(Mathf.Pow(s_x, 2) + Mathf.Pow(s_z, 2)) / k_A));                       // P_yS is Correct (In case of Anomaly, do: Mathf.Sqrt(s_x * s_x + s_z * s_z) instead;
+        P_yE = Mathf.Abs((1f + e) * c / k_B);                                                       // P_yE is Correct
+        P_yS = Mathf.Abs((Mathf.Sqrt(Mathf.Pow(s_x, 2) + Mathf.Pow(s_z, 2)) / k_A));                // P_yS is Correct (In case of Anomaly, do: Mathf.Sqrt(s_x * s_x + s_z * s_z) instead;
 
         if (P_yS <= P_yE)   // Sliding and sticking case 1-1
         {
-            PX = -s_x / k_A * sinθ - (1f + e) * c / k_B * cosθ;                                 // PX is Correct
-            PZ = s_z / k_A;                                                                    // PZ is correct
+            PX = -s_x / k_A * sinθ - (1f + e) * c / k_B * cosθ;                                     // PX is Correct
+            PZ = s_z / k_A;                                                                         // PZ is correct
             PY = s_x / k_A * cosθ - (1f + e) * c / k_B * sinθ;
         }
         else                // Forward Sliding Case 1-2 
         {
-            PX = -mu * (1f + e) * c / k_B * cosΦ * sinθ - (1f + e) * c / k_B * cosθ;             // PX is Correct
-            PZ = mu * (1f + e) * c / k_B * sinθ;                                                // PZ is Correct
-            PX =-mu * (1f + e) * c / k_B * cosΦ * sinθ - (1f + e) * c / k_B * cosθ;             // PX is Correct
-            PZ = mu * (1f + e) * c / k_B * sinΦ;                                                // PZ is Correct
-            PY = mu * (1f + e) * c / k_B * cosΦ * cosθ - (1f + e) * c / k_B * sinθ;             // PY is Correct    
+            PX =-mu * (1f + e) * c / k_B * cosΦ * sinθ - (1f + e) * c / k_B * cosθ;                 // PX is Correct
+            PZ = mu * (1f + e) * c / k_B * sinΦ;                                                    // PZ is Correct
+            PY = mu * (1f + e) * c / k_B * cosΦ * cosθ - (1f + e) * c / k_B * sinθ;                 // PY is Correct    
         }
 
         // Update Velocity                                                                      // Update Velocity is Corret
@@ -1401,7 +1415,7 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
         V1.z += V.z + (PZ / M);
         if(θ >= 0)
         {
-            V1.y += V.y + (-PY / M); // Force Applyed Geometrically down to the slate [the ball usually hop less than k_BALL_BOUNCE;
+            V1.y += V.y + (-PY / M) * 0.2f; // Force Applyed Geometrically down to the slate [the ball usually hop less than k_BALL_BOUNCE;
         }
         else{V1.y += 0f;}
 
@@ -1473,7 +1487,6 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
             }
 
         }
-
 
     }
 
