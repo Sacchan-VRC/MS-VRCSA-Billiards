@@ -591,7 +591,7 @@ public class BilliardsModule : UdonSharpBehaviour
         bool isAllowedPlayer = false;
         foreach (int allowedPlayer in allowedPlayers)
         {
-            if (allPlayersOffline && VRCPlayerApi.GetPlayerById(allowedPlayer) != null) allPlayersOffline = false;
+            if (allPlayersOffline && Utilities.IsValid(VRCPlayerApi.GetPlayerById(allowedPlayer))) allPlayersOffline = false;
 
             if (allowedPlayer == self) isAllowedPlayer = true;
         }
@@ -1004,10 +1004,10 @@ public class BilliardsModule : UdonSharpBehaviour
             string p1str = "No one";
             string p2str = "No one";
             VRCPlayerApi winner1 = VRCPlayerApi.GetPlayerById(playerIDsCached[winningTeamLocal]);
-            if (winner1 != null)
+            if (Utilities.IsValid(winner1))
                 p1str = winner1.displayName;
             VRCPlayerApi winner2 = VRCPlayerApi.GetPlayerById(playerIDsCached[winningTeamLocal + 2]);
-            if (winner2 != null)
+            if (Utilities.IsValid(winner2))
                 p2str = winner2.displayName;
             // All players are kicked from the match when it's won, so use the previous turn's player names to show the winners (playerIDsCached)
             _LogWarn("game over, team " + winningTeamLocal + " won (" + p1str + " and " + p2str + ")");
@@ -1202,7 +1202,7 @@ public class BilliardsModule : UdonSharpBehaviour
     private void onRemoteTurnSimulate(Vector3 cueBallV, Vector3 cueBallW, bool fake = false)
     {
         VRCPlayerApi owner = Networking.GetOwner(networkingManager.gameObject);
-        int ownerID = owner != null ? owner.playerId : -1;
+        int ownerID = Utilities.IsValid(owner) ? owner.playerId : -1;
         bool isOwner = owner == Networking.LocalPlayer || fake;
         _LogInfo($"onRemoteTurnSimulate cueBallV={cueBallV.ToString("F4")} cueBallW={cueBallW.ToString("F4")} owner={ownerID}");
 
@@ -3314,7 +3314,7 @@ public void _RedrawDebugger() { }
            "<color=\"#95a2b8\">sim(</color> <color=\"#678AC2\">PAUSED</color> <color=\"#95a2b8\">)</color> ";
 
         VRCPlayerApi currentOwner = Networking.GetOwner(networkingManager.gameObject);
-        output += "<color=\"#95a2b8\">owner(</color> <color=\"#4287F5\">" + (currentOwner != null ? currentOwner.displayName + ":" + currentOwner.playerId : "[null]") + "/" + teamIdLocal + "</color> <color=\"#95a2b8\">)</color> ";
+        output += "<color=\"#95a2b8\">owner(</color> <color=\"#4287F5\">" + (Utilities.IsValid(currentOwner) ? currentOwner.displayName + ":" + currentOwner.playerId : "[null]") + "/" + teamIdLocal + "</color> <color=\"#95a2b8\">)</color> ";
 
         if (currentPhysicsManager)
         {
