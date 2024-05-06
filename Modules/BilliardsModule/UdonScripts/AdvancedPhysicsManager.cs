@@ -23,7 +23,7 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
     private float k_BALL_MASS = 0.16f;                                      // Weight of ball in kg
     private float k_BALL_RSQR = 0.0009f;                                    // ball radius squared
     //const float k_BALL_BALL_F = 0.03f;                                    // Friction coefficient between balls       (ball-ball) 0.03f  
-    [SerializeField][Range(0.92f, 0.98f)] private float k_BALL_E = 0.98f;   // Coefficient of Restitution between balls (Data suggests 0.94 to 0.96, but it seems there is an issue during calculation, Happens rarely now after some fixes.)
+    private float k_BALL_E = 0.98f;   // Coefficient of Restitution between balls (Data suggests 0.94 to 0.96, but it seems there is an issue during calculation, Happens rarely now after some fixes.)
     public bool ballRichDebug = false; // for Debug Check
 
     // Ball <-> Table Variables 
@@ -687,14 +687,14 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
 
 #if UNITY_EDITOR
                 /// DEBUG VISUALIZATION BLOCK
-                if(ballRichDebug)
+                if (ballRichDebug)
                 {
                     Vector3 relativeVelocity = balls_V[id] - balls_V[checkBall];
                     float v = Vector3.Dot(velocityDelta, normal);
                     Vector3 normalVelocityDirection = v * normal;
                     Debug.DrawLine(balls[9].transform.position, balls[9].transform.position - normalVelocityDirection * 5f, Color.blue, 4f);
                     Debug.DrawLine(balls[9].transform.position, balls[9].transform.position + normalVelocityDirection * 5f, Color.blue, 4f);
-                } else {return;}
+                }
 #endif
 
                 float dot = Vector3.Dot(velocityDelta, normal);
@@ -734,7 +734,7 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
     /// However results fail to reach and match some of the plot data, [its likely because the components of Linear Velocity and Angular Velocity are separated, when in paper they are together]
     /// as such a value of 1.9942 has been emperically determined after multiple tests, this now becomes the new `advanced simple consistent` model as it attempts to fix some of the issues version 1 had.
     /// a value of 1.5x is acceptable [in case the game feels too hard for users]
-    public float muFactor = 1.9942f; // Default should be 1 but results fail to reach and match some of the plot data, as such a value of 1.9942 has been emperically set after multiple tests.  
+    private float muFactor = 1.9942f; // Default should be 1 but results fail to reach and match some of the plot data, as such a value of 1.9942 has been emperically set after multiple tests.  
 
     void HandleCollision3_4(int i, int id, Vector3 normal, Vector3 delta) // Advanced Physics V3.4
     {
@@ -1332,7 +1332,7 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
 
         if (isCushionFrictionConstant)
         {
-            mu =  k_Cushion_MU * Φ; // Constant                                             
+            mu = k_Cushion_MU * Φ; // Constant                                             
         }
         else { mu = 0.471f - 0.241f * (psi * Mathf.Deg2Rad); } // Dynamic
 
@@ -1405,7 +1405,7 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
         }
         else                // Forward Sliding Case 1-2 
         {
-            PX =-mu * (1f + e) * c / k_B * cosΦ * sinθ - (1f + e) * c / k_B * cosθ;                 // PX is Correct
+            PX = -mu * (1f + e) * c / k_B * cosΦ * sinθ - (1f + e) * c / k_B * cosθ;                 // PX is Correct
             PZ = mu * (1f + e) * c / k_B * sinΦ;                                                    // PZ is Correct
             PY = mu * (1f + e) * c / k_B * cosΦ * cosθ - (1f + e) * c / k_B * sinθ;                 // PY is Correct    
         }
@@ -1413,11 +1413,11 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
         // Update Velocity                                                                      // Update Velocity is Corret
         V1.x += V.x + (PX / M);
         V1.z += V.z + (PZ / M);
-        if(θ >= 0)
+        if (θ >= 0)
         {
             V1.y += V.y + (-PY / M) * 0.2f; // Force Applyed Geometrically down to the slate [the ball usually hop less than k_BALL_BOUNCE;
         }
-        else{V1.y += 0f;}
+        else { V1.y += 0f; }
 
         // Compute angular momentum changes
         W1.x += W.x - (R / I) * PZ * sinθ;
@@ -1475,9 +1475,9 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
             Debug.DrawLine(balls[0].transform.position, balls[0].transform.position * COT, Color.white, 5f); 
             */
 
-            Debug.Log("<size=16>P_yS</size>: "+P_yS.ToString("<size=16>0.00000000</size>)"));
-            Debug.Log("<size=16>P_yE</size>: "+P_yE.ToString("<size=16>0.00000000</size>)"));
-            if(P_yS <= P_yE)
+            Debug.Log("<size=16>P_yS</size>: " + P_yS.ToString("<size=16>0.00000000</size>)"));
+            Debug.Log("<size=16>P_yE</size>: " + P_yE.ToString("<size=16>0.00000000</size>)"));
+            if (P_yS <= P_yE)
             {
                 Debug.Log("<size=16>True!</size>");
             }
@@ -1509,10 +1509,10 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
     Vector3 k_pL = new Vector3();
     Vector3 k_pM = new Vector3();
     Vector3 k_pN = new Vector3(); // side pocket vert + cushion
-    public Vector3 k_pO = new Vector3(); // corner pocket + cushion
+    Vector3 k_pO = new Vector3(); // corner pocket + cushion
     Vector3 k_pP = new Vector3(); // corner pocket + cushion inside
     Vector3 k_pQ = new Vector3(); // corner pocket + cushion inside
-    public Vector3 k_pR = new Vector3(); // corner pocket + cushion
+    Vector3 k_pR = new Vector3(); // corner pocket + cushion
     Vector3 k_pT = new Vector3();
     Vector3 k_pS = new Vector3();
     Vector3 k_pU = new Vector3();
@@ -1565,6 +1565,23 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
         k_RAIL_DEPTH_HEIGHT = table.k_RAIL_DEPTH_HEIGHT;
         k_vE = table.k_vE; //cornerPocket
         k_vF = table.k_vF; //sidePocket
+
+        // Advanced only
+        k_F_SLIDE = table.k_F_SLIDE;
+        k_F_ROLL = table.k_F_ROLL;
+        k_F_SPIN = table.k_F_SPIN;
+        k_F_SPIN_RATE = table.k_F_SPIN_RATE;
+        isDRate = table.isDRate;
+        K_BOUNCE_FACTOR = table.K_BOUNCE_FACTOR;
+        isHanModel = table.isHanModel;
+        k_E_C = table.k_E_C;
+        isDynamicRestitution = table.isDynamicRestitution;
+        isCushionFrictionConstant = table.isCushionFrictionConstant;
+        k_Cushion_MU = table.k_Cushion_MU;
+        k_BALL_E = table.k_BALL_E;
+        muFactor = table.muFactor;
+        //
+
         Vector3 k_CONTACT_POINT = new Vector3(0.0f, -k_BALL_RADIUS, 0.0f);
 
         r_k_CUSHION_RADIUS = k_CUSHION_RADIUS + k_BALL_RADIUS;

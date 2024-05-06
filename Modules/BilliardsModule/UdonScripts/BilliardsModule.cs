@@ -37,13 +37,29 @@ public class BilliardsModule : UdonSharpBehaviour
     [NonSerialized] public float K_BAULK_LINE; // Snooker baulk line distance from end of table
     [NonSerialized] public float K_BLACK_SPOT; // Snooker Black ball distance from end of table
     [NonSerialized] public float k_SEMICIRCLERADIUS; // Snooker, radius of D
-    [NonSerialized] public float k_BALL_DIAMETRE; // Diameter of balls
-    [NonSerialized] public float k_BALL_RADIUS; // Radius of balls
-    [NonSerialized] public float k_BALL_MASS; // Mass of balls
     [NonSerialized] public float k_RAIL_HEIGHT_UPPER;
     [NonSerialized] public float k_RAIL_HEIGHT_LOWER;
     [NonSerialized] public float k_RAIL_DEPTH_WIDTH;
     [NonSerialized] public float k_RAIL_DEPTH_HEIGHT;
+    // advanced physics  variables
+    [NonSerialized] public float k_F_SLIDE; // bt_CoefSlide
+    [NonSerialized] public float k_F_ROLL; // bt_CoefRoll
+    [NonSerialized] public float k_F_SPIN; // bt_CoefSpin
+    [NonSerialized] public float k_F_SPIN_RATE; // bt_CoefSpinRate
+    [NonSerialized] public bool isDRate; // bt_isDRate
+    [NonSerialized] public float K_BOUNCE_FACTOR; // BounceFactor
+    [Header("Cushion Model:")]
+    [NonSerialized] public bool isHanModel; // bc_UseHan05
+    [NonSerialized] public float k_E_C; // bc_CoefRestitution
+    [NonSerialized] public bool isDynamicRestitution; // bc_DynRestitution
+    [NonSerialized] public bool isCushionFrictionConstant; // bc_UseConstFriction
+    [NonSerialized] public float k_Cushion_MU; // bc_ConstFriction
+    [Header("Ball Set Configuration:")]
+    [NonSerialized] public float k_BALL_E; // bs_CoefRestitution
+    [NonSerialized] public float muFactor; // bs_Friction
+    [NonSerialized] public float k_BALL_RADIUS; // Radius of balls
+    [NonSerialized] public float k_BALL_MASS; // Mass of balls
+    [NonSerialized] public float k_BALL_DIAMETRE; // Diameter of balls
     [NonSerialized] public Vector3 k_vE; // corner pocket data
     [NonSerialized] public Vector3 k_vF; // side pocket data
     [NonSerialized] public Vector3 k_rack_position = new Vector3();
@@ -112,7 +128,6 @@ public class BilliardsModule : UdonSharpBehaviour
 
     [Space(10)]
     [Header("Other")]
-    [Tooltip("Disable menus and balls at this distance, set negative to disable")]
     public float LoDDistance = 10;
 
     [Space(10)]
@@ -2022,9 +2037,9 @@ public class BilliardsModule : UdonSharpBehaviour
         K_BAULK_LINE = data.baulkLine;
         K_BLACK_SPOT = data.blackSpotFromR;
         k_SEMICIRCLERADIUS = data.semiCircleRadius;
-        k_BALL_RADIUS = data.ballRadius;
+        k_BALL_RADIUS = data.bs_ballRadius;
         k_BALL_DIAMETRE = k_BALL_RADIUS * 2;
-        k_BALL_MASS = data.ballMass;
+        k_BALL_MASS = data.bs_ballMass;
         k_RAIL_HEIGHT_UPPER = data.railHeightUpper;
         k_RAIL_HEIGHT_LOWER = data.railHeightLower;
         k_RAIL_DEPTH_WIDTH = data.railDepthWidth;
@@ -2032,6 +2047,21 @@ public class BilliardsModule : UdonSharpBehaviour
         k_SPOT_POSITION_X = data.rackTrianglePosition;
         k_vE = data.cornerPocket;
         k_vF = data.sidePocket;
+
+        //advanced physics
+        k_F_SLIDE = data.bt_CoefSlide;
+        k_F_ROLL = data.bt_CoefRoll;
+        k_F_SPIN = data.bt_CoefSpin;
+        k_F_SPIN_RATE = data.bt_CoefSpinRate;
+        isDRate = data.bt_ConstDecelRate;
+        K_BOUNCE_FACTOR = data.BounceFactor;
+        isHanModel = data.bc_UseHan05;
+        k_E_C = data.bc_CoefRestitution;
+        isDynamicRestitution = data.bc_DynRestitution;
+        isCushionFrictionConstant = data.bc_UseConstFriction;
+        k_Cushion_MU = data.bc_ConstFriction;
+        k_BALL_E = data.bs_CoefRestitution;
+        muFactor = data.bs_Friction;
 
         tableMRs = tableModels[newTableModel].GetComponentsInChildren<MeshRenderer>();
 
