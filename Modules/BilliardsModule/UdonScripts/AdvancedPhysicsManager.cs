@@ -1802,10 +1802,14 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
         }
         if (shouldBounce)
         {
-            float bounceVolume = Vector3.Dot(N, newPos);
-            if (bounceVolume > 0.2f)
+            int csl = cushionSounds.Length;
+            if (csl > 0)
             {
-                balls[id].GetComponent<AudioSource>().PlayOneShot(cushionSounds[UnityEngine.Random.Range(0, cushionSounds.Length - 1)], Mathf.Clamp01(bounceVolume));
+                float bounceVolume = Vector3.Dot(N, Vector3.Scale(newVel, _sign_pos));
+                if (bounceVolume > 0.5f)
+                {
+                    balls[id].GetComponent<AudioSource>().PlayOneShot(cushionSounds[UnityEngine.Random.Range(0, csl - 1)], Mathf.Clamp01(bounceVolume - 0.5f));
+                }
             }
         }
         return shouldBounce;
@@ -1877,8 +1881,9 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
                     {
                         // Static resolution
                         newPos.x = k_TABLE_WIDTH - r_k_CUSHION_RADIUS;
+                        N = k_vC_vW_normal;
                         // Dynamic
-                        _phy_bounce_cushion(ref newVel, ref newAngVel, id, Vector3.Scale(k_vC_vW_normal, _sign_pos));
+                        _phy_bounce_cushion(ref newVel, ref newAngVel, id, Vector3.Scale(N, _sign_pos));
                         shouldBounce = true;
 #if HT8B_DRAW_REGIONS
                         if (id == 0) Debug.Log("Region H");
@@ -1931,9 +1936,10 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
                             float y = newPos.y;
                             newPos = k_pQ + dot * k_vC_vZ + k_vC_vZ_normal * k_BALL_RADIUS;
                             newPos.y = y;
+                            N = k_vC_vZ_normal;
 
                             // Dynamic
-                            _phy_bounce_cushion(ref newVel, ref newAngVel, id, Vector3.Scale(k_vC_vZ_normal, _sign_pos));
+                            _phy_bounce_cushion(ref newVel, ref newAngVel, id, Vector3.Scale(N, _sign_pos));
                             shouldBounce = true;
 #if HT8B_DRAW_REGIONS
                             if (id == 0) Debug.Log("Region J (Inside Corner Pocket)");
@@ -1956,9 +1962,10 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
                                     float y = newPos.y;
                                     newPos = k_vE + pocketNormal * (k_INNER_RADIUS_CORNER - k_BALL_RADIUS);
                                     newPos.y = y;
+                                    N = -pocketNormal;
 
                                     // Dynamic
-                                    _phy_bounce_cushion(ref newVel, ref newAngVel, id, Vector3.Scale(-pocketNormal, _sign_pos));
+                                    _phy_bounce_cushion(ref newVel, ref newAngVel, id, Vector3.Scale(N, _sign_pos));
                                     shouldBounce = true;
                                 }
                             }
@@ -1994,9 +2001,9 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
                                 // Static resolution
                                 dot = Vector3.Dot(a_to_v, k_vA_vD);
                                 newPos = k_pL + dot * k_vA_vD;
-
+                                N = k_vA_vD_normal;
                                 // Dynamic
-                                _phy_bounce_cushion(ref newVel, ref newAngVel, id, Vector3.Scale(k_vA_vD_normal, _sign_pos));
+                                _phy_bounce_cushion(ref newVel, ref newAngVel, id, Vector3.Scale(N, _sign_pos));
                                 shouldBounce = true;
 #if HT8B_DRAW_REGIONS
                                 if (id == 0) Debug.Log("Region C ( Delegated )");
@@ -2006,9 +2013,9 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
                             {
                                 // Static resolution
                                 newPos.z = k_pN.z - k_BALL_RADIUS;
-
+                                N = k_vA_vB_normal;
                                 // Dynamic
-                                _phy_bounce_cushion(ref newVel, ref newAngVel, id, Vector3.Scale(k_vA_vB_normal, _sign_pos));
+                                _phy_bounce_cushion(ref newVel, ref newAngVel, id, Vector3.Scale(N, _sign_pos));
                                 shouldBounce = true;
 #if HT8B_DRAW_REGIONS
                                 if (id == 0) Debug.Log("Region A II");
@@ -2019,9 +2026,10 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
                         {
                             // Static resolution
                             newPos.z = k_pN.z - k_BALL_RADIUS;
+                            N = k_vA_vB_normal;
 
                             // Dynamic
-                            _phy_bounce_cushion(ref newVel, ref newAngVel, id, Vector3.Scale(k_vA_vB_normal, _sign_pos));
+                            _phy_bounce_cushion(ref newVel, ref newAngVel, id, Vector3.Scale(N, _sign_pos));
                             shouldBounce = true;
 #if HT8B_DRAW_REGIONS
                             if (id == 0) Debug.Log("Region A");
@@ -2075,9 +2083,10 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
                             float y = newPos.y;
                             newPos = k_pP + dot * k_vB_vY + k_vB_vY_normal * k_BALL_RADIUS;
                             newPos.y = y;
+                            N = k_vB_vY_normal;
 
                             // Dynamic
-                            _phy_bounce_cushion(ref newVel, ref newAngVel, id, Vector3.Scale(k_vB_vY_normal, _sign_pos));
+                            _phy_bounce_cushion(ref newVel, ref newAngVel, id, Vector3.Scale(N, _sign_pos));
                             shouldBounce = true;
 #if HT8B_DRAW_REGIONS
                             if (id == 0) Debug.Log("Region G (Inside Corner Pocket)");
@@ -2100,9 +2109,10 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
                                     float y = newPos.y;
                                     newPos = k_vE + pocketNormal * (k_INNER_RADIUS_CORNER - k_BALL_RADIUS);
                                     newPos.y = y;
+                                    N = -pocketNormal;
 
                                     // Dynamic
-                                    _phy_bounce_cushion(ref newVel, ref newAngVel, id, Vector3.Scale(-pocketNormal, _sign_pos));
+                                    _phy_bounce_cushion(ref newVel, ref newAngVel, id, Vector3.Scale(N, _sign_pos));
                                     shouldBounce = true;
                                 }
                             }
@@ -2137,9 +2147,10 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
                         {
                             // Static resolution
                             newPos.x = k_pK.x - k_BALL_RADIUS;
+                            N = -k_vC_vW_normal;
 
                             // Dynamic
-                            _phy_bounce_cushion(ref newVel, ref newAngVel, id, Vector3.Scale(k_vC_vW_normal, _sign_pos));
+                            _phy_bounce_cushion(ref newVel, ref newAngVel, id, Vector3.Scale(N, _sign_pos));
                             shouldBounce = true;
 #if HT8B_DRAW_REGIONS
                             if (id == 0) Debug.Log("Region E");
@@ -2162,9 +2173,10 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
                                     float y = newPos.y;
                                     newPos = k_vF + pocketNormal * (k_INNER_RADIUS_SIDE - k_BALL_RADIUS);
                                     newPos.y = y;
+                                    N = -pocketNormal;
 
                                     // Dynamic
-                                    _phy_bounce_cushion(ref newVel, ref newAngVel, id, Vector3.Scale(-pocketNormal, _sign_pos));
+                                    _phy_bounce_cushion(ref newVel, ref newAngVel, id, Vector3.Scale(N, _sign_pos));
                                     shouldBounce = true;
                                 }
                             }
@@ -2211,9 +2223,10 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
                         float y = newPos.y;
                         newPos = k_pL + dot * k_vA_vD + k_vA_vD_normal * k_BALL_RADIUS;
                         newPos.y = y;
+                        N = k_vA_vD_normal;
 
                         // Dynamic
-                        _phy_bounce_cushion(ref newVel, ref newAngVel, id, Vector3.Scale(k_vA_vD_normal, _sign_pos));
+                        _phy_bounce_cushion(ref newVel, ref newAngVel, id, Vector3.Scale(N, _sign_pos));
                         shouldBounce = true;
 #if HT8B_DRAW_REGIONS
                         if (id == 0) Debug.Log("Region C");
@@ -2297,10 +2310,14 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
 
         if (shouldBounce)
         {
-            float bounceVolume = Vector3.Dot(N, newPos);
-            if (bounceVolume > 0.2f)
+            int csl = cushionSounds.Length;
+            if (csl > 0)
             {
-                balls[id].GetComponent<AudioSource>().PlayOneShot(cushionSounds[UnityEngine.Random.Range(0, cushionSounds.Length - 1)], Mathf.Clamp01(bounceVolume));
+                float bounceVolume = Vector3.Dot(N, Vector3.Scale(newVel, _sign_pos));
+                if (bounceVolume > 0.5f)
+                {
+                    balls[id].GetComponent<AudioSource>().PlayOneShot(cushionSounds[UnityEngine.Random.Range(0, csl - 1)], Mathf.Clamp01(bounceVolume - 0.5f));
+                }
             }
         }
         return shouldBounce;
