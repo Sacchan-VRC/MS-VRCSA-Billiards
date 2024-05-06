@@ -60,7 +60,7 @@ public class CameraManager : UdonSharpBehaviour
             VRCPlayerApi player = controller._GetHolder();
 
             Vector3 position;
-            if (player != null)
+            if (Utilities.IsValid(player))
             {
                 position = player.GetPosition();
             }
