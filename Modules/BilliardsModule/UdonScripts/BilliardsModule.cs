@@ -46,6 +46,7 @@ public class BilliardsModule : UdonSharpBehaviour
     [NonSerialized] public float k_F_ROLL; // bt_CoefRoll
     [NonSerialized] public float k_F_SPIN; // bt_CoefSpin
     [NonSerialized] public float k_F_SPIN_RATE; // bt_CoefSpinRate
+    [NonSerialized] public bool useRailLower; // useRailHeightLower
     [NonSerialized] public bool isDRate; // bt_isDRate
     [NonSerialized] public float K_BOUNCE_FACTOR; // BounceFactor
     [Header("Cushion Model:")]
@@ -2037,9 +2038,9 @@ public class BilliardsModule : UdonSharpBehaviour
         K_BAULK_LINE = data.baulkLine;
         K_BLACK_SPOT = data.blackSpotFromR;
         k_SEMICIRCLERADIUS = data.semiCircleRadius;
-        k_BALL_RADIUS = data.bs_ballRadius;
+        k_BALL_RADIUS = data.bs_BallRadius;
         k_BALL_DIAMETRE = k_BALL_RADIUS * 2;
-        k_BALL_MASS = data.bs_ballMass;
+        k_BALL_MASS = data.bs_BallMass;
         k_RAIL_HEIGHT_UPPER = data.railHeightUpper;
         k_RAIL_HEIGHT_LOWER = data.railHeightLower;
         k_RAIL_DEPTH_WIDTH = data.railDepthWidth;
@@ -2049,12 +2050,13 @@ public class BilliardsModule : UdonSharpBehaviour
         k_vF = data.sidePocket;
 
         //advanced physics
+        useRailLower = data.useRailHeightLower;
         k_F_SLIDE = data.bt_CoefSlide;
         k_F_ROLL = data.bt_CoefRoll;
         k_F_SPIN = data.bt_CoefSpin;
         k_F_SPIN_RATE = data.bt_CoefSpinRate;
         isDRate = data.bt_ConstDecelRate;
-        K_BOUNCE_FACTOR = data.BounceFactor;
+        K_BOUNCE_FACTOR = data.bt_BounceFactor;
         isHanModel = data.bc_UseHan05;
         k_E_C = data.bc_CoefRestitution;
         isDynamicRestitution = data.bc_DynRestitution;

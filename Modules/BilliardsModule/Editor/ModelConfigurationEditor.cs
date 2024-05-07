@@ -110,7 +110,7 @@ public class ModelConfigurationEditor : Editor
             Ht8bUIGroupEnd();
             this.cdata_displayTarget.tableWidth = data.tableWidth;
             this.cdata_displayTarget.tableHeight = data.tableHeight;
-            this.cdata_displayTarget.k_BALL_RADIUS = data.bs_ballRadius;
+            this.cdata_displayTarget.k_BALL_RADIUS = data.bs_BallRadius;
             this.cdata_displayTarget.pocketWidthCorner = data.pocketWidthCorner;
             this.cdata_displayTarget.pocketHeightCorner = data.pocketHeightCorner;
             this.cdata_displayTarget.pocketRadiusSide = data.pocketRadiusSide;

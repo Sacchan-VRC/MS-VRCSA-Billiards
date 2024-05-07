@@ -705,15 +705,29 @@ MonoBehaviour:
   pocketDepthSide: 0.011
   facingAngleSide: 104.93142
   pocketInnerRadiusSide: 0.055
-  ballRadius: 0.02625
-  ballMass: 0.14
   rackTrianglePosition: 0.872
-  railHeightUpper: 0.038002
+  railHeightUpper: 0.040536
+  useRailHeightLower: 0
   railHeightLower: 0.028472
   railDepthWidth: 0.098
   railDepthHeight: 0.098
   cornerPocket: {x: 1.7988, y: 0, z: 0.9045}
   sidePocket: {x: 0, y: 0, z: 0.9448}
+  bt_CoefSlide: 0.2
+  bt_CoefRoll: 0.008
+  bt_CoefSpin: 0.022
+  bt_CoefSpinRate: 5
+  bt_ConstDecelRate: 1
+  bt_BounceFactor: 0.5
+  bc_UseHan05: 1
+  bc_CoefRestitution: 0.85
+  bc_DynRestitution: 0
+  bc_UseConstFriction: 0
+  bc_ConstFriction: 0.2
+  bs_CoefRestitution: 0.98
+  bs_Friction: 1.9942
+  bs_BallRadius: 0.02625
+  bs_BallMass: 0.14
   baulkLine: 0.76
   blackSpotFromR: 0.324
   semiCircleRadius: 0.2921

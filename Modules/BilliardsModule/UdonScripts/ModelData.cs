@@ -22,6 +22,7 @@ public class ModelData : UdonSharpBehaviour
     [SerializeField] public float pocketInnerRadiusSide = 0.072f;
     [SerializeField] public float rackTrianglePosition = 0.5334f;
     [SerializeField] public float railHeightUpper = 0.038002f;
+    public bool useRailHeightLower = false;
     [SerializeField] public float railHeightLower = 0.028472f;
     [SerializeField] public float railDepthWidth = 0.12f;
     [SerializeField] public float railDepthHeight = 0.12f;
@@ -42,7 +43,7 @@ public class ModelData : UdonSharpBehaviour
     [SerializeField] public float bt_CoefSpinRate = 5f; // k_F_SPIN_RATE
     [Tooltip("Overrides the Coefficient of Spin in MU above and uses Deceleration Rate in rad/sec² instead")]
     [SerializeField] public bool bt_ConstDecelRate = true; // isDRate
-    [SerializeField] public float BounceFactor = 0.5f; // K_BOUNCE_FACTOR
+    [SerializeField] public float bt_BounceFactor = 0.5f; // K_BOUNCE_FACTOR
     [Header("Cushion Model:")]
     [Tooltip("This Replaces the current Default Model with a similar and NEW one, which includes Friction, Jumps from Cushion and Accessible Coefficient of Restitution which works abroad for every component of the ball [Displacement, Velocity, Angular Velocity and their Inertia [Default = ON]" +
 "\nWhen Disabling this, the table will use its Default Derived Model (Previous Version 1.0.3), this may be useful if you prefer to play with the Default Model.")]
@@ -66,8 +67,8 @@ public class ModelData : UdonSharpBehaviour
     [Tooltip("The amount of friction at the surface of the balls, Derived from a friction curve, so all you are doing with this value is scaling the curve." +
 "\nDefault should be 1 However results fail to reach and match some of the plot data [its likely because the components of Linear Velocity and Angular Velocity are separated, when in paper they are together] as such a value of 1.9942x has been empirically determined, a value of 1.5x is also acceptable [in case the game feels too hard for new users]")]
     [SerializeField] public float bs_Friction = 1.9942f; // muFactor
-    [SerializeField] public float bs_ballRadius = 0.03f;
-    [SerializeField] public float bs_ballMass = 0.16f;
+    [SerializeField] public float bs_BallRadius = 0.03f;
+    [SerializeField] public float bs_BallMass = 0.16f;
 
     [Header("Snooker:")]
     [SerializeField] public float baulkLine = 0.7367f;
