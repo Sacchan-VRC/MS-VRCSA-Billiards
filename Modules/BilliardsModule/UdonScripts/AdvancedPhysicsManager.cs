@@ -89,6 +89,7 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
     float k_POCKET_DEPTH_SIDE;
     float k_CUSHION_RADIUS;
     float k_RAIL_HEIGHT_UPPER;
+    bool useRailLower = false;
     float k_RAIL_HEIGHT_LOWER;
     float k_RAIL_DEPTH_WIDTH;
     float k_RAIL_DEPTH_HEIGHT;
@@ -1567,6 +1568,7 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
         k_vF = table.k_vF; //sidePocket
 
         // Advanced only
+        useRailLower = table.useRailLower;
         k_F_SLIDE = table.k_F_SLIDE;
         k_F_ROLL = table.k_F_ROLL;
         k_F_SPIN = table.k_F_SPIN;
