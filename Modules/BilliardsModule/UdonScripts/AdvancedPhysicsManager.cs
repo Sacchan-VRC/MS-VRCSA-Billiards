@@ -1378,16 +1378,17 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
 
         // this provides the correct Jump from the cushion but based on visualization of other simulations, Angular Velocity should not invert its direction which occurs here. The reason for this is because  
         // it makes Geometrically sense when we discuss and find out about *The Center of Percussion* of a ball, here: https://billiards.colostate.edu/technical_proofs/TP_4-2.pdf)
-        // one Heuristic Solution is to create an IF statement which tracks if the ball above the slate, meaning that if it hits the cushion it will jump from it and then isolate the Radius of the ball from the equation, or perhaprs not account the angular changes at all.
+        // one Heuristic Solution is to create an IF statement which tracks if the ball is above the slate by an X amount, meaning that if it hits the cushion it will jump from it, 
+        // and then isolate the Radius of the ball from the equation, or perhaprs not account the angular changes at all.
         
-        //θ = Mathf.Asin(P / R); // <-- therefore, this equation provides the correct cushion jump but must have its angular velocity to not update it.
+        //θ = Mathf.Asin(P / R); // <-- therefore, this equation provides the correct cushion jump but must have its angular velocity unchanged.
                
 
-        // this same equation from before, but we put (R - 1f) or (R + 1), which ever you choose, will just invert the sign Thetha, but both of them will wild same results of a small sine angle.
+        // this same equation from before, but we put (R - 1f) or (R + 1), which ever you choose, will just invert the sign Thetha, but both of them will lead same results of a small sine angle.
         // this method stops frozen balls at cushion from receiving an odd amount of spin at high speed velocities, which seems true in other simulations, but it will once and for all not provide any amount of the same spin at low speed velocities which seems false.
-        // it will also not provide the leading Edge cushion contact accurately.
+        // it will also not provide the leading Edge cushion contact accurately.      
 
-        θ = Mathf.Asin(P / (R - 1f)); 
+        θ = Mathf.Asin(P / (R - 1f)); // this is the Default as it is currently providing cosistent results for now and good playablity overall.
 
 
         float cosθ = Mathf.Cos(θ);
