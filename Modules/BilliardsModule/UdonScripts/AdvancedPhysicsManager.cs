@@ -1450,7 +1450,7 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
         // this method stops frozen balls at cushion from receiving an odd amount of spin at high speed velocities, which seems true in other simulations, but it will once and for all not provide any amount of the same spin at low speed velocities which seems false.
         // it will also not provide the leading Edge cushion contact accurately.      
 
-        θ = Mathf.Asin(P / (R - 1f)); // this is the Default as it is currently providing cosistent results for now and good playablity overall.
+        θ = Mathf.Asin(P / (R + 1f)); // this is the Default as it is currently providing cosistent results for now and good playablity overall.
 
 
         float cosθ = Mathf.Cos(θ);
