@@ -1383,7 +1383,17 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
         D = k_BALL_DIAMETRE;
         R = k_BALL_RADIUS;
         M = k_BALL_MASS;
-        h = k_RAIL_HEIGHT_UPPER;
+        //h = k_RAIL_HEIGHT_UPPER;
+        h = k_RAIL_HEIGHT_LOWER;
+        float ballCenter = balls_P[id].y + R;
+        if (ballCenter > k_RAIL_HEIGHT_LOWER)
+        {
+            // the height the ball has to be below to touch k_RAIL_HEIGHT_UPPER 
+            float ballUpperContactHeight = k_RAIL_HEIGHT_UPPER + R;
+            // the balls position between k_RAIL_HEIGHT_LOWER and ballUpperContactHeight, normalized
+            float lerpT = (ballCenter - k_RAIL_HEIGHT_LOWER) / (ballUpperContactHeight - k_RAIL_HEIGHT_LOWER);
+            h = Mathf.Lerp(k_RAIL_HEIGHT_LOWER, k_RAIL_HEIGHT_UPPER, lerpT);
+        }
 
         // The angle of Incident [Phi_]
         Vector3 reflectedDirection = Vector3.Reflect(source_v, N);
@@ -1397,38 +1407,58 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
         {
             mu = k_Cushion_MU * Φ; // Constant                                             
         }
-        else { mu = 0.471f - 0.241f * (psi * Mathf.Deg2Rad); } // Dynamic
+        else { mu = 0.471f - 0.241f * Φ; } // Dynamic
 
         //h = k_BALL_DIAMETRE * cushionHeightPercent;                                           // LEGACY Gives us H [Measured from table surface to the point of impact]
-        //h = (D * cushionHeightPercent);                                                       // LEGACY
+        //h = (D * cushionHeightPercent);                                                       // LEGACY point of contact at the surface of the ball
 
         float P = (h - (balls_P[id].y + R));                                                    // Gives us P [Point of contact on ball surface from cushion]
 
-        // Now in Trignonometric Functions, the K_BALL_RADIUS is our Base(Adjacent) and P is opposite to the angle THETA.
+        // Now in Trignonometric Functions, the K_BALL_RADIUS [R] is our [Base(Adjacent)] and P is [opposite] to the angle THETA.
         // if we play around we can find the Tangent using Tan(opposite/Adjancent) and the Hypotenuse using our famous Pythagorean Theorem https://www.google.com/search?q=Pythagorean+theorem;
-        // since we need the angle THETA from the Unit Circle of the ball all we need to do is calculate the Arcsin, however i will leave some other stuff here for Rich Debuging Purposes if needed.
+        // since we need the angle THETA we can do it either within the Unit Circle of the ball using Arcsin or using the Arctangent. I will leave all six-forms here for Rich Debuging Purposes if needed.
 
-        /*
-        float A_ = (P * P);                                         // Pythagorean Theorem[A²] OPPOSITE
-        float B_ = (R * R);                                         // Pythagorean Theorem[B²] ADJACENT
-        float C_ = Mathf.Sqrt(A_ + B_);                             // Pythagorean Theorem[C ] HYPOTENUSE
+        
+        float A_ = (P * P);                                                                     // Pythagorean Theorem[A²] OPPOSITE
+        float B_ = (R * R);                                                                     // Pythagorean Theorem[B²] ADJACENT
+        float C_ = Mathf.Sqrt(A_ + B_);                                                         // Pythagorean Theorem[C ] HYPOTENUSE
+
+        // SOH - CAH - TOA
+        float SOH = Mathf.Asin(P / C_);                                                         // Sine    = Opposite / Hypotenuse
+        float CAH = Mathf.Acos(R / C_);                                                         // Cosine  = Adjacent / Hypotenuse
+        float TOA = Mathf.Atan(P / R);                                                          // Tangent = Opposite / Adjacent 
+
+        // SEC - CSC - COT
+        float SEC = Mathf.Acos(C_ / R);                                                         // Secant    = Flip Sine
+        float CSC = Mathf.Asin(C_ / P);                                                         // Cosecant  = Flip Cosine
+        float COT = Mathf.Atan(R / P);                                                          // Cotangent = Flip Tangent 
+        
+        /// ^ if in trouble: This video may help :) https://youtu.be/PUB0TaZ7bhA?si=Qxg1FKFivdANpcIl&t=263
+        /// if the video above was difficult, then try this Visualization Diagram video instead https://youtu.be/dUkCgTOOpQ0?si=wuXXbukD--e1e2qv&t=7
 
 
-        float SEC = Mathf.Acos((A_ + B_) / C_);
-        float CSC = Mathf.Asin(B_ / C_);
-        float TAN = Mathf.Atan(B_ / A_);
-        float COT = Mathf.Atan(A_ / B_);
-        */
 
+        // this provides the correct Jump from the cushion but based on visualization of other simulations, Angular Velocity should not invert its direction which occurs here. The reason for this is because  
+        // it makes Geometrically sense when we discuss and find out about *The Center of Percussion* of a ball, here: https://billiards.colostate.edu/technical_proofs/TP_4-2.pdf)
+        // one Heuristic Solution is to create an IF statement which tracks if the ball is above the slate by an X amount, meaning that if it hits the cushion it will jump from it, 
+        // and then isolate the Radius of the ball from the equation, or perhaprs not account the angular changes at all.
+        
+        //θ = Mathf.Asin(P / R); // <-- therefore, this equation provides the correct cushion jump but must have its angular velocity unchanged.
+               
 
-        θ = Mathf.Asin(P / (R - 1f)); // Directly pass h to Asin replacing P in case there are issues with NaN (if Doing so, you must also have V1.y set to 0);
+        // this same equation from before, but we put (R - 1f) or (R + 1), which ever you choose, will just invert the sign Thetha, but both of them will lead same results of a small sine angle.
+        // this method stops frozen balls at cushion from receiving an odd amount of spin at high speed velocities, which seems true in other simulations, but it will once and for all not provide any amount of the same spin at low speed velocities which seems false.
+        // it will also not provide the leading Edge cushion contact accurately.      
+
+        θ = Mathf.Asin(P / (R - 1f)); // this is the Default as it is currently providing cosistent results for now and good playablity overall.
 
 
         float cosθ = Mathf.Cos(θ);
         float sinθ = Mathf.Sin(θ);
+        
         float cosθ2 = (cosθ * cosθ);
         float sinθ2 = (sinθ * sinθ);
-
+        
         float cosΦ = Mathf.Cos(Φ);
         float sinΦ = Mathf.Sin(Φ);
 
@@ -1439,7 +1469,7 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
         s_z = -V.z - R * W.y * cosθ + R * W.x * sinθ;                                               // s_z is correct
 
 
-        c = (V.x * cosθ) - (V.y * sinθ);                                                            // 3D Assumption
+        c = (V.x * cosθ) - (V.y * sinθ);                                                            
         if (isDynamicRestitution)
         {
             e = Mathf.Clamp((0.39f + 0.257f * V.magnitude - 0.044f * V.magnitude), 0.6f, 0.95f);    // Dynamic [Works best at high refresh rates, UDON1 is currently too slow]
@@ -1458,11 +1488,11 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
         /// P_zE and P_zS (Remember, Z is up, so we write to Unity's "Y" here.
 
         P_yE = Mathf.Abs((1f + e) * c / k_B);                                                       // P_yE is Correct
-        P_yS = Mathf.Abs((Mathf.Sqrt(Mathf.Pow(s_x, 2) + Mathf.Pow(s_z, 2)) / k_A));                // P_yS is Correct (In case of Anomaly, do: Mathf.Sqrt(s_x * s_x + s_z * s_z) instead;
+        P_yS = (Mathf.Sqrt((s_x * s_x) + (s_z * s_z)) / k_A);                                       // P_yS is Correct
 
         if (P_yS <= P_yE)   // Sliding and sticking case 1-1
         {
-            PX = -s_x / k_A * sinθ - (1f + e) * c / k_B * cosθ;                                     // PX is Correct
+            PX =-s_x / k_A * sinθ - (1f + e) * c / k_B * cosθ;                                      // PX is Correct
             PZ = s_z / k_A;                                                                         // PZ is correct
             PY = s_x / k_A * cosθ - (1f + e) * c / k_B * sinθ;
         }
@@ -1473,14 +1503,16 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
             PY = mu * (1f + e) * c / k_B * cosΦ * cosθ - (1f + e) * c / k_B * sinθ;                 // PY is Correct    
         }
 
-        // Update Velocity                                                                      // Update Velocity is Corret
+        // Update Velocity                                                                          // Update Velocity is Corret
         V1.x += V.x + (PX / M);
         V1.z += V.z + (PZ / M);
+        //V1.y += 0f; // <-- Safest option, but removes the hability of jumping from cushions.
+        //V1.y += V.y + (PZ / M) * 0.2f; //<-- use this only if you are using θ = Mathf.Asin(P / R)
         if (θ >= 0)
         {
-            V1.y += V.y + (-PY / M) * 0.2f; // Force Applyed Geometrically down to the slate [the ball usually hop less than k_BALL_BOUNCE;
+            V1.y += 0;
         }
-        else { V1.y += 0f; }
+        else { V1.y += V.y + (-PY / M) * 0.2f; } // Force Applyed Geometrically
 
         // Compute angular momentum changes
         W1.x += W.x - (R / I) * PZ * sinθ;
