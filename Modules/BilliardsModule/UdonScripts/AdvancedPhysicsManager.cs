@@ -72,6 +72,7 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
     private Vector3[] balls_V; // Velocity Vector
     private Vector3[] balls_W; // Angular Velocity Vector
     private bool[] balls_inBounds; // Tracks if each ball is up on the rails or above the table
+    private bool[] balls_inPocketBounds; // Tracks if each ball is up on the rails or above the table
     private bool[] balls_transitioningBounds; // Tracks if the ball is in the special zone transitioning between the rails and the table
     private Vector3 railPoint; // Tracks the point at the top of the nearest rail, for the transition collision
     private float k_INNER_RADIUS_CORNER;
@@ -115,6 +116,7 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
         balls_inBounds = new bool[16];
         for (int i = 0; i < 16; i++) { balls_inBounds[i] = true; }
         balls_transitioningBounds = new bool[16];
+        balls_inPocketBounds = new bool[16];
     }
 
     public void _FixedTick()
@@ -343,10 +345,7 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
                     Vector3 ballStartPos = balls_P[i];
                     int predictedHitBall = -1;
 
-                    bool inPocketBounds = false;
-                    bool pocketed = _phy_ball_pockets(i, balls_P, is4Ball, ref inPocketBounds);
-
-                    Vector3 deltaPos = calculateDeltaPosition(sn_pocketed, i, deltaTime, ref predictedHitBall, !is4Ball && collidedBall > -2, inPocketBounds);
+                    Vector3 deltaPos = calculateDeltaPosition(sn_pocketed, i, deltaTime, ref predictedHitBall, !is4Ball && collidedBall > -2, balls_inPocketBounds[i]);
                     float expectedMoveDistance = (balls_V[i] * deltaTime).magnitude;
                     balls_P[i] += deltaPos;
 
@@ -408,14 +407,14 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
                         else moveTimeLeft = 0;
 
                         // table._BeginPerf(table.PERF_PHYSICS_POCKET); // can only measure one at a time now ..
-                        if (pocketed)
+                        if (_phy_ball_pockets(i, balls_P, is4Ball, ref balls_inPocketBounds[i]))
                         {
                             moveTimeLeft = 0;
                             moved[i] = false;
                         }
                         else
                         {
-                            moved[i] = updateVelocity(i, balls[i], deltaTime - moveTimeLeft, hitCushion, inPocketBounds);
+                            moved[i] = updateVelocity(i, balls[i], deltaTime - moveTimeLeft, hitCushion, balls_inPocketBounds[i]);
 
                             // because the ball predicted to collide with is now always added to the list of collision checks
                             // we don't need to run collision checks on balls that aren't moving
@@ -1091,7 +1090,12 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
     public void _ResetSimulationVariables()
     {
         jumpShotFlewOver = cueBallHasCollided = false;
-        for (int i = 0; i < 16; i++) balls_inBounds[i] = true;
+        for (int i = 0; i < 16; i++)
+        {
+            balls_inBounds[i] = true;
+            balls_inPocketBounds[i] = false;
+            balls_transitioningBounds[i] = false;
+        }
     }
 
     // Cue input tracking
@@ -1418,7 +1422,7 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
         // if we play around we can find the Tangent using Tan(opposite/Adjancent) and the Hypotenuse using our famous Pythagorean Theorem https://www.google.com/search?q=Pythagorean+theorem;
         // since we need the angle THETA we can do it either within the Unit Circle of the ball using Arcsin or using the Arctangent. I will leave all six-forms here for Rich Debuging Purposes if needed.
 
-        
+
         float A_ = (P * P);                                                                     // Pythagorean Theorem[A²] OPPOSITE
         float B_ = (R * R);                                                                     // Pythagorean Theorem[B²] ADJACENT
         float C_ = Mathf.Sqrt(A_ + B_);                                                         // Pythagorean Theorem[C ] HYPOTENUSE
@@ -1432,7 +1436,7 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
         float SEC = Mathf.Acos(C_ / R);                                                         // Secant    = Flip Sine
         float CSC = Mathf.Asin(C_ / P);                                                         // Cosecant  = Flip Cosine
         float COT = Mathf.Atan(R / P);                                                          // Cotangent = Flip Tangent 
-        
+
         /// ^ if in trouble: This video may help :) https://youtu.be/PUB0TaZ7bhA?si=Qxg1FKFivdANpcIl&t=263
         /// if the video above was difficult, then try this Visualization Diagram video instead https://youtu.be/dUkCgTOOpQ0?si=wuXXbukD--e1e2qv&t=7
 
@@ -1442,9 +1446,9 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
         // it makes Geometrically sense when we discuss and find out about *The Center of Percussion* of a ball, here: https://billiards.colostate.edu/technical_proofs/TP_4-2.pdf)
         // one Heuristic Solution is to create an IF statement which tracks if the ball is above the slate by an X amount, meaning that if it hits the cushion it will jump from it, 
         // and then isolate the Radius of the ball from the equation, or perhaprs not account the angular changes at all.
-        
+
         //θ = Mathf.Asin(P / R); // <-- therefore, this equation provides the correct cushion jump but must have its angular velocity unchanged.
-               
+
 
         // this same equation from before, but we put (R - 1f) or (R + 1), which ever you choose, will just invert the sign Thetha, but both of them will lead same results of a small sine angle.
         // this method stops frozen balls at cushion from receiving an odd amount of spin at high speed velocities, which seems true in other simulations, but it will once and for all not provide any amount of the same spin at low speed velocities which seems false.
@@ -1455,10 +1459,10 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
 
         float cosθ = Mathf.Cos(θ);
         float sinθ = Mathf.Sin(θ);
-        
+
         float cosθ2 = (cosθ * cosθ);
         float sinθ2 = (sinθ * sinθ);
-        
+
         float cosΦ = Mathf.Cos(Φ);
         float sinΦ = Mathf.Sin(Φ);
 
@@ -1469,7 +1473,7 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
         s_z = -V.z - R * W.y * cosθ + R * W.x * sinθ;                                               // s_z is correct
 
 
-        c = (V.x * cosθ) - (V.y * sinθ);                                                            
+        c = (V.x * cosθ) - (V.y * sinθ);
         if (isDynamicRestitution)
         {
             e = Mathf.Clamp((0.39f + 0.257f * V.magnitude - 0.044f * V.magnitude), 0.6f, 0.95f);    // Dynamic [Works best at high refresh rates, UDON1 is currently too slow]
@@ -1492,7 +1496,7 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
 
         if (P_yS <= P_yE)   // Sliding and sticking case 1-1
         {
-            PX =-s_x / k_A * sinθ - (1f + e) * c / k_B * cosθ;                                      // PX is Correct
+            PX = -s_x / k_A * sinθ - (1f + e) * c / k_B * cosθ;                                      // PX is Correct
             PZ = s_z / k_A;                                                                         // PZ is correct
             PY = s_x / k_A * cosθ - (1f + e) * c / k_B * sinθ;
         }
