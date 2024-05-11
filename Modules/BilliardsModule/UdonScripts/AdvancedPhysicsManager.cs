@@ -17,6 +17,7 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
     private float k_BALL_DIAMETRESQ = 0.0036f;                              // width of ball
     private float k_BALL_DIAMETRE = 0.06f;                                  // width of ball
     private float k_BALL_RADIUS = 0.03f;
+    private float k_BALL_RADIUS_SQRPE;
     private float k_BALL_1OR = 33.3333333333f;                              // 1 over ball radius
     private const float k_GRAVITY = 9.80665f;                               // Earths gravitational acceleration
     private float k_BALL_DSQR = 0.0036f;                                    // ball diameter squared
@@ -77,7 +78,6 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
     private float k_INNER_RADIUS_CORNER_SQ;
     private float k_INNER_RADIUS_SIDE;
     private float k_INNER_RADIUS_SIDE_SQ;
-
     float k_FACING_ANGLE_CORNER;
     float k_FACING_ANGLE_SIDE;
 
@@ -96,6 +96,7 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
     private Vector3 k_vE;
     private Vector3 k_vF;
     float r_k_CUSHION_RADIUS;
+    private float vertRadiusSQRPE;
 
     private bool jumpShotFlewOver, cueBallHasCollided;
 
@@ -341,7 +342,11 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
                     float deltaTime = moveTimeLeft;
                     Vector3 ballStartPos = balls_P[i];
                     int predictedHitBall = -1;
-                    Vector3 deltaPos = calculateDeltaPosition(sn_pocketed, i, deltaTime, ref predictedHitBall, !is4Ball && collidedBall > -2);
+
+                    bool inPocketBounds = false;
+                    bool pocketed = _phy_ball_pockets(i, balls_P, is4Ball, ref inPocketBounds);
+
+                    Vector3 deltaPos = calculateDeltaPosition(sn_pocketed, i, deltaTime, ref predictedHitBall, !is4Ball && collidedBall > -2, inPocketBounds);
                     float expectedMoveDistance = (balls_V[i] * deltaTime).magnitude;
                     balls_P[i] += deltaPos;
 
@@ -403,14 +408,14 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
                         else moveTimeLeft = 0;
 
                         // table._BeginPerf(table.PERF_PHYSICS_POCKET); // can only measure one at a time now ..
-                        if (_phy_ball_pockets(i, balls_P, is4Ball))
+                        if (pocketed)
                         {
                             moveTimeLeft = 0;
                             moved[i] = false;
                         }
                         else
                         {
-                            moved[i] = updateVelocity(i, balls[i], deltaTime - moveTimeLeft, hitCushion);
+                            moved[i] = updateVelocity(i, balls[i], deltaTime - moveTimeLeft, hitCushion, inPocketBounds);
 
                             // because the ball predicted to collide with is now always added to the list of collision checks
                             // we don't need to run collision checks on balls that aren't moving
@@ -487,7 +492,8 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
     // ( Since v0.2.0a ) Check if we can predict a collision before move update happens to improve accuracy
     // This function predicts if the cue ball is about to hit another ball, and if it is, it teleports it
     // to the surface of that ball, instead of letting it clip into that ball
-    private Vector3 calculateDeltaPosition(uint sn_pocketed, int id, float timeStep, ref int ballHit, bool doVerts)
+    // also checking against table cushion corner points and pockets
+    private Vector3 calculateDeltaPosition(uint sn_pocketed, int id, float timeStep, ref int ballHit, bool doTable, bool inPocketBounds)
     {
         ballHit = -1;
         Vector3 pos = balls_P[id];
@@ -544,78 +550,134 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
             }
         }
 
-        bool hitVert = false;
-        if (doVerts && pos.y < k_RAIL_HEIGHT_UPPER) // doVerts is only true if one wasn't hit last substep
+        bool hitTable = false;
+        if (doTable) // doTable is only true if one wasn't hit last substep
         {
-            // raycast against the 4+1 collision vertices on the table
-
             _sign_pos.x = Mathf.Sign(pos.x);
             _sign_pos.z = Mathf.Sign(pos.z);
-
-            // match height of ball and vertices within the raycasts to make it more cylinder-like
-            // this isn't quite correct because it's casting against a spehre and the ray direction can have a y componant.
-            // most of the velocity will almost certainly be lateral though, so this shouldn't be much of an issue.
-            pos.y = 0;
-
-            pos = Vector3.Scale(pos, _sign_pos);
             Vector3 norm_Verts = Vector3.Scale(norm, _sign_pos);
-            float vertRadiusSQR = r_k_CUSHION_RADIUS * r_k_CUSHION_RADIUS - 0.000002f;
-            // draw move dir
-            // Debug.DrawRay(balls[0].transform.parent.TransformPoint(Vector3.Scale(pos, _sign_pos)), balls[0].transform.parent.TransformDirection(Vector3.Scale(norm_Verts, _sign_pos) * .1f), Color.white, 1f);
-            if (_phy_ray_sphere(pos, norm_Verts, k_vA, vertRadiusSQR))
+            // raycast against pocket edge incase we bounced off the back and are going to hit it on the way out
+            if (inPocketBounds)
             {
-                nmag = (pos - RaySphere_output).magnitude;
-                // Debug.DrawRay(balls[0].transform.parent.TransformPoint(RaySphere_output), Vector3.up * .3f, Color.red, 3f);
-                if (nmag < minnmag)
+                Vector3 absPos = pos;
+                absPos = Vector3.Scale(absPos, _sign_pos);
+
+                Vector3 pocketPos;
+                float pocketRad;
+                if (Vector3.SqrMagnitude(absPos - k_vE) < Vector3.SqrMagnitude(absPos - k_vF))
                 {
-                    minnmag = nmag;
-                    hitVert = true;
-                    hitid = -2;
+                    pocketPos = k_vE;
+                    pocketRad = k_INNER_RADIUS_CORNER;
+                }
+                else
+                {
+                    pocketPos = k_vF;
+                    pocketRad = k_INNER_RADIUS_SIDE;
+                }
+
+                Vector3 edgeDir = absPos - pocketPos;
+                edgeDir.y = 0;
+                edgeDir = edgeDir.normalized;
+                Vector3 pocketEdge = pocketPos + edgeDir * pocketRad;
+                pocketEdge.y = -k_BALL_RADIUS;
+                if (Vector3.Dot(absPos, edgeDir) < 0) // only collide with pocket entrance
+                {
+                    if (_phy_ray_sphere(absPos, norm_Verts, pocketEdge, k_BALL_RADIUS_SQRPE))
+                    {
+                        nmag = (absPos - RaySphere_output).magnitude;
+                        if (nmag < minnmag)
+                        {
+                            minnmag = nmag;
+                            hitTable = true;
+                            hitid = -100;
+                        }
+                    }
                 }
             }
-            // since k_vA is so close to the center of the table, it's possible to cross to it's mirror position in one frame with a fast enough ball. (this is the +1)
-            if (_phy_ray_sphere(pos, norm_Verts, k_vA_Mirror, vertRadiusSQR))
+            else
             {
-                nmag = (pos - RaySphere_output).magnitude;
-                // Debug.DrawRay(balls[0].transform.parent.TransformPoint(RaySphere_output), Vector3.up * .3f, Color.red, 3f);
-                if (nmag < minnmag)
+                if (originalDelta.y < 0)// no chance of collision if moving upwards
                 {
-                    minnmag = nmag;
-                    hitVert = true;
-                    hitid = -3;
+                    if (_phy_ball_plane(pos, norm, Vector3.up * -(k_BALL_RADIUS + 0.001f), Vector3.up))
+                    {
+                        nmag = (pos - BallPlane_output).magnitude;
+                        if (nmag < minnmag)
+                        {
+                            minnmag = nmag;
+                            hitTable = true;
+                            hitid = -1;
+                        }
+                    }
                 }
             }
-            if (_phy_ray_sphere(pos, norm_Verts, k_vB, vertRadiusSQR))
-            {
-                nmag = (pos - RaySphere_output).magnitude;
-                // Debug.DrawRay(balls[0].transform.parent.TransformPoint(RaySphere_output), Vector3.up * .3f, Color.red, 3f);
-                if (nmag < minnmag)
+            if (pos.y < k_RAIL_HEIGHT_UPPER)
+            { // doTable is only true if one wasn't hit last substep
+              // raycast against the 4+1 collision vertices on the table
+
+                // match height of ball and vertices within the raycasts to make it more cylinder-like
+                // this isn't quite correct because it's casting against a spehre and the ray direction can have a y componant.
+                // most of the velocity will almost certainly be lateral though, so this shouldn't be much of an issue.
+                Vector3 absFlatPos = pos;
+                absFlatPos.y = 0;
+
+                absFlatPos = Vector3.Scale(absFlatPos, _sign_pos);
+                // draw move dir
+                // Debug.DrawRay(balls[0].transform.parent.TransformPoint(Vector3.Scale(pos, _sign_pos)), balls[0].transform.parent.TransformDirection(Vector3.Scale(norm_Verts, _sign_pos) * .1f), Color.white, 1f);
+                if (_phy_ray_sphere(absFlatPos, norm_Verts, k_vA, vertRadiusSQRPE))
                 {
-                    minnmag = nmag;
-                    hitVert = true;
-                    hitid = -4;
+                    nmag = (absFlatPos - RaySphere_output).magnitude;
+                    // Debug.DrawRay(balls[0].transform.parent.TransformPoint(RaySphere_output), Vector3.up * .3f, Color.red, 3f);
+                    if (nmag < minnmag)
+                    {
+                        minnmag = nmag;
+                        hitTable = true;
+                        hitid = -2;
+                    }
                 }
-            }
-            if (_phy_ray_sphere(pos, norm_Verts, k_vC, vertRadiusSQR))
-            {
-                // Debug.DrawRay(balls[0].transform.parent.TransformPoint(RaySphere_output), Vector3.up * .3f, Color.red, 3f);
-                nmag = (pos - RaySphere_output).magnitude;
-                if (nmag < minnmag)
+                // since k_vA is so close to the center of the table, it's possible to cross to it's mirror position in one frame with a fast enough ball. (this is the +1)
+                if (_phy_ray_sphere(absFlatPos, norm_Verts, k_vA_Mirror, vertRadiusSQRPE))
                 {
-                    minnmag = nmag;
-                    hitVert = true;
-                    hitid = -5;
+                    nmag = (absFlatPos - RaySphere_output).magnitude;
+                    // Debug.DrawRay(balls[0].transform.parent.TransformPoint(RaySphere_output), Vector3.up * .3f, Color.red, 3f);
+                    if (nmag < minnmag)
+                    {
+                        minnmag = nmag;
+                        hitTable = true;
+                        hitid = -3;
+                    }
                 }
-            }
-            if (_phy_ray_sphere(pos, norm_Verts, k_vD, vertRadiusSQR))
-            {
-                nmag = (pos - RaySphere_output).magnitude;
-                // Debug.DrawRay(balls[0].transform.parent.TransformPoint(RaySphere_output), Vector3.up * .3f, Color.red, 3f);
-                if (nmag < minnmag)
+                if (_phy_ray_sphere(absFlatPos, norm_Verts, k_vB, vertRadiusSQRPE))
                 {
-                    minnmag = nmag;
-                    hitVert = true;
-                    hitid = -6;
+                    nmag = (absFlatPos - RaySphere_output).magnitude;
+                    // Debug.DrawRay(balls[0].transform.parent.TransformPoint(RaySphere_output), Vector3.up * .3f, Color.red, 3f);
+                    if (nmag < minnmag)
+                    {
+                        minnmag = nmag;
+                        hitTable = true;
+                        hitid = -4;
+                    }
+                }
+                if (_phy_ray_sphere(absFlatPos, norm_Verts, k_vC, vertRadiusSQRPE))
+                {
+                    // Debug.DrawRay(balls[0].transform.parent.TransformPoint(RaySphere_output), Vector3.up * .3f, Color.red, 3f);
+                    nmag = (absFlatPos - RaySphere_output).magnitude;
+                    if (nmag < minnmag)
+                    {
+                        minnmag = nmag;
+                        hitTable = true;
+                        hitid = -5;
+                    }
+                }
+                if (_phy_ray_sphere(absFlatPos, norm_Verts, k_vD, vertRadiusSQRPE))
+                {
+                    nmag = (absFlatPos - RaySphere_output).magnitude;
+                    // Debug.DrawRay(balls[0].transform.parent.TransformPoint(RaySphere_output), Vector3.up * .3f, Color.red, 3f);
+                    if (nmag < minnmag)
+                    {
+                        minnmag = nmag;
+                        hitTable = true;
+                        hitid = -6;
+                    }
                 }
             }
             // Debug.DrawRay(balls[0].transform.parent.TransformPoint(Vector3.Scale(k_vB, _sign_pos)), Vector3.up * .3f, Color.red);
@@ -624,7 +686,7 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
             // Debug.DrawRay(balls[0].transform.parent.TransformPoint(Vector3.Scale(k_vD, _sign_pos)), Vector3.up * .3f, Color.green);
         }
 
-        if (hitid > -1 || hitVert)
+        if (hitid > -1 || hitTable)
         {
             // Assign new position if got appropriate magnitude
             if (minnmag * minnmag < originalDelta.sqrMagnitude)
@@ -846,7 +908,7 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
     }
     ///
 
-    private bool updateVelocity(int id, GameObject ball, float timeStep, bool hitWall)
+    private bool updateVelocity(int id, GameObject ball, float timeStep, bool hitWall, bool inPocketBounds)
     {
         float t = timeStep;
         bool ballMoving = false;
@@ -898,7 +960,7 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
 
         float floor = balls_inBounds[id] || balls_transitioningBounds[id] ? 0 : k_RAIL_HEIGHT_UPPER;
 
-        if (balls_P[id].y < floor + 0.001 && V.y <= 0)
+        if (balls_P[id].y < floor + 0.001 && V.y <= 0 && !inPocketBounds)
         {
             /// Relative velocity of ball and table at Contact point -> Relative Velocity is 𝑢0, once the player strikes the CB, 𝑢 is no-zero, the ball is moving and its initial velocity is measured (in m/s).
 
@@ -974,7 +1036,7 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
 
         if (Mathf.Abs(balls_P[id].x) < k_TABLE_WIDTH + k_RAIL_DEPTH_WIDTH && Mathf.Abs(balls_P[id].z) < k_TABLE_HEIGHT + k_RAIL_DEPTH_HEIGHT)
         {
-            if (balls_P[id].y < floor)
+            if (balls_P[id].y < floor && !inPocketBounds)
             {
                 V.y = -V.y * K_BOUNCE_FACTOR;  /// Once the ball reaches the table, it will bounce. off the slate, //Slate Bounce Integration Attempt.
                 if (V.y < frameGravity)
@@ -1012,9 +1074,9 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
             }
             railPoint.y = k_RAIL_HEIGHT_UPPER - k_BALL_RADIUS;
             Vector3 N = Vector3.zero;
-            transitionCollision(id, ref V, ref N);
+            transitionCollision(id, ref V);
         }
-        if (balls_P[id].y > 0)
+        if (balls_P[id].y > 0 || inPocketBounds)
             V.y -= frameGravity; /// Apply Gravity * Time so the airbone balls gets pushed back to the table.
 
 
@@ -1587,6 +1649,8 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
         Vector3 k_CONTACT_POINT = new Vector3(0.0f, -k_BALL_RADIUS, 0.0f);
 
         r_k_CUSHION_RADIUS = k_CUSHION_RADIUS + k_BALL_RADIUS;
+        vertRadiusSQRPE = r_k_CUSHION_RADIUS * r_k_CUSHION_RADIUS - 0.000002f;
+        k_BALL_RADIUS_SQRPE = k_BALL_RADIUS * k_BALL_RADIUS - 0.000002f;
 
         Collider[] collider = table.GetComponentsInChildren<Collider>();
         for (int i = 0; i < collider.Length; i++)
@@ -1686,30 +1750,65 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
     }
 
     // Check pocket condition
-    bool _phy_ball_pockets(int id, Vector3[] balls_P, bool is4ball)
+    bool _phy_ball_pockets(int id, Vector3[] balls_P, bool is4ball, ref bool inPocketBounds)
     {
+        inPocketBounds = false;
         Vector3 A = balls_P[id];
         Vector3 absA = new Vector3(Mathf.Abs(A.x), 0, Mathf.Abs(A.z));
         if (!is4ball)
         {
-            if (A.y < 0.001f)
+            absA.y = k_vE.y;
+            if ((absA - k_vE).sqrMagnitude < k_INNER_RADIUS_CORNER_SQ)
             {
-                absA.y = k_vE.y;
-                if ((absA - k_vE).sqrMagnitude < k_INNER_RADIUS_CORNER_SQ)
+                inPocketBounds = true;
+                if (A.y < -k_BALL_RADIUS)
                 {
                     table._TriggerPocketBall(id, false);
                     pocketedTime = Time.time;
                     return true;
                 }
-
-                absA.y = k_vF.y;
-                if ((absA - k_vF).sqrMagnitude < k_INNER_RADIUS_SIDE_SQ)
+                else if (A.y < 0.001f)
                 {
-                    table._TriggerPocketBall(id, false);
-                    pocketedTime = Time.time;
-                    return true;
+                    _sign_pos.x = Mathf.Sign(A.x);
+                    _sign_pos.z = Mathf.Sign(A.z);
+                    Vector3 railDir = absA - k_vE;
+                    railDir.y = 0;
+                    if (Vector3.Dot(absA, railDir) < 0) // only collide with pocket entrance
+                    {
+                        railPoint = k_vE + railDir.normalized * k_INNER_RADIUS_CORNER;
+                        railPoint = Vector3.Scale(railPoint, _sign_pos);
+                        railPoint.y = Mathf.Min(-k_BALL_RADIUS, A.y);
+                        transitionCollision(id, ref balls_V[id]);
+                    }
                 }
             }
+
+            absA.y = k_vF.y;
+            if ((absA - k_vF).sqrMagnitude < k_INNER_RADIUS_SIDE_SQ)
+            {
+                inPocketBounds = true;
+                if (A.y < -k_BALL_RADIUS)
+                {
+                    table._TriggerPocketBall(id, false);
+                    pocketedTime = Time.time;
+                    return true;
+                }
+                else if (A.y < 0.001f)
+                {
+                    _sign_pos.x = Mathf.Sign(A.x);
+                    _sign_pos.z = Mathf.Sign(A.z);
+                    Vector3 railDir = absA - k_vF;
+                    railDir.y = 0;
+                    if (Vector3.Dot(absA, railDir) < 0) // only collide with pocket entrance
+                    {
+                        railPoint = k_vF + railDir.normalized * k_INNER_RADIUS_SIDE;
+                        railPoint = Vector3.Scale(railPoint, _sign_pos);
+                        railPoint.y = Mathf.Min(-k_BALL_RADIUS, A.y);
+                        transitionCollision(id, ref balls_V[id]);
+                    }
+                }
+            }
+
         }
 
         if (absA.z > tableEdge.y)
@@ -1800,7 +1899,7 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
         if (balls_transitioningBounds[id])
         {
             //collide with railPoint
-            shouldBounce = transitionCollision(id, ref balls_V[id], ref N);
+            shouldBounce = transitionCollision(id, ref balls_V[id]);
         }
         if (shouldBounce)
         {
@@ -2307,7 +2406,7 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
         if (balls_transitioningBounds[id])
         {
             //collide with railPoint
-            shouldBounce = transitionCollision(id, ref balls_V[id], ref N);
+            shouldBounce = transitionCollision(id, ref balls_V[id]);
         }
 
         if (shouldBounce)
@@ -2325,12 +2424,14 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
         return shouldBounce;
     }
 
-    private bool transitionCollision(int id, ref Vector3 Speed, ref Vector3 N)
+    // transitionCollision is a simple function for abnormal collisions (rolling into pocket, rolling off table, rolling onto table from rail)
+    private bool transitionCollision(int id, ref Vector3 Speed)
     {
         Vector3 delta = railPoint - balls_P[id];
         float dist = delta.magnitude;
         if (dist < k_BALL_RADIUS)
         {
+            Vector3 N;
             N = delta / dist;
 
             // Static resolution
@@ -2346,6 +2447,36 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
         return false;
     }
 
+    private Vector3 BallPlane_output;
+    public bool _phy_ball_plane(Vector3 start, Vector3 dir, Vector3 targetPos, Vector3 targetNorm)
+    {
+        if (_phy_ray_plane(start, dir, targetPos, targetNorm))
+        {
+            Vector3 flatRayDir = Vector3.ProjectOnPlane(RayPlane_output - start, targetNorm);
+            float startPointHeight = Vector3.Dot(targetNorm, start - RayPlane_output);
+            float ratioUp = k_BALL_RADIUS / startPointHeight;
+            BallPlane_output = RayPlane_output - flatRayDir * ratioUp;
+            BallPlane_output += targetNorm * k_BALL_RADIUS;
+            return true;
+        }
+        return false;
+    }
+
+    private Vector3 RayPlane_output;
+
+    public bool _phy_ray_plane(Vector3 start, Vector3 dir, Vector3 targetPos, Vector3 targetNorm)
+    {
+        if (Vector3.Dot(dir, targetNorm) > 0) { return false; }
+        Vector3 startL = start - targetPos;
+        dir = dir.normalized;
+        float startPointHeight = Vector3.Dot(targetNorm, startL);
+        float shootAngle = Vector3.Angle(-targetNorm, dir);
+        float cos = Mathf.Cos(shootAngle * Mathf.Deg2Rad);
+        Vector3 hitpos = (startL + (dir * startPointHeight) / cos) + targetPos;
+        if (Vector3.Dot(dir, hitpos - start) < 0) { return false; }
+        RayPlane_output = hitpos;
+        return true;
+    }
     private Vector3 RaySphere_output;
     bool _phy_ray_sphere(Vector3 start, Vector3 dir, Vector3 sphere, float radiusSQR)
     {
@@ -2438,15 +2569,6 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
             // no scooping
             v.y = 0;
             table._Log("prevented scooping");
-        }
-        else if (v.y < 0)
-        {
-            // dampen y velocity because the table will eat a lot of energy (we're driving the ball straight into it)
-            v.y = -v.y * K_BOUNCE_FACTOR;
-            if (v.y < k_GRAVITY * k_FIXED_TIME_STEP)
-            {
-                v.y = 0f;
-            }
         }
 
         // translate
