@@ -713,7 +713,7 @@ int uniform_cue_colour;
             pColour1 = table.k_colour_default;
             pColour2 = table.k_colour_default;
 
-            pColourErr = table.k_colour_default; // No error effect
+            pColourErr = table.k_colour_foul;
 
             // 9 ball only uses one colourset / cloth colour
             ballMaterial.SetTexture("_MainTex", table.textureSets[1]);
