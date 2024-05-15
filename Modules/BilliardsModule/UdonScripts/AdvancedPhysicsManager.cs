@@ -1543,10 +1543,10 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
         Vector3 W1 = Vector3.zero;
 
         float θ, Φ, F, h, e, M, R, D, I, k_A, k_B, c, s_x, s_z, mu, PY, PX, PZ, P_yE, P_yS;
-        F = M * V.magnitude; 
         D = k_BALL_DIAMETRE;
         R = k_BALL_RADIUS;
         M = k_BALL_MASS;
+        F = M * V.magnitude; 
         //h = k_RAIL_HEIGHT_UPPER;
         h = k_RAIL_HEIGHT_LOWER;
         float ballCenter = balls_P[id].y + R;
