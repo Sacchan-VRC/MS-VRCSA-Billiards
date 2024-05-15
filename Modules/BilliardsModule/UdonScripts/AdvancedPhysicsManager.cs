@@ -348,7 +348,7 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
                     float deltaTime = moveTimeLeft;
                     Vector3 ballStartPos = balls_P[i];
 
-                    Vector3 deltaPos = calculateDeltaPosition(sn_pocketed, i, deltaTime, ref predictedHitBall, !is4Ball && collidedBall > -2, balls_inPocketBounds[i]);
+                    Vector3 deltaPos = calculateDeltaPosition(sn_pocketed, i, deltaTime, ref predictedHitBall, collidedBall > -2, balls_inPocketBounds[i]);
                     float expectedMoveDistance = (balls_V[i] * deltaTime).magnitude;
                     balls_P[i] += deltaPos;
 
