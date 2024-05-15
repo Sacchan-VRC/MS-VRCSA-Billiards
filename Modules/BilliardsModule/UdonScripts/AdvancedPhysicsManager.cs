@@ -550,14 +550,14 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
         }
 
         bool hitTable = false;
-        if (doTable) // doTable is only true if one wasn't hit last substep
+        if (doTable) // doTable is false if a vert was hit last substep to prevent edge cases where the ball can get stuck (hitid < -1)
         {
             _sign_pos.x = Mathf.Sign(pos.x);
             _sign_pos.z = Mathf.Sign(pos.z);
             Vector3 norm_Verts = Vector3.Scale(norm, _sign_pos);
-            // raycast against pocket edge incase we bounced off the back and are going to hit it on the way out
             if (inPocketBounds)
             {
+                // raycast against pocket edge in case we bounced off the back of the pocket and are going to hit it
                 Vector3 absPos = pos;
                 absPos = Vector3.Scale(absPos, _sign_pos);
 
@@ -604,7 +604,85 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
                         {
                             minnmag = nmag;
                             hitTable = true;
-                            hitid = -1;
+                            hitid = -1; // can collide with table again next substep
+                        }
+                    }
+                }
+                else if (originalDelta.y > 0)
+                {
+                    // if moving upward, ball cast to the bounds of the cushions in order to prevent clipping through them
+                    // balls are essentially cubes for the purpose of collision with cushions
+                    // so this wont fail to cause collisions when near the top of cushions
+                    if (originalDelta.x > 0)
+                    {
+                        if (pos.x + k_BALL_RADIUS < tableEdge_x.x) // prevents more than one substep in a row doing this
+                        {
+                            Vector3 cushionPos = tableEdge_x;
+                            cushionPos.x += 0.001f;
+                            if (_phy_ball_plane(pos, norm, cushionPos, -Vector3.right))
+                            {
+                                nmag = (pos - BallPlane_output).magnitude;
+                                if (nmag < minnmag)
+                                {
+                                    minnmag = nmag;
+                                    hitTable = true;
+                                    hitid = -1;
+                                }
+                            }
+                        }
+                    }
+                    else
+                    {
+                        if (pos.x - k_BALL_RADIUS > -tableEdge_x.x)
+                        {
+                            Vector3 cushionPos = -tableEdge_x;
+                            cushionPos.x -= 0.001f;
+                            if (_phy_ball_plane(pos, norm, cushionPos, Vector3.right))
+                            {
+                                nmag = (pos - BallPlane_output).magnitude;
+                                if (nmag < minnmag)
+                                {
+                                    minnmag = nmag;
+                                    hitTable = true;
+                                    hitid = -1;
+                                }
+                            }
+                        }
+                    }
+                    if (originalDelta.z > 0)
+                    {
+                        if (pos.z + k_BALL_RADIUS < tableEdge_z.z)
+                        {
+                            Vector3 cushionPos = tableEdge_z;
+                            cushionPos.z += 0.001f;
+                            if (_phy_ball_plane(pos, norm, cushionPos, -Vector3.forward))
+                            {
+                                nmag = (pos - BallPlane_output).magnitude;
+                                if (nmag < minnmag)
+                                {
+                                    minnmag = nmag;
+                                    hitTable = true;
+                                    hitid = -1;
+                                }
+                            }
+                        }
+                    }
+                    else
+                    {
+                        if (pos.z - k_BALL_RADIUS > -tableEdge_z.z)
+                        {
+                            Vector3 cushionPos = -tableEdge_z;
+                            cushionPos.z -= 0.001f;
+                            if (_phy_ball_plane(pos, norm, cushionPos, Vector3.forward))
+                            {
+                                nmag = (pos - BallPlane_output).magnitude;
+                                if (nmag < minnmag)
+                                {
+                                    minnmag = nmag;
+                                    hitTable = true;
+                                    hitid = -1;
+                                }
+                            }
                         }
                     }
                 }
@@ -697,7 +775,6 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
 
         return originalDelta;
     }
-    readonly int[] ballsToCheckStart = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15 };
     int[] ballsToCheck = new int[1];
     // Advance simulation 1 step for ball id
     private void stepOneBall(int id, uint sn_pocketed, bool[] moved, float timeStep)
@@ -1597,7 +1674,7 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
     Vector3 k_vA_Mirror = new Vector3(); // side pocket vert
     Vector3 k_vB = new Vector3(); // corner pocket vert (width)
     Vector3 k_vC = new Vector3(); // corner pocket vert (height)
-    Vector3 k_vD = new Vector3(); // vert deep inside side pocket (basically unused)
+    Vector3 k_vD = new Vector3(); // vert inside side pocket
 
     Vector3 k_vX = new Vector3();
     Vector3 k_vY = new Vector3(); // inside of corner pocket
@@ -1632,7 +1709,9 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
 
     Vector3 _sign_pos = new Vector3(0.0f, 1.0f, 0.0f);
 
-    Vector2 tableEdge;
+    Vector2 tableEdge; // distances at which ball falls off table
+    Vector3 tableEdge_x; // distances at which ball falls off table
+    Vector3 tableEdge_z; // distances at which ball falls off table
 
     public void _InitConstants()
     {
@@ -1769,6 +1848,12 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
 
         tableEdge.x = k_TABLE_WIDTH + k_RAIL_DEPTH_WIDTH + k_BALL_RADIUS;
         tableEdge.y = k_TABLE_HEIGHT + k_RAIL_DEPTH_HEIGHT + k_BALL_RADIUS;
+
+        tableEdge_x.x = k_vC.x - k_CUSHION_RADIUS;
+        tableEdge_z.z = k_pN.z;
+
+        // visualize points like this
+        // Debug.DrawRay(balls[0].transform.parent.TransformPoint(tableEdge_x), Vector3.up * .3f, Color.red, 3f);
 
 #if HT8B_DRAW_REGIONS
         // for drawing lines only
