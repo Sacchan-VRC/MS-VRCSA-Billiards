@@ -348,9 +348,12 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
                     float deltaTime = moveTimeLeft;
                     Vector3 ballStartPos = balls_P[i];
 
-                    Vector3 deltaPos = calculateDeltaPosition(sn_pocketed, i, deltaTime, ref predictedHitBall, collidedBall > -2, balls_inPocketBounds[i]);
                     float expectedMoveDistance = (balls_V[i] * deltaTime).magnitude;
-                    balls_P[i] += deltaPos;
+                    if (expectedMoveDistance != 0)
+                    {
+                        Vector3 deltaPos = calculateDeltaPosition(sn_pocketed, i, deltaTime, ref predictedHitBall, collidedBall > -2, balls_inPocketBounds[i]);
+                        balls_P[i] += deltaPos;
+                    }
 
                     // Here we create an array containing balls to check against for collision in stepOneBall()
                     // Balls used to only check balls with higher id than them for collisions
