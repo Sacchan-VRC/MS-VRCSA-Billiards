@@ -14,7 +14,6 @@ using VRC.Udon;
 using System;
 using Metaphira.Modules.CameraOverride;
 using TMPro;
-using System.Runtime.Remoting.Messaging;
 
 [UdonBehaviourSyncMode(BehaviourSyncMode.None)]
 public class BilliardsModule : UdonSharpBehaviour
@@ -277,6 +276,7 @@ public class BilliardsModule : UdonSharpBehaviour
     [NonSerialized] public bool isOrangeTeamFull = false;
     [NonSerialized] public bool isBlueTeamFull = false;
     [NonSerialized] public bool localPlayerDistant = false;
+    [NonSerialized] public bool noLOD = false; // use this to make sure max simulation is always visible
     bool checkingDistant;
     GameObject debugger;
     [NonSerialized] public CameraOverrideModule cameraOverrideModule;
@@ -3204,7 +3204,7 @@ public class BilliardsModule : UdonSharpBehaviour
             SendCustomEventDelayedSeconds(nameof(checkDistanceLoop), 1f);
         else
             return;
-        bool nowDistant = Vector3.Distance(Networking.LocalPlayer.GetPosition(), transform.position) > LoDDistance;
+        bool nowDistant = (Vector3.Distance(Networking.LocalPlayer.GetPosition(), transform.position) > LoDDistance) && !noLOD;
         if (nowDistant == localPlayerDistant) { return; }
         if (isPlayer)
         {
@@ -3278,7 +3278,7 @@ public void _RedrawDebugger() { }
 
     public void _EndPerf(int id)
     {
-        perfTimings[id] += Time.realtimeSinceStartup - perfStart[id];
+        perfTimings[id] = Time.realtimeSinceStartup - perfStart[id];
         perfCounters[id]++;
     }
 
@@ -3328,6 +3328,8 @@ public void _RedrawDebugger() { }
         for (int i = 0; i < PERF_MAX; i++)
         {
             output += "<color=\"#95a2b8\">" + perfNames[i] + "(</color> " + (perfCounters[i] > 0 ? perfTimings[i] * 1e6 / perfCounters[i] : 0).ToString("F2") + "µs <color=\"#95a2b8\">)</color> ";
+            // to not average them (see real, current values)
+            // output += "<color=\"#95a2b8\">" + perfNames[i] + "(</color> " + (/*perfCounters[i] > 0 ? */ perfTimings[i] * 1e6 /* / perfCounters[i] : 0 */).ToString("F2") + "µs <color=\"#95a2b8\">)</color> ";
         }
 
         output += "\n---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------\n";
