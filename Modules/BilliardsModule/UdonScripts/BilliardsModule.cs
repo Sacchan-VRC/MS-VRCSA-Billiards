@@ -2038,8 +2038,8 @@ public class BilliardsModule : UdonSharpBehaviour
         K_BAULK_LINE = data.baulkLine;
         K_BLACK_SPOT = data.blackSpotFromR;
         k_SEMICIRCLERADIUS = data.semiCircleRadius;
-        k_BALL_RADIUS = data.bs_BallRadius;
-        k_BALL_DIAMETRE = k_BALL_RADIUS * 2;
+        k_BALL_DIAMETRE = data.bs_BallDiameter / 1000f;
+        k_BALL_RADIUS = k_BALL_DIAMETRE / 2f;
         k_BALL_MASS = data.bs_BallMass;
         k_RAIL_HEIGHT_UPPER = data.railHeightUpper;
         k_RAIL_HEIGHT_LOWER = data.railHeightLower;

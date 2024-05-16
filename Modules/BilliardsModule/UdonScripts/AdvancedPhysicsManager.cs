@@ -1954,8 +1954,8 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
         k_CUSHION_RADIUS = table.k_CUSHION_RADIUS;
         k_FACING_ANGLE_CORNER = table.k_FACING_ANGLE_CORNER;
         k_FACING_ANGLE_SIDE = table.k_FACING_ANGLE_SIDE;
+        k_BALL_DIAMETRE = table.k_BALL_DIAMETRE;
         k_BALL_RADIUS = table.k_BALL_RADIUS;
-        k_BALL_DIAMETRE = k_BALL_RADIUS * 2;
         float epsilon = 0.000002f; // ??
         k_BALL_DIAMETRESQ = k_BALL_DIAMETRE * k_BALL_DIAMETRE;
         k_BALL_DSQRPE = k_BALL_DIAMETRESQ - epsilon;

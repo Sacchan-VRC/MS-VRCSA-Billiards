@@ -67,7 +67,8 @@ public class ModelData : UdonSharpBehaviour
     [Tooltip("The amount of friction at the surface of the balls, Derived from a friction curve, so all you are doing with this value is scaling the curve." +
 "\nDefault should be 1 However results fail to reach and match some of the plot data [its likely because the components of Linear Velocity and Angular Velocity are separated, when in paper they are together] as such a value of 1.9942x has been empirically determined, a value of 1.5x is also acceptable [in case the game feels too hard for new users]")]
     [SerializeField] public float bs_Friction = 1.9942f; // muFactor
-    [SerializeField] public float bs_BallRadius = 0.03f;
+    [Tooltip("Ball diameter in milimeters")]
+    [SerializeField] public float bs_BallDiameter = 60f;
     [SerializeField] public float bs_BallMass = 0.16f;
 
     [Header("Snooker:")]
