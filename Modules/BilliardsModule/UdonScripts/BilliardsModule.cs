@@ -129,6 +129,8 @@ public class BilliardsModule : UdonSharpBehaviour
     [Space(10)]
     [Header("Other")]
     public float LoDDistance = 10;
+    [Tooltip("Shuffle positions of ball spawn points in 8ball and 9ball?")]
+    public bool RandomizeBallPositions = true;
 
     [Space(10)]
     [Header("Table Light Colors")]
@@ -525,8 +527,54 @@ public class BilliardsModule : UdonSharpBehaviour
         {
             _LogYes("starting game");
         }
+        //0 is 8ball, 1 is 9ball, 2 is jp4b, 3 is kr4b, 4 is Snooker6Red)
+        Vector3[] randomPositions = new Vector3[16];
+        Array.Copy(initialPositions[gameModeLocal], randomPositions, 16);
+        if (RandomizeBallPositions)
+        {
+            switch (gameModeLocal)
+            {
+                case 0:
+                    // 8ball
+                    for (int i = 2; i < 16; i++)
+                    {
+                        // 8 and 14 are the far corner balls, don't randomize them so that one is always orange and one is always blue
+                        if (i == 8 || i == 14) continue;
+                        Vector3 temp = randomPositions[i];
+                        int rand = UnityEngine.Random.Range(2, 16);
+                        while (rand == 8 || rand == 14)
+                            rand = UnityEngine.Random.Range(2, 16);
 
-        networkingManager._OnGameStart(initialBallsPocketed[gameModeLocal], initialPositions[gameModeLocal]);
+                        randomPositions[i] = randomPositions[rand];
+                        randomPositions[rand] = temp;
+                    }
+                    // random swap of the corner colors
+                    if (UnityEngine.Random.Range(0, 2) == 1)
+                    {
+                        Vector3 temp = randomPositions[8];
+                        randomPositions[8] = randomPositions[14];
+                        randomPositions[14] = temp;
+                    }
+                    break;
+                case 1:
+                    // 9ball
+                    for (int i = 1; i < 9; i++)
+                    {
+                        // don't move the 1 or 9 balls
+                        if (i == 2 || i == 9) continue;
+                        Vector3 temp = randomPositions[i];
+                        int rand = UnityEngine.Random.Range(1, 9);
+                        while (rand == 2 || rand == 9)
+                            rand = UnityEngine.Random.Range(1, 9);
+
+                        randomPositions[i] = randomPositions[rand];
+                        randomPositions[rand] = temp;
+                    }
+                    break;
+            }
+        }
+
+        networkingManager._OnGameStart(initialBallsPocketed[gameModeLocal], randomPositions);
     }
 
     public void _TriggerJoinTeam(int teamId)
