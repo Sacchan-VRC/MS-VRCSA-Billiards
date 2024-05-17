@@ -6,7 +6,7 @@ using UnityEngine;
 [UdonBehaviourSyncMode(BehaviourSyncMode.NoVariableSync)]
 public class AdvancedPhysicsManager : UdonSharpBehaviour
 {
-    public string PHYSICSNAME = "<color=#FFD700>Advanced V0.5J</color>";
+    public string PHYSICSNAME = "<color=#FFD700>Advanced V0.5K</color>";
 #if HT_QUEST
    private  float k_MAX_DELTA =  0.05f; // Private Const Float 0.05f max time to process per frame on quest (~4)
 #else
@@ -94,6 +94,7 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
     float k_CUSHION_RADIUS;
     float k_RAIL_HEIGHT_UPPER;
     bool useRailLower = false;
+    float k_RAIL_HEIGHT_LOWER_CACHED;
     float k_RAIL_HEIGHT_LOWER;
     float k_RAIL_DEPTH_WIDTH;
     float k_RAIL_DEPTH_HEIGHT;
@@ -424,7 +425,7 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
 
                             // because the ball predicted to collide with is now always added to the list of collision checks
                             // we don't need to run collision checks on balls that aren't moving
-                            if (doColCheck) { stepOneBall(i, sn_pocketed, moved, deltaTime); }
+                            if (doColCheck) { stepOneBall(i, sn_pocketed, moved); }
 
                             if (!balls_inBounds[i] && !moved[i])
                             {
@@ -789,7 +790,7 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
     }
     int[] ballsToCheck = new int[1];
     // Advance simulation 1 step for ball id
-    private void stepOneBall(int id, uint sn_pocketed, bool[] moved, float timeStep)
+    private void stepOneBall(int id, uint sn_pocketed, bool[] moved)
     {
         GameObject g_ball_current = balls[id];
         GameObject cueBall = balls[0];
@@ -848,7 +849,7 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
                     /// - - -  but brakeshots/Racks are weird. 
                     /// [Maybe i am missing something]
                     /// as such i am pushing this as a (W.I.P)
-                    
+
                     HandleCollision5_2(checkBall, id, normal, delta);
                     //HandleCollision5_4(checkBall, id, normal, delta);  // Interesting solution from 1997, but we cant divide by Normal. Method available down bellow with Articles, comments and exerts
                 }
@@ -1513,6 +1514,33 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
             balls_inPocketBounds[i] = false;
             balls_transitioningBounds[i] = false;
         }
+
+        // this could maybe be done in a Match Start function, but there isn't one
+        if (useRailLower)
+        {
+            k_RAIL_HEIGHT_LOWER = k_RAIL_HEIGHT_LOWER_CACHED;
+        }
+        else
+        {
+            switch (table.gameModeLocal)
+            {
+                case 0: // 8ball
+                    k_RAIL_HEIGHT_LOWER = k_BALL_DIAMETRE * 0.635f;
+                    break;
+                case 1: // 9ball
+                    k_RAIL_HEIGHT_LOWER = k_BALL_DIAMETRE * 0.635f;
+                    break;
+                case 2: // jp4b
+                    k_RAIL_HEIGHT_LOWER = k_BALL_DIAMETRE * 0.6504065040650407f;
+                    break;
+                case 3: // kr4b
+                    k_RAIL_HEIGHT_LOWER = k_BALL_DIAMETRE * 0.6504065040650407f;
+                    break;
+                case 4: // 6red
+                    k_RAIL_HEIGHT_LOWER = k_BALL_DIAMETRE * 0.7f;
+                    break;
+            }
+        }
     }
 
     // Cue input tracking
@@ -1592,11 +1620,11 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
     */
 
     // Apply cushion bounce
-    void _phy_bounce_cushion(ref Vector3 vel, ref Vector3 angvel, int id, Vector3 N)
+    void _phy_bounce_cushion(ref Vector3 vel, ref Vector3 angvel, int id, Vector3 N, bool isPocketBounce = false)
     {
         if (isHanModel)
         {
-            _HANCushionModel(ref vel, ref angvel, id, N);
+            _HANCushionModel(ref vel, ref angvel, id, N, isPocketBounce);
         }
         else
         {
@@ -1705,7 +1733,7 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
     }
 
     //public float momentOfInertia = (2.0f / 5.0f * 0.17f * Mathf.Pow(0.028575f, 2f));
-    void _HANCushionModel(ref Vector3 vel, ref Vector3 angvel, int id, Vector3 N)
+    void _HANCushionModel(ref Vector3 vel, ref Vector3 angvel, int id, Vector3 N, bool isPocketBounce = false)
     {
 
         // Mathematical expressions derived from Professor INHWAN HAN in "Dynamics in carom and three cushion billiards" https://link.springer.com/article/10.1007/BF02919180
@@ -1805,7 +1833,6 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
         R = k_BALL_RADIUS;
         M = k_BALL_MASS;
         F = M * V.magnitude;
-        //h = k_RAIL_HEIGHT_UPPER;
         h = k_RAIL_HEIGHT_LOWER;
         float ballCenter = balls_P[id].y + R;
         if (ballCenter > k_RAIL_HEIGHT_LOWER)
@@ -1881,6 +1908,7 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
         if (isHandleCollison5_2)
         {
             θ = Mathf.Asin(P / R);
+            if (float.IsNaN(θ)) θ = 0;
         }
         else
         {
@@ -1919,6 +1947,11 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
         }
         else { e = k_E_C; } // Const [Default 0.85] - exert from https://essay.utwente.nl/59134/1/scriptie_J_van_Balen.pdf [Acceptable Range between 0.7 to 0.98] from https://billiards.colostate.edu/physics_articles/Mathavan_IMechE_2010.pdf 
 
+        // inside of pockets are less elastic
+        if (isPocketBounce)
+        {
+            e *= 0.8f;
+        }
 
         // [Equation 16]
         I = 2f / 5f * M * R * R;                                                                    // Moment of Inertia
@@ -1947,9 +1980,9 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
         }
 
         // Update Velocity                                                                          // Update Velocity is Corret
-        V1.x += V.x + (PX / M);
-        V1.z += V.z + (PZ / M);
-        V1.y += V.y + (0f);
+        V1.x = V.x + (PX / M);
+        V1.z = V.z + (PZ / M);
+        V1.y = V.y + (PY / M) * 0.4f; // attenuate to closer match reality
 
         //use this only if you are using θ = Mathf.Asin(P / (R + 1))
         /*
@@ -2125,7 +2158,7 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
         k_BALL_RSQR = k_BALL_RADIUS * k_BALL_RADIUS;
         k_BALL_MASS = table.k_BALL_MASS;
         k_RAIL_HEIGHT_UPPER = table.k_RAIL_HEIGHT_UPPER;
-        k_RAIL_HEIGHT_LOWER = table.k_RAIL_HEIGHT_LOWER;
+        k_RAIL_HEIGHT_LOWER_CACHED = table.k_RAIL_HEIGHT_LOWER;
         k_RAIL_DEPTH_WIDTH = table.k_RAIL_DEPTH_WIDTH;
         k_RAIL_DEPTH_HEIGHT = table.k_RAIL_DEPTH_HEIGHT;
         k_vE = table.k_vE; //cornerPocket
@@ -2548,7 +2581,7 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
                             N = k_vC_vZ_normal;
 
                             // Dynamic
-                            _phy_bounce_cushion(ref newVel, ref newAngVel, id, Vector3.Scale(N, _sign_pos));
+                            _phy_bounce_cushion(ref newVel, ref newAngVel, id, Vector3.Scale(N, _sign_pos), !table.isSnooker6Red);
                             shouldBounce = true;
 #if HT8B_DRAW_REGIONS
                             if (id == 0) Debug.Log("Region J (Inside Corner Pocket)");
@@ -2574,7 +2607,7 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
                                     N = -pocketNormal;
 
                                     // Dynamic
-                                    _phy_bounce_cushion(ref newVel, ref newAngVel, id, Vector3.Scale(N, _sign_pos));
+                                    _phy_bounce_cushion(ref newVel, ref newAngVel, id, Vector3.Scale(N, _sign_pos), !table.isSnooker6Red);
                                     shouldBounce = true;
                                 }
                             }
@@ -2695,7 +2728,7 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
                             N = k_vB_vY_normal;
 
                             // Dynamic
-                            _phy_bounce_cushion(ref newVel, ref newAngVel, id, Vector3.Scale(N, _sign_pos));
+                            _phy_bounce_cushion(ref newVel, ref newAngVel, id, Vector3.Scale(N, _sign_pos), !table.isSnooker6Red);
                             shouldBounce = true;
 #if HT8B_DRAW_REGIONS
                             if (id == 0) Debug.Log("Region G (Inside Corner Pocket)");
@@ -2721,7 +2754,7 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
                                     N = -pocketNormal;
 
                                     // Dynamic
-                                    _phy_bounce_cushion(ref newVel, ref newAngVel, id, Vector3.Scale(N, _sign_pos));
+                                    _phy_bounce_cushion(ref newVel, ref newAngVel, id, Vector3.Scale(N, _sign_pos), !table.isSnooker6Red);
                                     shouldBounce = true;
                                 }
                             }
@@ -2880,6 +2913,15 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
                 } */
         if (shouldBounce)
         {
+            if (Vector3.Dot(newVel, Vector3.Scale(N, _sign_pos)) < 0)
+            {
+                if (balls_inBounds[id])
+                {
+                    // table._LogInfo("ball id " + id + " bounced off top of cushion out of bounds");
+                    balls_inBounds[id] = false;
+                    balls_transitioningBounds[id] = true;
+                }
+            }
             if (balls_inBounds[id])
             {
                 //if ball was in bounds and not above rail last time, bounce
