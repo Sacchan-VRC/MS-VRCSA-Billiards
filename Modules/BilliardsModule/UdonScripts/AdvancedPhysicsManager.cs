@@ -1930,7 +1930,6 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
         if (isHandleCollison5_2)
         {
             θ = Mathf.Asin(P / R);
-            if (float.IsNaN(θ)) θ = 0;
         }
         else
         {
@@ -1943,6 +1942,10 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
                 θ = Mathf.Asin(P / (R + RubberH)); // We assume that once the balls *sinks* into the cushion at high speeds, its Hypotenuse Lenght is changed some, when in reality we perceive the cushion taking a slightly larger area of the ball during an infinitesimally low time, thus likely shifting its point point of contact from initial the initial one [Theory] (this Heuristic method exists only to prevent the ball from receiving an unnecesary amount of spin when frozen at cushion)
             }
         }
+        // 0.2733929 == hitting pocket on flat ground, a higher number is only possible while falling into pocket
+        // prevents weird bug where ball can fall through the back of the pocket
+        // also prevents NaN even though unity documentation says it doesn't
+        θ = Mathf.Min(θ, 0.4f);
 
 
 
@@ -2983,6 +2986,15 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
 
         if (shouldBounce)
         {
+            if (Vector3.Dot(newVel, Vector3.Scale(N, _sign_pos)) < 0)
+            {
+                if (balls_inBounds[id])
+                {
+                    // table._LogInfo("ball id " + id + " bounced off top of cushion out of bounds");
+                    balls_inBounds[id] = false;
+                    balls_transitioningBounds[id] = true;
+                }
+            }
             int csl = cushionSounds.Length;
             if (csl > 0)
             {
