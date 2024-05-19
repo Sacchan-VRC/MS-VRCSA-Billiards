@@ -26,7 +26,8 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
     //const float k_BALL_BALL_F = 0.03f;                                    // Friction coefficient between balls       (ball-ball) 0.03f  
     private float k_BALL_E = 0.98f;   // Coefficient of Restitution between balls (Data suggests 0.94 to 0.96, but it seems there is an issue during calculation, Happens rarely now after some fixes.)
     public bool isHandleCollison5_2 = false;
-    public float muFactor_for_5_2 = 1f;
+    [Tooltip("Friction between balls, altering it will adjust how much throw balls recieve in collisions. (Ball dirtiness)\nRecommended range 0.5 - 1.5")]
+    public float muFactor_for_5_2 = 0.7f;
     public bool ballRichDebug = false; // for Debug Check
 
     // Ball <-> Table Variables 
