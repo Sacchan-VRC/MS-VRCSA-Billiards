@@ -30,7 +30,8 @@ Transform:
   m_LocalPosition: {x: 0, y: 0.83009994, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
-  m_Children: []
+  m_Children:
+  - {fileID: 3995830606673479809}
   m_Father: {fileID: 2602777788224070353}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!33 &4944089545185584035
@@ -66,7 +67,7 @@ MeshRenderer:
     firstSubMesh: 0
     subMeshCount: 0
   m_StaticBatchRoot: {fileID: 0}
-  m_ProbeAnchor: {fileID: 0}
+  m_ProbeAnchor: {fileID: 3995830606673479809}
   m_LightProbeVolumeOverride: {fileID: 0}
   m_ScaleInLightmap: 1
   m_ReceiveGI: 1
@@ -734,15 +735,29 @@ MonoBehaviour:
   pocketDepthSide: 0.06
   facingAngleSide: 100
   pocketInnerRadiusSide: 0.06
-  ballRadius: 0.03
-  ballMass: 0.16
   rackTrianglePosition: 0.5334
-  railHeightUpper: 0.04
+  railHeightUpper: 0.0447334
+  useRailHeightLower: 0
   railHeightLower: 0.032
   railDepthWidth: 0.15895
   railDepthHeight: 0.16855
   cornerPocket: {x: 1.005, y: 0, z: 0.515}
   sidePocket: {x: 0, y: 0, z: 0.565}
+  bt_CoefSlide: 0.2
+  bt_CoefRoll: 0.008
+  bt_CoefSpin: 0.022
+  bt_CoefSpinRate: 5
+  bt_ConstDecelRate: 1
+  bt_BounceFactor: 0.5
+  bc_UseHan05: 1
+  bc_CoefRestitution: 0.85
+  bc_DynRestitution: 0
+  bc_UseConstFriction: 0
+  bc_ConstFriction: 0.2
+  bs_CoefRestitution: 0.98
+  bs_Friction: 1.9942
+  bs_BallDiameter: 57.15
+  bs_BallMass: 0.16
   baulkLine: 0.5
   blackSpotFromR: 0.2
   semiCircleRadius: 0.2921
@@ -792,6 +807,37 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 2602777788224070353}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &8229215982464230633
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 3995830606673479809}
+  m_Layer: 22
+  m_Name: anchor
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 0
+--- !u!4 &3995830606673479809
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8229215982464230633}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0.000000111262665, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 0, y: -0.12, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 5246472861197083703}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &8384448113874967615
 GameObject:
