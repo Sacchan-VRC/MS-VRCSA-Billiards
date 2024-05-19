@@ -11,7 +11,8 @@ Material:
   m_Shader: {fileID: 4800000, guid: 4d2b9e4ef22d6924993fad8181636136, type: 3}
   m_Parent: {fileID: 0}
   m_ModifiedSerializedProperties: 0
-  m_ValidKeywords: []
+  m_ValidKeywords:
+  - DETAIL_CLOTH
   m_InvalidKeywords:
   - _EMISSION
   - _SMOOTHNESS_TEXTURE_ALBEDO_CHANNEL_A
@@ -30,8 +31,24 @@ Material:
         m_Texture: {fileID: 0}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
+    - _ClothDetail:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _ClothDetailMask:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
     - _DetailAlbedoMap:
         m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _DetailCloth:
+        m_Texture: {fileID: 2800000, guid: 5595b1562bd4dfb468d2e74e52907bee, type: 3}
+        m_Scale: {x: 256, y: 256}
+        m_Offset: {x: 0, y: 0}
+    - _DetailClothMask:
+        m_Texture: {fileID: 2800000, guid: ad1b9df66b0231145b540fcebe705d3c, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _DetailMask:
@@ -41,6 +58,10 @@ Material:
     - _DetailNormalMap:
         m_Texture: {fileID: 0}
         m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _DetailOther:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 12, y: 12}
         m_Offset: {x: 0, y: 0}
     - _EmissionMap:
         m_Texture: {fileID: 2800000, guid: ff296674dc633904e98ba0446c7dce18, type: 3}
@@ -74,11 +95,19 @@ Material:
     m_Floats:
     - _BumpScale: 1
     - _Cutoff: 0.5
+    - _DetailBrightness: 1
+    - _DetailCloth: 0
+    - _DetailClothBrightness: 0.489
+    - _DetailCloth_b: 0
     - _DetailNormalMapScale: 1
+    - _DetailOtherBrightness: 1
+    - _DetailOther_b: 0
     - _DstBlend: 0
     - _GlossMapScale: 1
     - _Glossiness: 0.5
     - _GlossyReflections: 1
+    - _MaskStrengthCloth: 1
+    - _MaskStrengthOther: 0.537
     - _Metallic: 0
     - _Mode: 0
     - _OcclusionStrength: 1
@@ -87,9 +116,13 @@ Material:
     - _SpecularHighlights: 1
     - _SrcBlend: 1
     - _TimerPct: 0
+    - _TriplanarRocks: 0
     - _UVSec: 0
+    - _UseDetailCloth: 1
+    - _UseDetailCloth_b: 0
+    - _UseDetailOther: 0
     - _ZWrite: 1
     m_Colors:
-    - _Color: {r: 0.9339623, g: 0.9339623, b: 0.9339623, a: 1}
+    - _Color: {r: 0.8980392, g: 0.8980392, b: 0.8980392, a: 1}
     - _EmissionColor: {r: 0, g: 0.95294124, b: 1, a: 1}
   m_BuildTextureStacks: []
