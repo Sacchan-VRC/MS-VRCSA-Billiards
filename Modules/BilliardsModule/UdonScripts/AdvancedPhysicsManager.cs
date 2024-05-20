@@ -34,7 +34,7 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
     [NonSerializedAttribute] public float k_F_SLIDE = 0.2f;                                                         // Friction coefficient of sliding          (Ball-Table)    [Update Velocity]
     [NonSerializedAttribute] public float k_F_ROLL = 0.008f;                                                        // Friction coefficient of rolling          (Ball-table)    [Update Velocity]
     [NonSerializedAttribute] public float k_F_SPIN = 0.022f;                                                        // Friction coefficient of Spin             (Ball-table)    [Update Velocity]
-    [NonSerializedAttribute] public float k_F_SPIN_RATE = 5f;                                                       // Desired constant deceleration rate       (ball-table)    [Update Velocity]  https://billiards.colostate.edu/faq/physics/physical-properties/ [desired between 0.5 - 15]
+    [NonSerializedAttribute] public float k_F_SPIN_RATE = 5.0122876f;                                               // Desired constant deceleration rate       (ball-table)    [Update Velocity]  https://billiards.colostate.edu/faq/physics/physical-properties/ [desired between 0.5 - 15]
     [NonSerializedAttribute][Range(0.5f, 0.7f)] public float K_BOUNCE_FACTOR = 0.5f;                                // COR Ball-Slate.                          (ball-table)    [Update Velocity]
     [NonSerializedAttribute] public bool isDRate = true;
     public AnimationCurve RubberF;                                                                                  // Set this animation curve to 1 in both keys in case if you dont know what you are doing.
@@ -1085,34 +1085,46 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
 
         if (ballRichDebug)
         {
-            // this will draw a line distance relative from the center of the ball cue ball to the point of impact of the object ball [For Torque]
-            Debug.DrawLine(balls[0].transform.position, balls[0].transform.position - leverArm_id, Color.red, 5f);
 
+            Debug.Log("<size=16><color=yellow><i>Ballμ_Vectors</i></color></size>" + Ft); // Show Directions of friction per Vector.
+            Debug.Log("<size=16><color=yellow><i>Ballμ_Magnitude</i></color></size>" + Ft.magnitude); // Show the total Friction Applied.
+            //Debug.Log("<size=16><i>Newton Force: </i></size>" + NewtonForce);
+
+            // draw a line distance relative from the point of impact to the center of the ball. [For Torque]
+            Debug.DrawLine(balls[0].transform.position, balls[0].transform.position - leverArm_id, Color.red, 2f);
 
             // Draws and Check for the Tangential Direction Force, applied from the Collision Normal, [to not make it a mess, we are constraining this only to the cue ball, feel free to replace the array [0] with [id], BE ADVISED: UNITY MAY STALL UPPON MULTIPLE COLLISION DETECTION WHEN DOING SO AS IT WILL NEED TO DRAW A LINE FOR EVERY BALL CONTACT IN THE SCENE]
             //Debug.DrawRay(balls[0].transform.position, balls_V[0] + tangentialForce, Color.yellow, 5f);
 
-            Debug.DrawRay(balls[9].transform.position, balls[9].transform.position + tangentialForce, Color.green, 5f);
+            Debug.DrawRay(balls[9].transform.position, (normal * R) + Ft, new Color(1f, 0.4f, 0f), 2f); // Draws the Tangential Vector in orange.
 
+            Debug.DrawRay(balls[9].transform.position + -normal, (-normal * R) + new Vector3(tangentialForce.x, 0, tangentialForce.z), Color.green, 2f); // Draws the Perpendicular line to collision in Green.
+
+
+            float v = Vector3.Dot(relativeVelocity, normal);
+            Vector3 normalVelocityDirection = v * normal;
 
             // Calculate the cut angle, we assume the ball to always be on table
-            float cutAngle = Vector3.SignedAngle(Fn, new Vector3(relativeVelocity.x, 0, relativeVelocity.z), Vector3.up);
+            float cutAngle = Vector3.SignedAngle(normalVelocityDirection, balls[0].transform.position + new Vector3(relativeVelocity.x, 0, relativeVelocity.z), Vector3.up);
+
+            //float cutAngle = Vector3.SignedAngle(J * normal, new Vector3(relativeVelocity.x, 0, relativeVelocity.z), Vector3.up);           
+            Debug.DrawLine(balls[0].transform.position, balls[0].transform.position + new Vector3(relativeVelocity.x, 0, relativeVelocity.z), Color.yellow, 2f);
 
             // Print the CUT angle PHI
-            Debug.Log("<size=16><b><i><color=yellow>φ</color></i></b></size>: " + cutAngle.ToString("<size=16><i><color=yellow>00.0°</color></i></size>") + "<color=yellow><i>CA</i></color>");
+            Debug.Log("<size=16><b><i><color=yellow>φ</color></i></b></size>: " + Mathf.Abs(cutAngle).ToString("<size=16><i><color=yellow>00.0°</color></i></size>") + "<color=yellow><i>CA</i></color>");
 
             // Print the THROW angle THETA [Please Note, this angle starts calculating at the point (Where the collision occurs) and not from the center of the ball]
-            Debug.Log("<size=16><b><i><color=cyan>θ</color></i></b></size>: " + (Mathf.Atan2(tangentialForce.magnitude, Fn.magnitude) * Mathf.Rad2Deg).ToString("<size=16><i><color=cyan>00.0°</color></i></size>" + "<color=cyan><i>TA</i></color>"));
-
+            Debug.Log("<size=16><b><i><color=cyan>θ</color></i></b></size>: " + (Mathf.Atan2(Ft.magnitude, Fn.magnitude) * Mathf.Rad2Deg).ToString("<size=16><i><color=cyan>00.0°</color></i></size>" + "<color=cyan><i>TA</i></color>"));
 
 
             // Calculate Transfer of Angular Momentum
-            float DeltaL = balls_W[i].y - balls_W[id].y;
+            //float DeltaL = balls_W[i].y - balls_W[id].y;
+            float DeltaL = (R * balls_W[0].magnitude) / (7 * balls_V[9].magnitude);
 
             // Calculate Transfer Spin Rate
-            float DeltaW = DeltaL / (I / 5f);
+            float DeltaW = DeltaL;
 
-            Debug.Log("<size=16><b><i><color=white>Spin Transfer Rate</color></i></b></size>: " + DeltaW.ToString("<size=16><i><color=white>00.00000000000000</color></i></size>" + "<color=white><i>STP</i></color>"));
+            Debug.Log("<size=16><b><i><color=white>Spin Transfer Rate</color></i></b></size>: " + DeltaW.ToString("<size=16><i><color=white>00.00</color></i></size>" + "<color=white><i>STP</i></color>"));
 
             /// Some Legacy stuff bellow, will keep it here in case it prove usefull later down the road.
 
@@ -1356,19 +1368,15 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
 
         float g = k_GRAVITY;                                    // Gravitational constant
         float R = k_BALL_RADIUS;                                // Ball Radius
-        float DARate = (2f * k_F_SPIN_RATE * R) / (5f * g);     // Calculate Friction down to the Tenth digit to the right of the decimal point based on deacceleration rate
+        float m = k_BALL_MASS;
+        float p = R * 0.06f;                                    // contact area of the ball to the table measured as a % of the Radius.
+        float Rate = k_F_SPIN_RATE;
+        float mu_spf = k_F_SPIN;
+        float DARate; //(2f * Rate * R) / (5f * g);            // Calculate Friction down to the Tenth digit to the right of the decimal point based on deacceleration rate
         float mu_sp;                                            // Coefficient of friction for spin
         float mu_s = k_F_SLIDE;                                 // Coefficient of friction for sliding
         float mu_r = k_F_ROLL;                                  // Coefficient of friction for rolling
 
-        if (isDRate)
-        {
-            mu_sp = DARate;
-        }
-        else
-        {
-            mu_sp = k_F_SPIN;
-        }
 
         Vector3 u0;
         Vector3 k_CONTACT_POINT = new Vector3(0.0f, -R, 0.0f);
@@ -1381,6 +1389,44 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
 
         Vector3 VXZ = new Vector3(V.x, 0, V.z);             // [Initial Velocity vB0]     [Initial Linear Velocity]    (V = u0) Following Kinematics Equation for velocity;
                                                             //𝑣 = 𝑢 + 𝑎 𝑡
+
+        if (isDRate)
+        {
+            // https://billiards.colostate.edu/faq/physics/physical-properties/
+            // https://billiards.colostate.edu/faq/speed/typical/
+
+            if (VXZ.sqrMagnitude < 0.0001f && Mathf.Abs(W.y) > 50f) // Check if the linear velocity magnitude of a ball have come to a value closer to a rest position and if the same ball is still spinning above 50 Rad/sec
+            {
+                Rate = 300f; // if true, there is a chance no futher collision will occur and players are still waiting for the turn to finish. Because time is a valuable thing, we temporally increase the rate of decelration to help the current turn end sooner for the next player or current player.
+                
+                //Debug.Log("some Balls have come at a rest, however they are still spinning, Friction Rate is INCREASED to help this turn end sooner");
+            }
+            else  // We restore to the previous USER SETTINGS rate and avoiding a jarrying sudden stop.
+            {
+                Rate = k_F_SPIN_RATE;
+                
+                //Debug.Log("<size=24>Friction Rate is USER SETTINGS</size>");
+            }
+
+            DARate = (2f * Rate * R) / (5f * g);    // Solve/Calculate Friction down to the Tenth digit to the right of the decimal point based on deceleration rate
+            mu_sp = DARate;
+        }
+        else
+        {
+            if (VXZ.sqrMagnitude < 0.0001f && Mathf.Abs(W.y) > 50f) // Same thing as above but for users who may have picked MU instead.
+            {
+                mu_spf = 0.3f;
+                Debug.Log("some Balls have come at a rest, however they are still spinning, Friction Rate is INCREASED to help this turn end sooner");
+            }
+            else
+            {
+                mu_spf = k_F_SPIN;
+                Debug.Log("<size=24>Friction Rate Reseted</size>");
+            }
+            mu_sp = mu_spf;
+        }
+
+
 
         // Kinematic equations basic guide [SUVAT]
 
@@ -1437,6 +1483,13 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
                 }
                 else
                 {
+                    /// Han Model Equation 5 Figure 3.
+                    /*
+                    float Mz = (2f * 0.069f * m * g) * (2f / 3f * 0.002f); // Constrained to Han Model, he measures a friction value of: 0.069mu, and measures the Area the ball has in contact with the cloth 2mm (0.002f)
+                    float I = ((2f / 5f) * m * (R * R)); // the equation is paired with the Inertia of the ball, the model is measured as Torque. [Nm] to decelerate the ball.          
+                    float w_perp = Mz * (1f/I); // Finally, we can return and calculate the Deceleration Rate of 5.0122876 Rad/sec² for a 60mm ball (this is what Han uses). [the ball size radius changes this values considerably]
+                    */
+
                     float w_perp = (5f * mu_sp * g) / (2f * R);
                     W.y -= Mathf.Sign(W.y) * w_perp * t;
                 }
@@ -1519,6 +1572,37 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
         if (balls_P[id].y > 0 || inPocketBounds)
             V.y -= frameGravity; /// Apply Gravity * Time so the airbone balls gets pushed back to the table.
 
+
+        // From simple calculations and measures taken from other simulations we are clamping the Magnitude of each rotation axis by 300 Rad.
+        // this comes from an observation that when a ball is hit with maximum side spin using a phenolic tip,
+        // it would take around 40~ seconds for the same ball to come at rest while spining perpendicular to the table at a complete rest (meaning whitout linear Velocity)
+
+        // Therefore when Wf = Wi + at 
+        // where (Wf) is the final angular velocity in rad/s
+        // (Wi) is the initial angular velocity rad/s
+        // (a) is the angular acceleration rad/s²
+        // t is the time in seconds.
+
+        // if a ball of 57.15mm Diameter were to receive a spin magnitude of 700 RAD perpendicular to the table at rest.
+        // it would take 140 seconds for the next player to wait for their next turn [assuming its decelaration rate is a constant of 5 rad/sec²], which is the common deceleration rate found when billiards cloth are in good condition among other factors)      
+        // thus solving for time becomes: 700/5 = 140 seconds.
+
+        // Our simulation currently does not handle calculations for miss-cue, and because of this, users can easily apply unrealistic amount of spin hitting way past 0.5D of the ball
+        // but none of them are willing to accept the consequences this will have on the numerical calculations later, and this is normal because most of players are there just to hit balls in the first place.
+        // so until then, we will clamp the perpendicular velocity based on what VISUALY and TIME MEASURED seems to be correct from factors presented above.
+
+        // we need to clamp the square magnitude lenght just at the right amount, for now we are using 520MAG which is 300² as it is providing *good pace*
+        // [Keep in mind this is a Heuristic Solution along actual numerical data values equations, so we often call this *Semi-Heuristic*,
+        // if a player were to perform the same exact shot again, it would provide the same exact outcome, meaning its deterministic as well]
+        
+        float Max = 300f; // (increase this value to 500 if Masse swerve shots starts showing undesirable behaviour).
+
+        float Wx_C = Mathf.Clamp(W.x, -Max, Max);
+        float Wy_C = Mathf.Clamp(W.y, -Max, Max);
+        float Wz_C = Mathf.Clamp(W.z, -Max, Max);
+
+
+        W = new Vector3(Wx_C, Wy_C, Wz_C); // (√300²x + 3300²y + 300²z) this results in 520~ MAG as opposed to 1765~ MAG
 
         balls_W[id] = W;
         balls_V[id] = V;
@@ -2051,6 +2135,15 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
 
         if (isCushionRichDebug) // Choose to display some information about the cushion and Draw some lines (bool default = FALSE) [May cause stall in Unity Editor if there are Multiple collisions happening at once]
         {
+
+            Debug.DrawRay(balls[0].transform.parent.TransformPoint(balls_P[id]) - N * R, new Vector3(0, V1.y, 0), Color.green, 3f);   // Height of the cushion
+
+            Debug.DrawRay(balls[0].transform.parent.TransformPoint(balls_P[id]) - N * R, new Vector3(V1.x, 0, 0), Color.red, 3f);    // Needs to be negative because we rotate X and Z to be in the referencee frame of the table.
+
+            Debug.DrawRay(balls[0].transform.parent.TransformPoint(balls_P[id]) - N * R, new Vector3(0, 0, V1.z), Color.cyan, 3f);   // But we are not doing for Y, so we invert the value at the calculation for now
+
+            Debug.DrawRay(balls[0].transform.parent.TransformPoint(balls_P[id]) - N * R, new Vector3(-V1.x, V1.y, V.z), Color.white, 3f); // returns the total/ Actual Directon direction 
+
 
             Debug.Log("Force N: " + F);
 
