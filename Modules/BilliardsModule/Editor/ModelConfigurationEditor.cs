@@ -100,9 +100,17 @@ public class ModelConfigurationEditor : Editor
 
             if (!cdata_displayTarget)
             {
-                cdata_displayTarget = _editor.transform.parent.parent.Find("intl.balls").Find("__table_refiner__").gameObject.GetComponent<CollisionVisualizer>();
-                if (cdata_displayTarget == null) { return; }
+                Transform table = _editor.transform.parent.parent.Find("intl.balls");
+                if (table)
+                {
+                    Transform refiner = table.Find("__table_refiner__");
+                    if (refiner)
+                    {
+                        cdata_displayTarget = _editor.transform.parent.parent.Find("intl.balls").Find("__table_refiner__").gameObject.GetComponent<CollisionVisualizer>();
+                    }
+                }
             }
+            if (cdata_displayTarget == null) { return; }
 
             this.bShowCollision = EditorGUILayout.Toggle("Draw collision data", this.cdata_displayTarget.gameObject.activeSelf);
             this.cdata_displayTarget.gameObject.SetActive(this.bShowCollision);
