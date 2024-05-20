@@ -3090,9 +3090,14 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
         return true;
     }
 
+    public float inV0_override;
     public float inV0;
     public void _ApplyPhysics()
     {
+        if (Test_Mode && inV0_override > 0)
+        {
+            inV0 = inV0_override;
+        }
         applyPhysics(inV0);
     }
 
