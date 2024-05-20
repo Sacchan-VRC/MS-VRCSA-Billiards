@@ -12,14 +12,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c333ccfdd0cbdbc4ca30cef2dd6e6b9b, type: 3}
   m_Name: RepositionManager
   m_EditorClassIdentifier: 
-  serializedUdonProgramAsset: {fileID: 11400000, guid: 76bf17ae8d5e7044f971fdeb0e5f6931,
+  serializedUdonProgramAsset: {fileID: 11400000, guid: b39375b0bd6b13b46a396bb3a53bfbf0,
     type: 2}
   udonAssembly: 
   assemblyError: 
   sourceCsScript: {fileID: 11500000, guid: 13186aae46a57f64e9646caf0959dcc8, type: 3}
   scriptVersion: 2
   compiledVersion: 2
-  behaviourSyncMode: 2
+  behaviourSyncMode: 1
   hasInteractEvent: 0
   scriptID: 2500832813384905454
   serializationData:

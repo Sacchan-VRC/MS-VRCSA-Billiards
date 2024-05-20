@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c333ccfdd0cbdbc4ca30cef2dd6e6b9b, type: 3}
   m_Name: CueRackManager
   m_EditorClassIdentifier: 
-  serializedUdonProgramAsset: {fileID: 11400000, guid: ea3a98441eabcc347b7ab93900aa2247,
+  serializedUdonProgramAsset: {fileID: 11400000, guid: c3eabaa6bcdfc9b45ba525482c05d818,
     type: 2}
   udonAssembly: 
   assemblyError: 
