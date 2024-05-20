@@ -114,7 +114,10 @@ public class GraphicsManager : UdonSharpBehaviour
         scorecard = scorecard_gameobject.GetComponent<MeshRenderer>().material;
         scorecard_info = table.transform.Find("intl.scorecardinfo").gameObject;
 
-        tableMaterial = table.tableModels[table.tableModelLocal].tableMaterial;
+        if (table.tableModels[table.tableModelLocal].tableMaterial)
+            tableMaterial = table.tableModels[table.tableModelLocal].tableMaterial;
+        else
+            Debug.LogWarning("Table material not found, make sure you set Table Mesh correctly on Model Data");
 
         _SetShadowsDisabled(false);
         _SetUpReflectionProbe();
