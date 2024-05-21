@@ -1398,13 +1398,13 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
             if (VXZ.sqrMagnitude < 0.0001f && Mathf.Abs(W.y) > 50f) // Check if the linear velocity magnitude of a ball have come to a value closer to a rest position and if the same ball is still spinning above 50 Rad/sec
             {
                 Rate = 300f; // if true, there is a chance no futher collision will occur and players are still waiting for the turn to finish. Because time is a valuable thing, we temporally increase the rate of decelration to help the current turn end sooner for the next player or current player.
-                
+
                 //Debug.Log("some Balls have come at a rest, however they are still spinning, Friction Rate is INCREASED to help this turn end sooner");
             }
             else  // We restore to the previous USER SETTINGS rate and avoiding a jarrying sudden stop.
             {
                 Rate = k_F_SPIN_RATE;
-                
+
                 //Debug.Log("<size=24>Friction Rate is USER SETTINGS</size>");
             }
 
@@ -1594,7 +1594,7 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
         // we need to clamp the square magnitude lenght just at the right amount, for now we are using 520MAG which is 300² as it is providing *good pace*
         // [Keep in mind this is a Heuristic Solution along actual numerical data values equations, so we often call this *Semi-Heuristic*,
         // if a player were to perform the same exact shot again, it would provide the same exact outcome, meaning its deterministic as well]
-        
+
         float Max = 300f; // (increase this value to 500 if Masse swerve shots starts showing undesirable behaviour).
 
         float Wx_C = Mathf.Clamp(W.x, -Max, Max);
@@ -3183,14 +3183,18 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
         return true;
     }
 
+#if UNITY_EDITOR
     public float inV0_override;
+#endif
     public float inV0;
     public void _ApplyPhysics()
     {
+#if UNITY_EDITOR
         if (Test_Mode && inV0_override > 0)
         {
             inV0 = inV0_override;
         }
+#endif
         applyPhysics(inV0);
     }
 
