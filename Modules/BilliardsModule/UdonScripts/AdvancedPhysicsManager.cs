@@ -7,6 +7,11 @@ using UnityEngine;
 public class AdvancedPhysicsManager : UdonSharpBehaviour
 {
     public string PHYSICSNAME = "<color=#FFD700>Advanced V0.5K</color>";
+    [SerializeField] AudioClip[] hitSounds;
+    [SerializeField] AudioClip[] bounceSounds;
+    [SerializeField] AudioClip[] cushionSounds;
+    [SerializeField] public Transform transform_Surface;
+    public GameObject[] balls;
 #if HT_QUEST
    private  float k_MAX_DELTA =  0.05f; // Private Const Float 0.05f max time to process per frame on quest (~4)
 #else
@@ -28,7 +33,6 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
     public bool isHandleCollison5_2 = false;
     [Tooltip("Friction between balls, altering it will adjust how much throw balls recieve in collisions. (Ball dirtiness)\nRecommended range 0.5 - 1.5")]
     public float muFactor_for_5_2 = 0.7f;
-    public bool ballRichDebug = false; // for Debug Check
 
     // Ball <-> Table Variables 
     [NonSerializedAttribute] public float k_F_SLIDE = 0.2f;                                                         // Friction coefficient of sliding          (Ball-Table)    [Update Velocity]
@@ -45,6 +49,7 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
     [NonSerializedAttribute][Range(0.5f, 0.98f)] public float k_E_C = 0.85f;                                        // COR ball-Cushion                         (Ball-Cushion)  [Phys Cushion]      [default 0.85] - Acceptable Range [0.7 - 0.98] 
     [NonSerializedAttribute][Range(0.2f, 0.4f)] public float k_Cushion_MU = 0.2f;
     [NonSerializedAttribute] public bool isCushionFrictionConstant = false;
+    public bool ballRichDebug = false; // for Debug Check
     public bool isCushionRichDebug = false; // for Debug Check
 
     //[Range(0f, 1f)] public float k_F_SLIDE_TERM1 = 0.471f;                                                        // COF slide of the Cushion                 (Ball-Cushion)  [Phys Cushion]
@@ -56,11 +61,6 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
 
     //private Vector3 k_CONTACT_POINT = new Vector3(0.0f, -0.03f, 0.0f);
 
-    [SerializeField] AudioClip[] hitSounds;
-    [SerializeField] AudioClip[] bounceSounds;
-    [SerializeField] AudioClip[] cushionSounds;
-    [SerializeField] public Transform transform_Surface;
-
     private AudioSource audioSource;
     private float initialVolume;    // Ball-Slate
     private float initialPitch;
@@ -71,7 +71,6 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
     private float lastTimestamp;
     float pocketedTime = 0;
 
-    public GameObject[] balls;
     private Vector3[] balls_P; // Displacement Vector
     private Vector3[] balls_V; // Velocity Vector
     private Vector3[] balls_W; // Angular Velocity Vector
@@ -290,6 +289,7 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
     }
 
 #if UNITY_EDITOR
+    [Tooltip("Used WASD+RF to move the cue ball around, IJKL+OU to spin cue ball")]
     public bool Test_Mode;
     public float Test_MoveSpeed = 3f;
     public float Test_RotSpeed = 50f;
@@ -850,7 +850,7 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
                     /// as such i am pushing this as a public (W.I.P) and also as a means of Fallback in bool presented in AdvancedPhysicsManager GameObject in case anyone wants to use it and have fun with it.
                     HandleCollision5_2(checkBall, id, normal);
                     //HandleCollision5_4(checkBall, id, normal);  // Interesting solution from 1997, Method available down bellow with Articles, comments and exerts, check it out in their respective functions()!
-                    
+
                 }
                 else
                 {
@@ -904,7 +904,7 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
         }
     }
 
-    
+
     private float muFactor = 1f; // Default should be 1 but results fail to reach and match some of the plot data, as such a value of 1.9942 has been emperically set after multiple tests.  
 
     /// W.I.P -
@@ -972,7 +972,7 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
         float JT = -Vector3.Dot(relativeVelocity, tangentialForce) / 2f;
 
         Vector3 Ft;
-        
+
         if (Mathf.Abs(JT) <= J * -mu_s) // mu_`s` is [Static Friction]
         {
             // Impulse Friction Calculation
@@ -983,7 +983,7 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
             // Impulse Friction Calculation
             Ft = tangentialForce * -J * -mu;
         }
-        
+
 
         // Apply to the balls
         balls_V[id] -= Ft;
@@ -1027,7 +1027,7 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
             Vector3 normalVelocityDirection = v * normal;
 
             // Calculate the cut angle, we assume the ball to always be on table
-            float cutAngle = Vector3.SignedAngle(new Vector3 (normalVelocityDirection.x, 0f, normalVelocityDirection.z), new Vector3(relativeVelocity.x, 0f, relativeVelocity.z), Vector3.up);
+            float cutAngle = Vector3.SignedAngle(new Vector3(normalVelocityDirection.x, 0f, normalVelocityDirection.z), new Vector3(relativeVelocity.x, 0f, relativeVelocity.z), Vector3.up);
 
             //float cutAngle = Vector3.SignedAngle(J * normal, new Vector3(relativeVelocity.x, 0, relativeVelocity.z), Vector3.up);           
             Debug.DrawLine(balls[0].transform.position, balls[0].transform.position + new Vector3(relativeVelocity.x, 0, relativeVelocity.z), Color.yellow, 2f);
@@ -1036,7 +1036,7 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
             Debug.Log("<size=16><b><i><color=yellow>φ</color></i></b></size>: " + Mathf.Abs(cutAngle).ToString("<size=16><i><color=yellow>00.0°</color></i></size>") + "<color=yellow><i>CA</i></color>");
 
             // Print the THROW angle THETA [Please Note, this angle starts calculating at the point (Where the collision occurs) and not from the center of the ball]
-            Debug.Log("<size=16><b><i><color=cyan>θ</color></i></b></size>: " + (Mathf.Atan2(new Vector3(Ft.x,0,Ft.z).magnitude, new Vector3(Fn.x,0,Fn.z).magnitude) * Mathf.Rad2Deg).ToString("<size=16><i><color=cyan>00.0°</color></i></size>" + "<color=cyan><i>TA</i></color>"));
+            Debug.Log("<size=16><b><i><color=cyan>θ</color></i></b></size>: " + (Mathf.Atan2(new Vector3(Ft.x, 0, Ft.z).magnitude, new Vector3(Fn.x, 0, Fn.z).magnitude) * Mathf.Rad2Deg).ToString("<size=16><i><color=cyan>00.0°</color></i></size>" + "<color=cyan><i>TA</i></color>"));
 
 
             // Calculate Transfer of Angular Momentum
@@ -1155,7 +1155,7 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
         /// F' = m*v'n
         float J = numerator / denominator;
         //J /= 1f;  // <-- not necessary, but in case someone tries something with boxes or other shapes just for fun, you need to divide the impulse by the amount of collision detections, Circles are simpler and has only 1 point of detections.
-                                
+
         Vector3 Fn = normal * J;
 
         // Apply normal impulse (transferred linear momentum) to update velocities
@@ -1254,13 +1254,13 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
         float R = k_BALL_RADIUS;
         float M = k_BALL_MASS;
         float I = ((2f / 5f) * M * (R * R));
-        
+
         // Relative Linear Velocity
         Vector3 v_rel = balls_V[id] - balls_V[i];
 
         // Calculate the relative velocity at the contact point [TP.A14 PAGE 2, Eq 8, 9] / Dr.Dave
         Vector3 v_rel_contact = v_rel + Vector3.Cross(balls_W[id], R * -normal) - Vector3.Cross(balls_W[i], R * normal);
-        
+
         // Calculate friction coefficient [TP.A14 Page 4]
         float mu = CalculateFrictionCoefficient(v_rel_contact);
         mu = muFactor_for_5_2 * mu;
@@ -1302,17 +1302,17 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
             Vector3 centersLine = (balls_V[i] - balls_V[id]).normalized; // Line connecting centers
             float cutAngle = Vector3.Angle(centersLine, balls_V[id]);
             Debug.Log("Cut Angle: " + (cutAngle - 90f));
-        
+
             // --- Throw Angle based on Tangential Impulse ---
-            Debug.Log("<size=12><b><i>Throw Angle ATAN_MU/DEG:</i></b></size> " + 
-                        Mathf.Atan(mu).ToString("<size=12><b><i>0.000μ</i></b></size>") 
-                        + " / " + 
+            Debug.Log("<size=12><b><i>Throw Angle ATAN_MU/DEG:</i></b></size> " +
+                        Mathf.Atan(mu).ToString("<size=12><b><i>0.000μ</i></b></size>")
+                        + " / " +
                         (Mathf.Atan(mu) * Mathf.Rad2Deg).ToString("<size=12><b><i>0.000 DEG</i></b></size>"));
 
             float DELTA_W = R * Ft.magnitude / I;
             Debug.Log("<size=16><b><i><color=white>Spin Transfer Rate</color></i></b></size>: " + DELTA_W.ToString("<size=16><i><color=white>00.00</color></i></size>" + "<color=white><i>STP</i></color>"));
 
-            Debug.DrawLine(balls[0].transform.position, balls[0].transform.position + 
+            Debug.DrawLine(balls[0].transform.position, balls[0].transform.position +
                 new Vector3(v_rel_contact.x, 0, v_rel_contact.z), Color.yellow, 2f);
 
 
@@ -1340,7 +1340,7 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
             */
 
         }
- 
+
     }
 
     private float CalculateFrictionCoefficient(Vector3 v_rel_contact)

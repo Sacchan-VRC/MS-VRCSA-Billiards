@@ -729,7 +729,7 @@ MonoBehaviour:
   bc_UseConstFriction: 0
   bc_ConstFriction: 0.2
   bs_CoefRestitution: 0.98
-  bs_Friction: 1.9942
+  bs_Friction: 1
   bs_BallDiameter: 57.15
   bs_BallMass: 0.16
   baulkLine: 0.7367

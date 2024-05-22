@@ -8054,7 +8054,7 @@ MonoBehaviour:
     SerializationNodes: []
   _udonSharpBackingUdonBehaviour: {fileID: 3671293032783138245}
   PHYSICSNAME: <color=#FFD700>Advanced V0.5K</color>
-  isHandleCollison5_2: 1
+  isHandleCollison5_2: 0
   muFactor_for_5_2: 0.7
   ballRichDebug: 0
   RubberF:
