@@ -783,7 +783,7 @@ MonoBehaviour:
   bs_BallMass: 0.16
   baulkLine: 0.5
   blackSpotFromR: 0.2
-  semiCircleRadius: 0.2921
+  semiCircleRadius: 0.23
   CueOrange: {fileID: 924623236615340724}
   CueBlue: {fileID: 2110187444530268019}
   DesktopUIScaleFactor: 1.08

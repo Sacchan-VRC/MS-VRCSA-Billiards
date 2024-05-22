@@ -732,9 +732,9 @@ MonoBehaviour:
   bs_Friction: 1
   bs_BallDiameter: 57.15
   bs_BallMass: 0.16
-  baulkLine: 0.7367
-  blackSpotFromR: 0.324
-  semiCircleRadius: 0.2921
+  baulkLine: 0.46
+  blackSpotFromR: 0.19
+  semiCircleRadius: 0.23
   CueOrange: {fileID: 543142896622143520}
   CueBlue: {fileID: 9012212504501021619}
   DesktopUIScaleFactor: 1.08
