@@ -845,21 +845,17 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
                 // Handle collision effects
                 if (isHandleCollison5_2)
                 {
-                    /// Pretty good, derived to the simplistic of the terms 
-                    /// seems to be able to use the correct friction Scale of 1 as it is and cushion response seems natural without manual/Heuristic work, 
-                    /// - - - Breakshots recently fixed and natural.
-                    /// as such i am pushing this as a public (W.I.P)
-
-                    HandleCollision5_2(checkBall, id, normal, delta);
-                    //HandleCollision5_4(checkBall, id, normal, delta);  // Interesting solution from 1997, but we cant divide by the amount of normal contacts yet. Method available down bellow with Articles, comments and exerts, check it out!
+                    /// Fun to play with it in code, derived to the simplistic of the terms from 5_4
+                    /// - - - Breakshots recently fixed.
+                    /// as such i am pushing this as a public (W.I.P) and also as a means of Fallback in bool presented in AdvancedPhysicsManager GameObject in case anyone wants to use it and have fun with it.
+                    HandleCollision5_2(checkBall, id, normal);
+                    //HandleCollision5_4(checkBall, id, normal);  // Interesting solution from 1997, Method available down bellow with Articles, comments and exerts, check it out in their respective functions()!
+                    
                 }
                 else
                 {
-                    /// Provides the best Breakshot/Rack reponse,
-                    /// uses a Heuristic Factor value for Friction to match as close as possible natural behaviour. 
-                    /// - - - but Cushion Response requires some manual treshold work to counter anamolies
-                    /// This mode is currently in use for public testing we dont see much issues so far, it makes me wonder sometimes..
-                    HandleCollision3_4(checkBall, id, normal, delta);
+                    /// Provides the best readability and response with a solution using Dr.Dave and Hecker equations.
+                    HandleCollision6(checkBall, id, normal);
                 }
 
 #if UNITY_EDITOR
@@ -868,9 +864,10 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
                 {
                     Vector3 relativeVelocity = balls_V[id] - balls_V[checkBall];
                     float v = Vector3.Dot(velocityDelta, normal);
-                    Vector3 normalVelocityDirection = v * normal;
-                    Debug.DrawLine(balls[9].transform.position, balls[9].transform.position - normalVelocityDirection * 5f, Color.blue, 4f);
-                    Debug.DrawLine(balls[9].transform.position, balls[9].transform.position + normalVelocityDirection * 5f, Color.blue, 4f);
+                    Vector3 normalVelocityDirection = v * normal; // J
+                    Vector3 tangent = relativeVelocity - Vector3.Dot(relativeVelocity, normal) * normal; //JT
+                    Debug.DrawLine(balls[id].transform.position, balls[id].transform.position + tangent * 5f, Color.green, 3f); // returns the natural initial tangent direction line post impact.
+                    Debug.DrawLine(balls[i].transform.position, balls[i].transform.position + normalVelocityDirection * 5f, Color.red, 3f); // returns the direction the object ball has been hit from the line of centers connecting both balls.
                 }
 #endif
 
@@ -907,96 +904,17 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
         }
     }
 
-    /// Default should be 1
-    /// However results fail to reach and match some of the plot data, [its likely because the components of Linear Velocity and Angular Velocity are separated, when in paper they are together]
-    /// as such a value of 1.9942 has been emperically determined after multiple tests, this now becomes the new `advanced simple consistent` model as it attempts to fix some of the issues version 1 had.
-    /// a value of 1.5x is acceptable [in case the game feels too hard for users]
-    private float muFactor = 1.9942f; // Default should be 1 but results fail to reach and match some of the plot data, as such a value of 1.9942 has been emperically set after multiple tests.  
-
-    void HandleCollision3_4(int i, int id, Vector3 normal, Vector3 delta) // Advanced Physics V3.4
-    {
-        /// PREPARE SOME STUFF
-
-        Vector3 balls_Wid_onlyY = new Vector3(0, balls_W[id].y, 0);
-        Vector3 balls_Wi_onlyY = new Vector3(0, balls_W[id].y, 0); // same ID.
-
-        /// TEST // NOTE: this model calculates the relative velocities components separately.
-        Vector3 angularVelocity = (Vector3.Cross(balls_W[id], k_BALL_RADIUS * normal)) - (Vector3.Cross(balls_W[i], k_BALL_RADIUS * normal));
-        Vector3 tangentialDirection = -angularVelocity.normalized;
-        float angularVelocityMagnitude = angularVelocity.magnitude;
-        float scaledMagnitude = Mathf.Clamp(angularVelocityMagnitude, 0f, 1f); //0,25
-        Vector3 scaledTangentialDirection = tangentialDirection * scaledMagnitude;
-
-        Vector3 relativeVelocity = (balls_V[id] - balls_V[i]);
-
-        Vector3 Vobt_MAX = balls_V[id] - (Vector3.Cross(balls_Wid_onlyY, k_BALL_RADIUS * normal) + Vector3.Cross(balls_Wi_onlyY, k_BALL_RADIUS * normal));
-        Vector3 tangentialDirection_2 = Vobt_MAX.normalized;
-        float tangentialDirection_Magnitude = Vobt_MAX.magnitude;
-        float scaledMagnitude_2 = Mathf.Clamp(tangentialDirection_Magnitude, 0f, 35f);
-        Vector3 scaledTangentialDirection_2 = tangentialDirection_2 * scaledMagnitude_2;
-
-        /// PART 1
-        /// NORMAL IMPULSE (TRANSFERED LINEAR MOMENTUM_)
-        /// F' = m*v'n
-        float e = k_BALL_E;
-        float J = (1 + e) / 2 * Vector3.Dot(relativeVelocity, normal);
-        Vector3 Fn = normal * J;
-
-        // Apply normal impulse (transferred linear momentum) to update velocities
-        balls_V[id] -= Fn; // Fn = ((1+e)/2)*m*v
-        balls_V[i] += Fn;  // Fn = ((1+e)/2)*m*v
-
-
-        /// PART 2
-        /// LINEAR IMPULSE AND MOMENTUM IN THE TANGENT DIRECTION.
-        /// OBJECT BALL SPEED IN THE TANGENTIAL DIRECTION IS GIVEN BY Vt = μ * Vn
-
-        //  Friction between the CB and OB during impact creates forces in the tangential direction.
-
-        //  Calculate friction force using the given model.
-
-        float mu = -muFactor * (9.951e-3f + 0.108f * Mathf.Exp(-1.088f * Vobt_MAX.magnitude));  // model 1
-                                                                                                //float mu = -muFactor * (9.951e-3f + 0.108f * Mathf.Exp(-0.77f * Vobt_MAX.magnitude)); // model 2
-
-        //  Prepare T impulses.
-
-        Vector3 Ft2 = -mu * scaledTangentialDirection; // S-I-T   
-        Vector3 Ft1 = mu * scaledTangentialDirection_2;// C-I-T
-        Vector3 Ft = Ft1 + Ft2;
-
-        // apply Tagential impulses
-        balls_V[id] += Ft;
-        balls_V[i] -= Ft;
-
-
-        /// PART 3
-        /// ANGULAR IMPULSE (TRANSFERRED ANGULAR MOMENTUM)
-        /// τ' = r × F'
-
-        Vector3 angularImpulse = Vector3.Cross(Ft, delta) / (k_BALL_RADIUS * k_BALL_RADIUS);
-
-        // Apply Linear Impulse Translation.
-        balls_W[id] += angularImpulse;
-        balls_W[i] += angularImpulse;
-
-
-        /// Note
-        /// /// C-I-T is 'largest' for slow stun shots speeds close to a 1/2 ball hit.
-        /// at faster speed the balls surfaces dont engage well, resulting in less friction and throw. (as such the coefficient of Restitution has a crucial role)
-        /// throw also changes with cut angles.
-        /// 3/4 cut ('full hit') = small amount of throw.
-        /// 1/4 cut ('thin hit') = slightly less throw than 'largest' throw, but more than a 'full hit'
-
-    }
+    
+    private float muFactor = 1f; // Default should be 1 but results fail to reach and match some of the plot data, as such a value of 1.9942 has been emperically set after multiple tests.  
 
     /// W.I.P -
-    void HandleCollision5_2(int i, int id, Vector3 normal, Vector3 delta)
+    void HandleCollision5_2(int i, int id, Vector3 normal)
     {
         float e = k_BALL_E;
         float R = k_BALL_RADIUS;
         float M = k_BALL_MASS;
-        float I = (2f * M * (R * R));           // Moment of Inertia, where [/5] is not used because we are already simplifying the impulses and masses when we divide by half.
-        float I2 = ((2f / 5f) * M * (R * R));   // In case if you wanna see what happens.
+        float I = (2f * M * (R * R));           // Moment of Inertia, where the factor [/5] is not being used, there is a chance it can be use correctly if we do (R * τ / I) or (R * τ (1/I)
+        //float I = ((2f / 5f) * M * (R * R));   // In case if you wish to try it uncomment this line and comment the line above!
 
         // Prepare Lever Arms that will be used for Torque Later.
         Vector3 leverArm_id = -normal * R;
@@ -1054,7 +972,7 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
         float JT = -Vector3.Dot(relativeVelocity, tangentialForce) / 2f;
 
         Vector3 Ft;
-
+        
         if (Mathf.Abs(JT) <= J * -mu_s) // mu_`s` is [Static Friction]
         {
             // Impulse Friction Calculation
@@ -1065,6 +983,7 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
             // Impulse Friction Calculation
             Ft = tangentialForce * -J * -mu;
         }
+        
 
         // Apply to the balls
         balls_V[id] -= Ft;
@@ -1101,11 +1020,14 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
             Debug.DrawRay(balls[9].transform.position + -normal, (-normal * R) + new Vector3(tangentialForce.x, 0, tangentialForce.z), Color.green, 2f); // Draws the Perpendicular line to collision in Green.
 
 
+
+            Vector3 linearRelative = balls_V[id] - balls_V[i];
+
             float v = Vector3.Dot(relativeVelocity, normal);
             Vector3 normalVelocityDirection = v * normal;
 
             // Calculate the cut angle, we assume the ball to always be on table
-            float cutAngle = Vector3.SignedAngle(normalVelocityDirection, balls[0].transform.position + new Vector3(relativeVelocity.x, 0, relativeVelocity.z), Vector3.up);
+            float cutAngle = Vector3.SignedAngle(new Vector3 (normalVelocityDirection.x, 0f, normalVelocityDirection.z), new Vector3(relativeVelocity.x, 0f, relativeVelocity.z), Vector3.up);
 
             //float cutAngle = Vector3.SignedAngle(J * normal, new Vector3(relativeVelocity.x, 0, relativeVelocity.z), Vector3.up);           
             Debug.DrawLine(balls[0].transform.position, balls[0].transform.position + new Vector3(relativeVelocity.x, 0, relativeVelocity.z), Color.yellow, 2f);
@@ -1114,15 +1036,16 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
             Debug.Log("<size=16><b><i><color=yellow>φ</color></i></b></size>: " + Mathf.Abs(cutAngle).ToString("<size=16><i><color=yellow>00.0°</color></i></size>") + "<color=yellow><i>CA</i></color>");
 
             // Print the THROW angle THETA [Please Note, this angle starts calculating at the point (Where the collision occurs) and not from the center of the ball]
-            Debug.Log("<size=16><b><i><color=cyan>θ</color></i></b></size>: " + (Mathf.Atan2(Ft.magnitude, Fn.magnitude) * Mathf.Rad2Deg).ToString("<size=16><i><color=cyan>00.0°</color></i></size>" + "<color=cyan><i>TA</i></color>"));
+            Debug.Log("<size=16><b><i><color=cyan>θ</color></i></b></size>: " + (Mathf.Atan2(new Vector3(Ft.x,0,Ft.z).magnitude, new Vector3(Fn.x,0,Fn.z).magnitude) * Mathf.Rad2Deg).ToString("<size=16><i><color=cyan>00.0°</color></i></size>" + "<color=cyan><i>TA</i></color>"));
 
 
             // Calculate Transfer of Angular Momentum
             //float DeltaL = balls_W[i].y - balls_W[id].y;
-            float DeltaL = (R * balls_W[0].magnitude) / (7 * balls_V[9].magnitude);
+            float DeltaL = (R * balls_W[0].y) / (7 * balls_V[9].magnitude);
 
             // Calculate Transfer Spin Rate
             float DeltaW = DeltaL;
+
 
             Debug.Log("<size=16><b><i><color=white>Spin Transfer Rate</color></i></b></size>: " + DeltaW.ToString("<size=16><i><color=white>00.00</color></i></size>" + "<color=white><i>STP</i></color>"));
 
@@ -1155,32 +1078,34 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
         }
     }
 
-    /// W.I.I - 
-    void HandleCollision5_4(int i, int id, Vector3 normal, Vector3 delta)
+    /// W.I.I - this essentially becomes 5_2 above, which now becomes our Legacy and Safe Fall Back users can switch to if they want to. <summary>
+    /// 5_4 is and exert.
+
+    void HandleCollision5_4(int i, int id, Vector3 normal)
     {
 
         /// Equations and Model derived from: https://www.chrishecker.com/Rigid_Body_Dynamics in
         /// Under Physics, Part 2: Angular Effects - Dec/Jan 1996
-        /// Physics, Part 4: The Third Dimension - June 1997
+        /// Physics, Part 4: The Third Dimension - June 1997 - we will be writting this in Handlecollision6, so check it out later!
 
-        /// There is a video exert from Two-Bit Coding where he uses the same principle but for 2 - Dimensionals collisions
-        /// you can watch it here https://www.youtube.com/watch?v=VbvdoLQQUPs, Episode 24 covers about friction
+        /// There is a really interesting series on youtube from Two-Bit Coding where he uses the same principle but for 2-Dimensional collisions
+        /// you can watch it here https://www.youtube.com/watch?v=VbvdoLQQUPs Episode 23, Episode 24 covers about friction, but we are going to use Dr.Dave Friction model which is based on Marlow Data: [Table 10 on p. 245 in "The Physics of Pocket Billiards," 1995)
 
-        /// its amazing to follow it through, but it will still require some attention with our vectors, because Unity Treats Y as UP axis.
-        /// and Unity Cross Products are Left Hand Rules instead of Right Hand Rule (Why.. idk.)
+        /// its amazing to follow it through, but still require some attention with our vectors, because Unity Treats Y as UP axis.
+        /// and Unity Cross Products are Left Hand Rules instead of Right Hand Rule.
 
         /// since we are doing for 3D Dimensions, 
-        /// we should be able to solve for our perpendicular rotation vectors by just using a Cross Product instead of inverting them into a new Vector.
+        /// we should be able to solve for our perpendicular rotation vectors by just using a Cross Product instead of inverting them into a new Vector. (and this is what i am going to try here in HC5_4)
         /// this attempt is done in: [rAPCrossN]
-        /// this way our equation, in theory, should be able to be easy to solve using the last picture found in [Physics, Part 4] PDF from the website linked above.
-        /// but i am currently not convinced that i should repeat the process twice to solve for our denominator here during the Tagential Impulse. 
+        /// this way our equation, in theory, should be easy to solve using the last picture found in [Physics, Part 4] PDF from the website linked above.
+        /// but i am currently not convinced that i should repeat the process twice to solve for our denominator here during the Tagent Impulse. 
         /// 
         /// This is because by using the cross product vector, we already return a value Orthogonal from the 2 input vectors (A.k.A, Perpendicular).
-        /// but either way, i will leave it here.
+        /// but either way, i will leave it here just in case.
         /// 
         /// this expanded formula may allow us to do some interesting things to test later, such as different ball masses or inertia tensors.
         /// 
-        /// in the meantime, we use and focus on HC5_2 [HandleCollision5_2] which should be able to reproduce the same results to the simplistic of terms from these equations.
+        /// in the meantime, we have a focus on HC5_2 [HandleCollision5_2] function() above which should be able to reproduce the same results to the simplistic of terms from these equations as it assumes all balls to be equal in masses.
 
 
 
@@ -1189,7 +1114,7 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
         float M = k_BALL_MASS;                  // Mass of the ballA and ballB
         float Inv_M = (1f / M);                 // Inverse Mass, although we are assuming that all balls have equal mass for now, it could be also written as (2 * Inv_M), but i am doing it for paper reasons to help keep us on track, so dont be afraid.
         float I = ((2f / 5f) * M * (R * R));    // Moment of Inertia
-        float Inv_I = (1f / I);                 // Inverse Moment of Inertia, this way you can use it for Multiplications instead, thus avoiding Division by 0.
+        float Inv_I = (1f / I);                 // Inverse Moment of Inertia, this way you can use it for Multiplications instead.
 
         // Prepare Lever Arms that will be used for Torque Later.
         Vector3 leverArm_id = -normal * R;
@@ -1223,18 +1148,14 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
 
         // F = m * a
         //NewtonForce = M * relativeVelocity.magnitude; //Since the collision time is very short, we assume the acceleration is instantaneous and equal to the relative velocity [ΔV/ΔT = acceleration]
-        //Debug.Log("<size=16><i>Newton Force: </i></size>" + NewtonForce);
-
 
 
         /// PART 1
         /// NORMAL IMPULSE (TRANSFERRED LINEAR MOMENTUM_)
         /// F' = m*v'n
         float J = numerator / denominator;
-        J /= normal.magnitude;  // <-- this is probably done wrong in here, our normal is not a floating point that stores the numbers of contact point a ball receives at a given time. Instead it is a Vector pointing a the direction of the collision.
-                                // However in Theory this seems correct, bit-wit states this will allow the forces to be distributed evenlly when an object encounter 2 or more simultaneous collision,
-                                // However, we only handle collisions between two balls at a time here, so it cant be properly done here, Maybe we can create a function to handle and store how many collision Vectors points a single ball is receiving at a given time? Hmm...
-
+        //J /= 1f;  // <-- not necessary, but in case someone tries something with boxes or other shapes just for fun, you need to divide the impulse by the amount of collision detections, Circles are simpler and has only 1 point of detections.
+                                
         Vector3 Fn = normal * J;
 
         // Apply normal impulse (transferred linear momentum) to update velocities
@@ -1258,23 +1179,17 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
         Vector3 tangentialForce = relativeVelocity - Vector3.Dot(relativeVelocity, normal) * normal;
 
         // Apply friction to Tangential Force [https://billiards.colostate.edu/faq/physics/physical-properties/] 
-        // Capping at 0.06 Mu as shown in https://billiards.colostate.edu/technical_proofs/TP_4-4.pdf and https://billiards.colostate.edu/technical_proofs/TP_4-3.pdf
-        // However, the same paper tells us that friction will vary at different shot speeds and cut angles.
+        // at 0.06 Mu as shown in https://billiards.colostate.edu/technical_proofs/TP_4-4.pdf and https://billiards.colostate.edu/technical_proofs/TP_4-3.pdf
+        // the same paper tells us that friction will vary at different shot speeds and cut angles.
         // if that is the case we need a Static Friction and Dynamic Friction.
 
-        // Static Friction is a Value much higher than Dynamic Friction, it occurs at very low velocities close to 0.
+        // Static Friction is a Value much higher than Dynamic Friction, it occurs at low relative velocities close to 0.
         // in this friction model we can see that friction is at peak around 0.108f, this is likely our static friction.
 
         // because the Dynamic friction is the friction which occurs once the static friction is overcome,
-        // the state in which this seems happens is anywhere where the balls are not stationary.
-
-        // we may likely need to clamp this, but i will keep this commented out as a reference.
-        //Vector3 frictionForce = tangentialForce * Mathf.Clamp(mu, 0.001f, 0.06f);
-        //frictionForce = Vector3.ClampMagnitude(frictionForce, 0.06f);
 
 
-        /// usually, we would want to normalize this vector to ensure our numerical values wont exceed or break.
-        /// but what if the tangent value is 0 or close to 0? in this case we should skip any calculation from the normalization.
+        /// normalize this vector to ensure our numerical values wont exceed or break once it is not longer 0.
         if (Vector3.Equals(tangentialForce, Vector3.zero))
         {
             return;
@@ -1285,8 +1200,8 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
         }
 
 
-        /// we now supposedly start caculating the same way as before but for our tangential/perpendicular/frictional impulse.
-        /// same initial solutions, but we replace `Normal` for `tangentialForce` normal [calculated above]
+        /// we now supposedly start caculating the same way as before but for our tangent impulse.
+        /// same initial solutions, but we replace `Normal` for `tangentialForce` (because that is our tangent impulse) [calculated above]
 
         Vector3 rAPCrossT = Vector3.Cross(ra, tangentialForce);
         Vector3 rBPCrossT = Vector3.Cross(rb, tangentialForce);
@@ -1299,15 +1214,14 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
 
         // Impulse magnitude calculation
         float numeratorT = -vDotT;
-        float denominatorT = Inv_M + Inv_M + Vector3.Dot(termAT + termBT, tangentialForce); // i am not sure if this Denominator is needed, because we already solved for this perpendicular in step 1.
+        float denominatorT = Inv_M + Inv_M + Vector3.Dot(termAT + termBT, tangentialForce); // i am not sure if this Denominator is needed here, because we already solved for this perpendicular in step 1 using Cross Product Value, feel free to try it
 
         float JT = numeratorT / denominator;
-        JT /= normal.magnitude; // <= same story as the first one.
-
+        //JT /= normal.magnitude; // <= same story as the first one.
 
         Vector3 Ft;
 
-        if (Mathf.Abs(JT) <= J * 0.108f) // we assume 0.1f or 0.108f as Static Friction.
+        if (Mathf.Abs(JT) <= J * 0.108f) // we assume the high value from our firctional exponent 0.108f to be Static Friction.
         {
             // Impulse Friction Calculation
             Ft = tangentialForce * JT;
@@ -1325,7 +1239,120 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
         balls_W[id] += -Vector3.Cross(ra, Ft) * Inv_I;
         balls_W[i] += Vector3.Cross(rb, Ft) * Inv_I;
 
+        /// Now check out HandleCollision6 function() bellow, it unify and simplify the terms and expressions found here provided with Dr.Dave billiards Technical Prof documents.
+        /// HC6 is essentially a much better, shorter, simple and elegant way of 5_2 and 5_4 combined.
     }
+
+
+    public void HandleCollision6(int i, int id, Vector3 normal)
+    {
+        // Resources used
+        // https://billiards.colostate.edu/technical-proof/ - by David G. Alciatore, PhD, PE ("Dr. Dave") https://billiards.colostate.edu/technical_proofs/new/TP_A-5.pdf , https://billiards.colostate.edu/technical_proofs/new/TP_A-6.pdf and https://billiards.colostate.edu/technical_proofs/new/TP_A-14.pdf
+        // https://www.chrishecker.com/Rigid_Body_Dynamics - by Chris Hecker in Game Developer Magazine. we are not allowed to link Heckers PDF documents here, he suggests we link to his website instead :)
+
+        float e = k_BALL_E;
+        float R = k_BALL_RADIUS;
+        float M = k_BALL_MASS;
+        float I = ((2f / 5f) * M * (R * R));
+        
+        // Relative Linear Velocity
+        Vector3 v_rel = balls_V[id] - balls_V[i];
+
+        // Calculate the relative velocity at the contact point [TP.A14 PAGE 2, Eq 8, 9] / Dr.Dave
+        Vector3 v_rel_contact = v_rel + Vector3.Cross(balls_W[id], R * -normal) - Vector3.Cross(balls_W[i], R * normal);
+        
+        // Calculate friction coefficient [TP.A14 Page 4]
+        float mu = CalculateFrictionCoefficient(v_rel_contact);
+        mu = muFactor_for_5_2 * mu;
+
+        // Calculate the normal component of the relative velocity [J] - Numertor of  Equation 6 / Chris Hecker Physics, Part 3: Collision Response - Feb/Mar 97 - Page 4
+        float v_rel_normal = Vector3.Dot(v_rel_contact, normal);
+
+        // Calculate the tangential component of the relative velocity
+        Vector3 v_rel_tangential = v_rel_contact - v_rel_normal * normal;
+
+        // Calculate the normal impulse J - PAGE 9 FIGURE 4. in Physics Articles, Physics Part 4 The Third Dimension - June 97
+        float J_normal = -(1 + e) * v_rel_normal / (1 / M + 1 / M + (R * R * Vector3.Dot(normal, Vector3.Cross(Vector3.Cross(normal, balls_W[id]), normal)) / I) + (R * R * Vector3.Dot(normal, Vector3.Cross(Vector3.Cross(normal, balls_W[i]), normal)) / I));
+
+        // Calculate the tangential impulse [TP.A6 PAGE 1, Eq 6] and [TP.A14 PAGE2 Eq 7] / Dr.Dave
+        float J_tangential = -mu * Mathf.Abs(J_normal);
+
+        // Apply the normal impulse to linear velocities
+        balls_V[id] += J_normal * normal / M;
+        balls_V[i] -= J_normal * normal / M;
+
+        // Apply the tangential impulse to linear velocities
+        balls_V[id] += J_tangential * v_rel_tangential.normalized / M;
+        balls_V[i] -= J_tangential * v_rel_tangential.normalized / M;
+
+        // Apply the tangential impulse to angular velocities
+        balls_W[id] += R * Vector3.Cross(normal, J_tangential * v_rel_tangential.normalized) / I; //(R * R);
+        balls_W[i] -= R * Vector3.Cross(normal, J_tangential * v_rel_tangential.normalized) / I; //(R * R);
+
+
+
+        ///////////////// Simple Numerical Debugs for Plot Data
+        if (ballRichDebug)
+        {
+            // Pushing Impulses above into a single Vector Variable, you may now use this for further Debug testing.
+            Vector3 Fn = J_normal * normal; // Alson known as V'n [need the scalar? use J_normal]
+            Vector3 Ft = J_tangential * v_rel_tangential.normalized; // Also known as V't [need the scalar use J_tangential]
+
+
+            Vector3 centersLine = (balls_V[i] - balls_V[id]).normalized; // Line connecting centers
+            float cutAngle = Vector3.Angle(centersLine, balls_V[id]);
+            Debug.Log("Cut Angle: " + (cutAngle - 90f));
+        
+            // --- Throw Angle based on Tangential Impulse ---
+            Debug.Log("<size=12><b><i>Throw Angle ATAN_MU/DEG:</i></b></size> " + 
+                        Mathf.Atan(mu).ToString("<size=12><b><i>0.000μ</i></b></size>") 
+                        + " / " + 
+                        (Mathf.Atan(mu) * Mathf.Rad2Deg).ToString("<size=12><b><i>0.000 DEG</i></b></size>"));
+
+            float DELTA_W = R * Ft.magnitude / I;
+            Debug.Log("<size=16><b><i><color=white>Spin Transfer Rate</color></i></b></size>: " + DELTA_W.ToString("<size=16><i><color=white>00.00</color></i></size>" + "<color=white><i>STP</i></color>"));
+
+            Debug.DrawLine(balls[0].transform.position, balls[0].transform.position + 
+                new Vector3(v_rel_contact.x, 0, v_rel_contact.z), Color.yellow, 2f);
+
+
+            /* // Waiting for UDON 2
+            // Check if the ball already has a Trail Renderer
+            if (!balls[0].gameObject.GetComponent<TrailRenderer>())
+            {
+                // Add the Trail Renderer component to the ball
+                TrailRenderer trail = balls[0].gameObject.AddComponent<TrailRenderer>();
+
+                // Customize the Trail Renderer parameters
+                trail.startWidth = 0.001f;
+                trail.endWidth = 0.001f;
+                trail.startColor = Color.white;
+                trail.endColor = Color.white;
+                trail.time = 1f;
+            }
+            else
+        
+            // Remove the Trail Renderer if the flag is disabled
+            if (balls[0].gameObject.GetComponent<TrailRenderer>())
+            {
+                Destroy(balls[0].gameObject.GetComponent<TrailRenderer>());
+            }
+            */
+
+        }
+ 
+    }
+
+    private float CalculateFrictionCoefficient(Vector3 v_rel_contact)
+    {
+        //  https://billiards.colostate.edu/technical_proofs/new/TP_A-14.pdf PAGE 4  theoretical curve fit [Dr.Dave Friction model based on Marlow Data Table 10 on p. 245 in "The Physics of Pocket Billiards," 1995]
+        float A = 9.951f * (Mathf.Pow(10, -3));
+        float B = 0.108f;
+        float C = 1.088f;
+        return A + B * Mathf.Exp(-C * v_rel_contact.magnitude);
+    }
+
+
 
     /// DEBUG
     void ballDebugVisualizer(uint sn_pocketed, Vector3 normal, int id)
@@ -1602,7 +1629,7 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
         float Wz_C = Mathf.Clamp(W.z, -Max, Max);
 
 
-        W = new Vector3(Wx_C, Wy_C, Wz_C); // (√300²x + 3300²y + 300²z) this results in 520~ MAG as opposed to 1765~ MAG
+        W = new Vector3(Wx_C, Wy_C, Wz_C); // (√300²x + 300²y + 300²z) this results in 520~ MAG as opposed to 1765~ MAG
 
         balls_W[id] = W;
         balls_V[id] = V;
