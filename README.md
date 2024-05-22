@@ -6,6 +6,7 @@ This table is a fork of the Pool Parlor table by metaphira and Toasterly
 Originally coded by Harry-T
 
 The aim of this table is provide an updated and improved pool table that is as realistic* as possible for cue sports enthusiasts, while also providing quality of life enhancements and useful features that everyone can enjoy.
+See it in action in the VRChat world 'Sacc's Snooker Club'
 
 ### Features
 - New game set up menu:
