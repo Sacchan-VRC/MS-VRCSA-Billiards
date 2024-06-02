@@ -323,9 +323,9 @@ public class NetworkingManager : UdonSharpBehaviour
                 foulStateSynced = 4;
             }
 
-            if (fourBallCueBallSynced > 5)//reused variable to track number of fouls/repeated shots
+            if (fourBallCueBallSynced > 3)//reused variable to track number of fouls/repeated shots
             {
-                fourBallCueBallSynced = 0;//after the limit, 5, we set it to 0 to prevent the SnookerUndo button from appearing again
+                fourBallCueBallSynced = 0;//at the limit, 4, we set it to 0 to prevent the SnookerUndo button from appearing again
             }
             else
             {
