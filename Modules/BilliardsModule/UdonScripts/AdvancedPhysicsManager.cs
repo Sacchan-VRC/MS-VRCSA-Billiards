@@ -623,80 +623,79 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
                         }
                     }
                 }
-                else if (originalDelta.y > 0)
+                // ball cast to the bounds of the cushions in order to prevent clipping through them
+                // balls are essentially cubes for the purpose of collision with cushions
+                // so this wont fail to cause collisions when near the top of cushions
+                // these checks only run while in table rectangle, so that it detects a hit once at the edge, allowing it to go into pockets
+                // and not get stuck at the edge due to it running every substep
+                if (originalDelta.x > 0)
                 {
-                    // if moving upward, ball cast to the bounds of the cushions in order to prevent clipping through them
-                    // balls are essentially cubes for the purpose of collision with cushions
-                    // so this wont fail to cause collisions when near the top of cushions
-                    if (originalDelta.x > 0)
+                    if (pos.x + k_BALL_RADIUS <= tableEdge_x.x)
                     {
-                        if (pos.x + k_BALL_RADIUS < tableEdge_x.x) // prevents more than one substep in a row doing this
+                        Vector3 cushionPos = tableEdge_x;
+                        cushionPos.x += 0.001f;
+                        if (_phy_ball_plane(pos, norm, cushionPos, -Vector3.right))
                         {
-                            Vector3 cushionPos = tableEdge_x;
-                            cushionPos.x += 0.001f;
-                            if (_phy_ball_plane(pos, norm, cushionPos, -Vector3.right))
+                            nmag = (pos - BallPlane_output).magnitude;
+                            if (nmag < minnmag)
                             {
-                                nmag = (pos - BallPlane_output).magnitude;
-                                if (nmag < minnmag)
-                                {
-                                    minnmag = nmag;
-                                    hitTable = true;
-                                    hitid = -1;
-                                }
+                                minnmag = nmag;
+                                hitTable = true;
+                                hitid = -1;
                             }
                         }
                     }
-                    else
+                }
+                else
+                {
+                    if (pos.x - k_BALL_RADIUS >= -tableEdge_x.x)
                     {
-                        if (pos.x - k_BALL_RADIUS > -tableEdge_x.x)
+                        Vector3 cushionPos = -tableEdge_x;
+                        cushionPos.x -= 0.001f;
+                        if (_phy_ball_plane(pos, norm, cushionPos, Vector3.right))
                         {
-                            Vector3 cushionPos = -tableEdge_x;
-                            cushionPos.x -= 0.001f;
-                            if (_phy_ball_plane(pos, norm, cushionPos, Vector3.right))
+                            nmag = (pos - BallPlane_output).magnitude;
+                            if (nmag < minnmag)
                             {
-                                nmag = (pos - BallPlane_output).magnitude;
-                                if (nmag < minnmag)
-                                {
-                                    minnmag = nmag;
-                                    hitTable = true;
-                                    hitid = -1;
-                                }
+                                minnmag = nmag;
+                                hitTable = true;
+                                hitid = -1;
                             }
                         }
                     }
-                    if (originalDelta.z > 0)
+                }
+                if (originalDelta.z > 0)
+                {
+                    if (pos.z + k_BALL_RADIUS <= tableEdge_z.z)
                     {
-                        if (pos.z + k_BALL_RADIUS < tableEdge_z.z)
+                        Vector3 cushionPos = tableEdge_z;
+                        cushionPos.z += 0.001f;
+                        if (_phy_ball_plane(pos, norm, cushionPos, -Vector3.forward))
                         {
-                            Vector3 cushionPos = tableEdge_z;
-                            cushionPos.z += 0.001f;
-                            if (_phy_ball_plane(pos, norm, cushionPos, -Vector3.forward))
+                            nmag = (pos - BallPlane_output).magnitude;
+                            if (nmag < minnmag)
                             {
-                                nmag = (pos - BallPlane_output).magnitude;
-                                if (nmag < minnmag)
-                                {
-                                    minnmag = nmag;
-                                    hitTable = true;
-                                    hitid = -1;
-                                }
+                                minnmag = nmag;
+                                hitTable = true;
+                                hitid = -1;
                             }
                         }
                     }
-                    else
+                }
+                else
+                {
+                    if (pos.z - k_BALL_RADIUS >= -tableEdge_z.z)
                     {
-                        if (pos.z - k_BALL_RADIUS > -tableEdge_z.z)
+                        Vector3 cushionPos = -tableEdge_z;
+                        cushionPos.z -= 0.001f;
+                        if (_phy_ball_plane(pos, norm, cushionPos, Vector3.forward))
                         {
-                            Vector3 cushionPos = -tableEdge_z;
-                            cushionPos.z -= 0.001f;
-                            if (_phy_ball_plane(pos, norm, cushionPos, Vector3.forward))
+                            nmag = (pos - BallPlane_output).magnitude;
+                            if (nmag < minnmag)
                             {
-                                nmag = (pos - BallPlane_output).magnitude;
-                                if (nmag < minnmag)
-                                {
-                                    minnmag = nmag;
-                                    hitTable = true;
-                                    hitid = -1;
-                                }
+                                minnmag = nmag;
+                                hitTable = true;
+                                hitid = -1;
                             }
                         }
                     }
