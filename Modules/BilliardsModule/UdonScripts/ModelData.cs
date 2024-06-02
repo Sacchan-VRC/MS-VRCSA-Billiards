@@ -74,6 +74,7 @@ public class ModelData : UdonSharpBehaviour
             "\n\n<b>[DEFAULT = 0.5] [VALID RANGES 0.5 - 0.7]</b>")]
     [SerializeField] public float bt_BounceFactor = 0.5f; // K_BOUNCE_FACTOR
 
+    [SerializeField] public float bt_PocketRestitutionFactor = 0.7f; // k_POCKET_RESTITUTION
 
     /// End of Ball-Table Header ---
 

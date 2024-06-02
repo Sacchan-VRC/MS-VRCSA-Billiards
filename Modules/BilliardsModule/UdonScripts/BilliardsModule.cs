@@ -48,6 +48,7 @@ public class BilliardsModule : UdonSharpBehaviour
     [NonSerialized] public bool useRailLower; // useRailHeightLower
     [NonSerialized] public bool isDRate; // bt_isDRate
     [NonSerialized] public float K_BOUNCE_FACTOR; // BounceFactor
+    [NonSerialized] public float k_POCKET_RESTITUTION; // Reduces bounce inside of pockets
     [Header("Cushion Model:")]
     [NonSerialized] public bool isHanModel; // bc_UseHan05
     [NonSerialized] public float k_E_C; // bc_CoefRestitution
@@ -2094,6 +2095,7 @@ public class BilliardsModule : UdonSharpBehaviour
         k_RAIL_DEPTH_WIDTH = data.railDepthWidth;
         k_RAIL_DEPTH_HEIGHT = data.railDepthHeight;
         k_SPOT_POSITION_X = data.rackTrianglePosition;
+        k_POCKET_RESTITUTION = data.bt_PocketRestitutionFactor;
         k_vE = data.cornerPocket;
         k_vF = data.sidePocket;
 

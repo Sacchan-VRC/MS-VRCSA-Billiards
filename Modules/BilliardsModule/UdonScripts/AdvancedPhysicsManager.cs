@@ -98,6 +98,7 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
     float k_RAIL_HEIGHT_LOWER;
     float k_RAIL_DEPTH_WIDTH;
     float k_RAIL_DEPTH_HEIGHT;
+    float k_POCKET_RESTITUTION;
     private Vector3 k_vE;
     private Vector3 k_vF;
     float r_k_CUSHION_RADIUS;
@@ -2087,7 +2088,7 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
         // inside of pockets are less elastic
         if (isPocketBounce)
         {
-            e *= 0.8f;
+            e *= k_POCKET_RESTITUTION;
         }
 
         // [Equation 16]
@@ -2325,6 +2326,7 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
         k_Cushion_MU = table.k_Cushion_MU;
         k_BALL_E = table.k_BALL_E;
         muFactor = table.muFactor;
+        k_POCKET_RESTITUTION = table.k_POCKET_RESTITUTION;
         //
 
         Vector3 k_CONTACT_POINT = new Vector3(0.0f, -k_BALL_RADIUS, 0.0f);
@@ -2727,7 +2729,7 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
                             N = k_vC_vZ_normal;
 
                             // Dynamic
-                            _phy_bounce_cushion(ref newVel, ref newAngVel, id, Vector3.Scale(N, _sign_pos), !table.isSnooker6Red);
+                            _phy_bounce_cushion(ref newVel, ref newAngVel, id, Vector3.Scale(N, _sign_pos));
                             shouldBounce = true;
 #if HT8B_DRAW_REGIONS
                             if (id == 0) Debug.Log("Region J (Inside Corner Pocket)");
@@ -2753,7 +2755,7 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
                                     N = -pocketNormal;
 
                                     // Dynamic
-                                    _phy_bounce_cushion(ref newVel, ref newAngVel, id, Vector3.Scale(N, _sign_pos), !table.isSnooker6Red);
+                                    _phy_bounce_cushion(ref newVel, ref newAngVel, id, Vector3.Scale(N, _sign_pos), true);
                                     shouldBounce = true;
                                 }
                             }
@@ -2874,7 +2876,7 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
                             N = k_vB_vY_normal;
 
                             // Dynamic
-                            _phy_bounce_cushion(ref newVel, ref newAngVel, id, Vector3.Scale(N, _sign_pos), !table.isSnooker6Red);
+                            _phy_bounce_cushion(ref newVel, ref newAngVel, id, Vector3.Scale(N, _sign_pos));
                             shouldBounce = true;
 #if HT8B_DRAW_REGIONS
                             if (id == 0) Debug.Log("Region G (Inside Corner Pocket)");
@@ -2900,7 +2902,7 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
                                     N = -pocketNormal;
 
                                     // Dynamic
-                                    _phy_bounce_cushion(ref newVel, ref newAngVel, id, Vector3.Scale(N, _sign_pos), !table.isSnooker6Red);
+                                    _phy_bounce_cushion(ref newVel, ref newAngVel, id, Vector3.Scale(N, _sign_pos), true);
                                     shouldBounce = true;
                                 }
                             }
