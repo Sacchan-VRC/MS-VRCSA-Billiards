@@ -2965,7 +2965,7 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
                                     N = -pocketNormal;
 
                                     // Dynamic
-                                    _phy_bounce_cushion(ref newVel, ref newAngVel, id, Vector3.Scale(N, _sign_pos));
+                                    _phy_bounce_cushion(ref newVel, ref newAngVel, id, Vector3.Scale(N, _sign_pos), true);
                                     shouldBounce = true;
                                 }
                             }
