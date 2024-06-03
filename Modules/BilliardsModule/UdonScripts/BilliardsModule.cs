@@ -1699,6 +1699,11 @@ public class BilliardsModule : UdonSharpBehaviour
                             //pocketing a red on a colorturn is a foul with a penalty of 7
                             highestPocketedBallScore = 7;
                         }
+                        if (numBallsPocketed > 1)
+                        {
+                            _LogInfo("6RED: Foul: Two balls were pocketed on a colorTurn");
+                            foulCondition = true;
+                        }
                     }
                     else
                     {
