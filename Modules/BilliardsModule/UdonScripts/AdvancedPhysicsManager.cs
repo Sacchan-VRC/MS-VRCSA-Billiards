@@ -1263,7 +1263,7 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
 
         // Calculate friction coefficient [TP.A14 Page 4]
         float mu = CalculateFrictionCoefficient(v_rel_contact);
-        mu = muFactor_for_5_2 * mu;
+        mu = muFactor * mu;
 
         // Calculate the normal component of the relative velocity [J] - Numertor of  Equation 6 / Chris Hecker Physics, Part 3: Collision Response - Feb/Mar 97 - Page 4
         float v_rel_normal = Vector3.Dot(v_rel_contact, normal);
