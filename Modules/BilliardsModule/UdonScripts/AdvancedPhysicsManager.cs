@@ -2038,22 +2038,8 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
 
 
         // Heuristic Solution
-        float RubberH = RubberF.Evaluate(F);
-        if (isHandleCollison5_2)
-        {
-            θ = Mathf.Asin(P / R);
-        }
-        else
-        {
-            if (balls_P[id].y > 0.01f)
-            {
-                θ = Mathf.Asin(P / R);
-            }
-            else
-            {
-                θ = Mathf.Asin(P / (R + RubberH)); // We assume that once the balls *sinks* into the cushion at high speeds, its Hypotenuse Lenght is changed some, when in reality we perceive the cushion taking a slightly larger area of the ball during an infinitesimally low time, thus likely shifting its point point of contact from initial the initial one [Theory] (this Heuristic method exists only to prevent the ball from receiving an unnecesary amount of spin when frozen at cushion)
-            }
-        }
+        θ = Mathf.Asin(P / R);
+
         // 0.2733929 == hitting pocket on flat ground, a higher number is only possible while falling into pocket
         // prevents weird bug where ball can fall through the back of the pocket
         // also prevents NaN even though unity documentation says it doesn't
