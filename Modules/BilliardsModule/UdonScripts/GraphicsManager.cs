@@ -601,7 +601,7 @@ int uniform_cue_colour;
 
     public void _RefreshTimers()
     {
-        if (!table.timerRunning || table.localPlayerDistant)
+        if (!table.timerRunning || table.localPlayerDistant || !table.gameLive)
         {
             _HideTimers();
             return;
