@@ -254,7 +254,7 @@ public class GraphicsManager : UdonSharpBehaviour
         }
         else
         {
-            playerNames[0].text = "<size=7>" + _FormatName(VRCPlayerApi.GetPlayerById(players[0])) + "\n" + _FormatName(VRCPlayerApi.GetPlayerById(players[2]));
+            playerNames[0].text = "<size=7><line-height=8.25>" + _FormatName(VRCPlayerApi.GetPlayerById(players[0])) + "\n" + _FormatName(VRCPlayerApi.GetPlayerById(players[2]));
         }
 
         if (players[3] == -1 || !table.teamsLocal)
@@ -263,7 +263,7 @@ public class GraphicsManager : UdonSharpBehaviour
         }
         else
         {
-            playerNames[1].text = "<size=7>" + _FormatName(VRCPlayerApi.GetPlayerById(players[1])) + "\n" + _FormatName(VRCPlayerApi.GetPlayerById(players[3]));
+            playerNames[1].text = "<size=7><line-height=8.25>" + _FormatName(VRCPlayerApi.GetPlayerById(players[1])) + "\n" + _FormatName(VRCPlayerApi.GetPlayerById(players[3]));
         }
     }
 
