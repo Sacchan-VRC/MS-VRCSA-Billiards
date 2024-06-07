@@ -1443,12 +1443,12 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
             if (VXZ.sqrMagnitude < 0.0001f && Mathf.Abs(W.y) > 50f) // Same thing as above but for users who may have picked MU instead.
             {
                 mu_spf = 0.3f;
-                Debug.Log("some Balls have come at a rest, however they are still spinning, Friction Rate is INCREASED to help this turn end sooner");
+                // Debug.Log("some Balls have come at a rest, however they are still spinning, Friction Rate is INCREASED to help this turn end sooner");
             }
             else
             {
                 mu_spf = k_F_SPIN;
-                Debug.Log("<size=24>Friction Rate Reseted</size>");
+                // Debug.Log("<size=24>Friction Rate Reseted</size>");
             }
             mu_sp = mu_spf;
         }
