@@ -50,6 +50,8 @@ Import the package
 Click MS-VRCSA->Set Up Pool Table Layers
 	- this names layer 22 to 'BilliardsModule' and sets the collision matrix so that it only collides with itself
 Place one or more Prefab/MS-VRCA Table prefabs into your scene
+Because tables can be swapped out they can't easily be lightmapped. Use just one table if you wish to have light mapping
+ - Remove the unused tables from the list in BilliardsModule and delete their objects
 
 ### Table Creation
 Copy the hierarchy of the existing tables and you should be fine, objects whose name begin with a period are used in the code, so don't change their names.
@@ -60,7 +62,7 @@ The shader for the table's Metallic/Smoothness texture can be exported as a 2 ch
 - Saving/loading shots isn't perfect due to some values getting compressed - this may be fixable
 
 ### Future
-There's still a lot that can be done to improve things
+There's still a lot that can be done to improve things - I don't intend to do any more major work on this myself - Sacchan
 - Stuff that could be useful for worlds like support for custom ball and table skins
 - A system to export shots from an entire match for preservation
 - Snooker with 15 red balls:
@@ -69,6 +71,8 @@ There's still a lot that can be done to improve things
 	- 9Ball push out rule
 	- Break rules (4 balls must contact cushion on break)
 - Further improvements to physics
+- Misscues
+- New sound effects
 - Optimization - may not be necessary with udon2 coming soon
 - 10Ball mode
 - pocket selection for 8Ball
@@ -80,7 +84,7 @@ There's still a lot that can be done to improve things
 
 ### Credits
 Neko Mabel:
-- Cushion collision, ball-to-ball collision, rolling, and bounce physics
+- Ball-cushion collision function, ball-to-ball collision, rolling, and bounce functions
 - Deep knowledge about all things billiards related
 
 Sacchan:
