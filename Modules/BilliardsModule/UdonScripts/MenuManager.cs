@@ -8,7 +8,7 @@ using TMPro;
 [UdonBehaviourSyncMode(BehaviourSyncMode.None)]
 public class MenuManager : UdonSharpBehaviour
 {
-    private readonly uint[] TIMER_VALUES = new uint[] { 0, 60, 30, 15 };
+    private readonly uint[] TIMER_VALUES = new uint[] { 0, 60, 45, 30, 15 };
 
     [SerializeField] private GameObject menuStart;
     [SerializeField] private GameObject menuJoinLeave;
@@ -359,13 +359,13 @@ public class MenuManager : UdonSharpBehaviour
         if (selectedTimer > 0)
             selectedTimer--;
         else
-            selectedTimer = 3;
+            selectedTimer = 4;
 
         table._TriggerTimerChanged(TIMER_VALUES[selectedTimer]);
     }
     public void TimeLeft()
     {
-        if (selectedTimer < 3)
+        if (selectedTimer < 4)
             selectedTimer++;
         else
             selectedTimer = 0;
