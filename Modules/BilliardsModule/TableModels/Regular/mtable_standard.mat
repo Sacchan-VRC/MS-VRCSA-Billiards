@@ -106,6 +106,8 @@ Material:
     m_Ints: []
     m_Floats:
     - _BumpScale: 1
+    - _ClothHue: 0
+    - _ClothSaturation: 1
     - _Cutoff: 0.5
     - _DetailBrightness: 0.365
     - _DetailCloth: 0
