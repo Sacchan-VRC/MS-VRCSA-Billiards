@@ -1704,6 +1704,11 @@ public class BilliardsModule : UdonSharpBehaviour
                             _LogInfo("6RED: Foul: Two balls were pocketed on a colorTurn");
                             foulCondition = true;
                         }
+                        if (numBallsPocketed == 1 && ((1u << firstHit & ballsPocketedLocal) == 0))
+                        {
+                            _LogInfo("6RED: Foul: Pocketed color ball was not first hit");
+                            foulCondition = true;
+                        }
                     }
                     else
                     {
@@ -1718,7 +1723,7 @@ public class BilliardsModule : UdonSharpBehaviour
                 {
                     if (firstHit != break_order_sixredsnooker[nextColor] && !freeBall)
                     {
-                        _LogInfo("6RED: Foul: Wrong color as first hit");
+                        _LogInfo("6RED: Foul: Wrong color was first hit");
                         foulFirstHitScore = sixredsnooker_ballpoints[firstHit];
                         foulCondition = true;
                     }
