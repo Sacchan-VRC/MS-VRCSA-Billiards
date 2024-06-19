@@ -261,6 +261,7 @@ public class NetworkingManager : UdonSharpBehaviour
     {
         gameStateSynced = 3;
         winningTeamSynced = 2;
+        colorTurnSynced = false;
         for (int i = 0; i < MAX_PLAYERS; i++)
         {
             playerIDsSynced[i] = -1;
