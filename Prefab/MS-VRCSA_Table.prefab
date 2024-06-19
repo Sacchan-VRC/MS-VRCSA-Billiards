@@ -8054,9 +8054,17 @@ MonoBehaviour:
     SerializationNodes: []
   _udonSharpBackingUdonBehaviour: {fileID: 3671293032783138245}
   PHYSICSNAME: <color=#FFD700>Advanced V0.5K</color>
+  hitSounds:
+  - {fileID: 8300000, guid: c5c3277a589929d49be99bc2f100aae1, type: 3}
+  - {fileID: 8300000, guid: e55c033e7d8b29e409baf5343b67bead, type: 3}
+  - {fileID: 8300000, guid: feebba097cc8e2d4fb236753ecd5c137, type: 3}
+  bounceSounds:
+  - {fileID: 8300000, guid: 70b124838479ce44a952b1251f336e00, type: 3}
+  cushionSounds: []
+  transform_Surface: {fileID: 1961406577989517608}
+  balls: []
   isHandleCollison5_2: 0
   muFactor_for_5_2: 0.7
-  ballRichDebug: 0
   RubberF:
     serializedVersion: 2
     m_Curve:
@@ -8090,16 +8098,8 @@ MonoBehaviour:
     m_PreInfinity: 2
     m_PostInfinity: 2
     m_RotationOrder: 4
+  ballRichDebug: 0
   isCushionRichDebug: 0
-  hitSounds:
-  - {fileID: 8300000, guid: c5c3277a589929d49be99bc2f100aae1, type: 3}
-  - {fileID: 8300000, guid: e55c033e7d8b29e409baf5343b67bead, type: 3}
-  - {fileID: 8300000, guid: feebba097cc8e2d4fb236753ecd5c137, type: 3}
-  bounceSounds:
-  - {fileID: 8300000, guid: 70b124838479ce44a952b1251f336e00, type: 3}
-  cushionSounds: []
-  transform_Surface: {fileID: 1961406577989517608}
-  balls: []
   Test_Mode: 0
   Test_MoveSpeed: 3
   Test_RotSpeed: 50
@@ -16220,7 +16220,7 @@ Transform:
   m_GameObject: {fileID: 5951911174597359635}
   serializedVersion: 2
   m_LocalRotation: {x: 0.7071068, y: -0, z: -0, w: 0.7071068}
-  m_LocalPosition: {x: 0.189, y: 5, z: 0}
+  m_LocalPosition: {x: 0.189, y: 3.13, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -16258,7 +16258,7 @@ Camera:
     width: 1
     height: 1
   near clip plane: 0.3
-  far clip plane: 1000
+  far clip plane: 4
   field of view: 73.7
   orthographic: 1
   orthographic size: 1.08
