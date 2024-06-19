@@ -847,6 +847,8 @@ public class StandardPhysicsManager : UdonSharpBehaviour
         // Unrotate result
         balls_V[id] += rb * V1;
         balls_W[id] += rb * W1;
+
+        table._TriggerBounceCushion();
     }
 
 
