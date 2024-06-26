@@ -1,5 +1,4 @@
 ﻿using System;
-using Cysharp.Threading.Tasks.Triggers;
 using UdonSharp;
 using UnityEngine;
 using VRC.SDKBase;
@@ -460,7 +459,7 @@ public class CueController : UdonSharpBehaviour
 
     private void clampTransform(Transform child)
     {
-        child.position = table.transform.TransformPoint(clamp(table.transform.InverseTransformPoint(child.position), -3.25f, 3.25f, 0f, 3f, -2.5f, 2.5f));
+        child.position = table.transform.TransformPoint(clamp(table.transform.InverseTransformPoint(child.position), -4.25f, 4.25f, 0f, 4f, -3.5f, 3.5f));
     }
 
     public GameObject _GetDesktopMarker()

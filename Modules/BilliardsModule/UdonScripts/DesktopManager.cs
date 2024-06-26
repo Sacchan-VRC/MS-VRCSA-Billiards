@@ -99,7 +99,7 @@ public class DesktopManager : UdonSharpBehaviour
         pressE.transform.position = basePosition;
 
         Vector3 playerPos = table.transform.InverseTransformPoint(Networking.LocalPlayer.GetPosition());
-        bool canUseUI = (Mathf.Abs(playerPos.x) < 2.0f) && (Mathf.Abs(playerPos.z) < 1.5f);
+        bool canUseUI = (Mathf.Abs(playerPos.x) < 3.5f) && (Mathf.Abs(playerPos.z) < 2.5f);
 
         pressE.SetActive(holdingCue && canUseUI);
 
