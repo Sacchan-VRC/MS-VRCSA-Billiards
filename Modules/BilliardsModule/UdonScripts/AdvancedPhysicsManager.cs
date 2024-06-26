@@ -280,6 +280,7 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
                 }
                 else
                 {
+                    if (!table.markerObj.activeSelf && table.isReposition) { table.markerObj.SetActive(true); }
                     table.devhit.SetActive(false);
                     table.guideline.SetActive(false);
                 }
