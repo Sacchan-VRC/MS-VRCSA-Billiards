@@ -382,7 +382,6 @@ public class BilliardsModule : UdonSharpBehaviour
         cameraManager._Tick();
         graphicsManager._Tick();
         tickTimer();
-        _Update9BallMarker();
 
         networkingManager._FlushBuffer();
         _EndPerf(PERF_MAIN);
@@ -1014,6 +1013,8 @@ public class BilliardsModule : UdonSharpBehaviour
         _LogInfo($"onRemoteBallPositionsChanged");
 
         Array.Copy(ballsPSynced, ballsP, ballsP.Length);
+
+        _Update9BallMarker();
     }
 
 
@@ -1563,7 +1564,7 @@ public class BilliardsModule : UdonSharpBehaviour
             }
 
             // Common informations
-            bool isSetComplete = (ballsPocketedLocal & bmask) == bmask;
+            bool isSetComplete = (ballsPocketedOrig & bmask) == bmask;
             bool isScratch = (ballsPocketedLocal & 0x1U) == 0x1U || forceScratch;
             bool nextTurnBlocked = false;
 
@@ -2164,11 +2165,17 @@ public class BilliardsModule : UdonSharpBehaviour
 
         desktopManager._RefreshTable();
 
+        //set height of guideline
         Transform guideDisplay = guideline.gameObject.transform.Find("guide_display");
-        Vector3 gdlp = guideDisplay.localPosition; gdlp.y = 0;
-        gdlp += Vector3.down * (k_BALL_RADIUS - 0.003f) / guideline.transform.localScale.y;// divide to convert back to worldspace distance
-        guideDisplay.localPosition = gdlp;
+        Vector3 newpos = guideDisplay.localPosition; newpos.y = 0;
+        newpos += Vector3.down * (k_BALL_RADIUS - 0.003f) / guideline.transform.localScale.y;// divide to convert back to worldspace distance
+        guideDisplay.localPosition = newpos;
         guideDisplay.GetComponent<MeshRenderer>().material.SetVector("_Dims", new Vector4(tableModels[tableModelLocal].tableWidth, tableModels[tableModelLocal].tableHeight, 0, 0));
+
+        //set height of 9ball marker
+        newpos = marker9ball.transform.localPosition; newpos.y = 0;
+        newpos += Vector3.down * -0.003f / marker9ball.transform.localScale.y;
+        marker9ball.transform.localPosition = newpos;
 
         initializeRack();
         ConfineBallTransformsToTable();
@@ -2448,7 +2455,10 @@ public class BilliardsModule : UdonSharpBehaviour
         if (marker9ball.activeSelf)
         {
             int target = findLowestUnpocketedBall(ballsPocketedLocal);
-            marker9ball.transform.localPosition = ballsP[target];
+            // move without changing y
+            Vector3 oldpos = marker9ball.transform.localPosition;
+            Vector3 newpos = ballsP[target];
+            marker9ball.transform.localPosition = new Vector3(newpos.x, oldpos.y, newpos.z);
         }
     }
 
