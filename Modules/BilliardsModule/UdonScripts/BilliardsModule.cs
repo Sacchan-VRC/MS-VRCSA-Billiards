@@ -842,6 +842,9 @@ public class BilliardsModule : UdonSharpBehaviour
         {
             teamsLocal = teamsSynced;
             refreshToggles = true;
+            isOrangeTeamFull = teamsLocal ? playerIDsLocal[0] != -1 && playerIDsLocal[2] != -1 : playerIDsLocal[0] != -1;
+            isBlueTeamFull = teamsLocal ? playerIDsLocal[1] != -1 && playerIDsLocal[3] != -1 : playerIDsLocal[1] != -1;
+            menuManager._RefreshMenu();
         }
 
         if (noGuidelineLocal != noGuidelineSynced)
