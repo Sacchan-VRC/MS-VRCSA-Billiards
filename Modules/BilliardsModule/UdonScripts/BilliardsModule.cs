@@ -279,7 +279,21 @@ public class BilliardsModule : UdonSharpBehaviour
     [NonSerialized] public bool isOrangeTeamFull = false;
     [NonSerialized] public bool isBlueTeamFull = false;
     [NonSerialized] public bool localPlayerDistant = false;
-    [NonSerialized] public bool noLOD = false; // use this to make sure max simulation is always visible
+
+    // use this to make sure max simulation is always visible
+    [System.NonSerializedAttribute] public bool noLOD;
+    // Add 1 to noLOD_ using SetProgramVariable() to prevent LoD check, subtract to undo
+    // this allows more than one other script to disable LoD simultaniously
+    [System.NonSerializedAttribute, FieldChangeCallback(nameof(noLOD__))] public int noLOD_ = 0;
+    public int noLOD__
+    {
+        set
+        {
+            noLOD = value > 0;
+            noLOD_ = value;
+        }
+        get => noLOD_;
+    }
     bool checkingDistant;
     GameObject debugger;
     [NonSerialized] public CameraOverrideModule cameraOverrideModule;
@@ -419,9 +433,9 @@ public class BilliardsModule : UdonSharpBehaviour
         networkingManager._OnTableModelChanged(TableModelSelected);
     }
 
-    public void _TriggerPhysicsChanged(uint TableModelSelected)
+    public void _TriggerPhysicsChanged(uint PhysicsSelected)
     {
-        networkingManager._OnPhysicsChanged(TableModelSelected);
+        networkingManager._OnPhysicsChanged(PhysicsSelected);
     }
 
     public void _TriggerGameModeChanged(uint newGameMode)
@@ -3264,6 +3278,12 @@ public class BilliardsModule : UdonSharpBehaviour
             SendCustomEventDelayedSeconds(nameof(checkDistanceLoop), 1f);
         else
             return;
+
+        checkDistanceLoD();
+    }
+
+    public void checkDistanceLoD()
+    {
         bool nowDistant = (Vector3.Distance(Networking.LocalPlayer.GetPosition(), transform.position) > LoDDistance) && !noLOD;
         if (nowDistant == localPlayerDistant) { return; }
         if (isPlayer)
