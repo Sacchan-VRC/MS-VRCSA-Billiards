@@ -1967,7 +1967,7 @@ public class BilliardsModule : UdonSharpBehaviour
             }
 
             // cue ball always starts here (unless four ball, but we override below)
-            initialPositions[i][0] = new Vector3(-k_SPOT_POSITION_X, 0.0f, 0.0f);
+            initialPositions[i][0] = new Vector3(-(k_TABLE_WIDTH - k_CUSHION_RADIUS) / 2, 0.0f, 0.0f);
         }
 
         {
