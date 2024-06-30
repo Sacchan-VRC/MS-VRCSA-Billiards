@@ -298,6 +298,19 @@ public class NetworkingManager : UdonSharpBehaviour
         bufferMessages(false);
     }
 
+    // Snooker only
+    public void _OnTurnTie()
+    {
+        stateIdSynced++;
+
+        teamIdSynced = (byte)UnityEngine.Random.Range(0, 2);
+        turnStateSynced = 2;
+        timerStartSynced = Networking.GetServerTimeInMilliseconds();
+        foulStateSynced = 3;
+
+        bufferMessages(false);
+    }
+
     public void _OnTurnFoul(uint teamId, bool Scratch, bool objBlocked)
     {
         stateIdSynced++;

@@ -1591,6 +1591,7 @@ public class BilliardsModule : UdonSharpBehaviour
                 foulCondition,
                 deferLossCondition
             ;
+            bool snookerDraw = false;
 
             if (is8Ball)
             {
@@ -1824,14 +1825,26 @@ public class BilliardsModule : UdonSharpBehaviour
                 else
                 { colorTurnLocal = false; }
 
-                //win = all balls pocketed and have more points than opponent
-                bool myTeamWinning = fbScoresLocal[teamIdLocal] > fbScoresLocal[1 - teamIdLocal];
-                winCondition = myTeamWinning && allBallsPocketed;
-                if (winCondition) { foulCondition = false; }
-                deferLossCondition = allBallsPocketed && !myTeamWinning;
-                /*                 _LogInfo("6RED: " + Convert.ToString((ballsPocketedLocal & 0x1FFEu), 2));
-                                _LogInfo("6RED: " + Convert.ToString(0x1FFEu, 2)); */
-
+                if (fbScoresLocal[teamIdLocal] == fbScoresLocal[1 - teamIdLocal] && allBallsPocketed)
+                {
+                    // tie rules, cue and black are re-spotted, and a random player gets to go, cue ball in hand, ->onLocalTurnTie()
+                    winCondition = false;
+                    deferLossCondition = false;
+                    foulCondition = false;
+                    sixRedReturnColoredBalls(11);
+                    ballsP[0] = new Vector3(-k_TABLE_WIDTH + K_BAULK_LINE - k_SEMICIRCLERADIUS * .5f, 0f, 0f);
+                    snookerDraw = true;
+                }
+                else
+                {
+                    // win = all balls pocketed and have more points than opponent
+                    bool myTeamWinning = fbScoresLocal[teamIdLocal] > fbScoresLocal[1 - teamIdLocal];
+                    winCondition = myTeamWinning && allBallsPocketed;
+                    if (winCondition) { foulCondition = false; }
+                    deferLossCondition = allBallsPocketed && !myTeamWinning;
+                    /*                 _LogInfo("6RED: " + Convert.ToString((ballsPocketedLocal & 0x1FFEu), 2));
+                                    _LogInfo("6RED: " + Convert.ToString(0x1FFEu, 2)); */
+                }
             }
 
             networkingManager._OnSimulationEnded(ballsP, ballsPocketedLocal, fbScoresLocal, colorTurnLocal);
@@ -1858,6 +1871,11 @@ public class BilliardsModule : UdonSharpBehaviour
             {
                 // Foul
                 onLocalTurnFoul(isScratch, nextTurnBlocked);
+            }
+            else if (snookerDraw)
+            {
+                // Snooker Draw
+                onLocalTurnTie();
             }
             else if (isObjectiveSink && !isOpponentSink)
             {
@@ -2317,6 +2335,13 @@ public class BilliardsModule : UdonSharpBehaviour
         _LogInfo($"onLocalTurnPass");
 
         networkingManager._OnTurnPass(teamIdLocal ^ 0x1u);
+    }
+
+    private void onLocalTurnTie()
+    {
+        _LogInfo($"onLocalTurnTie");
+
+        networkingManager._OnTurnTie();
     }
 
     private void onLocalTurnFoul(bool Scratch, bool objBlocked)
