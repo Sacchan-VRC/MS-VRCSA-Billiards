@@ -1242,7 +1242,7 @@ public class BilliardsModule : UdonSharpBehaviour
             switch (foulStateLocal)
             {
                 case 1://kitchen
-                    repoMaxX = -k_SPOT_POSITION_X;
+                    repoMaxX = -(k_TABLE_WIDTH - k_CUSHION_RADIUS) / 2;
                     break;
                 case 2://anywhere
                     Vector3 k_pR = (Vector3)currentPhysicsManager.GetProgramVariable("k_pR");
@@ -1958,6 +1958,7 @@ public class BilliardsModule : UdonSharpBehaviour
     {
         float k_BALL_PL_X = k_BALL_RADIUS; // break placement X
         float k_BALL_PL_Y = Mathf.Sin(60 * Mathf.Deg2Rad) * k_BALL_DIAMETRE; // break placement Y
+        float quarterTable = (k_TABLE_WIDTH - k_CUSHION_RADIUS) / 2;
         for (int i = 0; i < 5; i++)
         {
             initialPositions[i] = new Vector3[16];
@@ -1967,7 +1968,7 @@ public class BilliardsModule : UdonSharpBehaviour
             }
 
             // cue ball always starts here (unless four ball, but we override below)
-            initialPositions[i][0] = new Vector3(-(k_TABLE_WIDTH - k_CUSHION_RADIUS) / 2, 0.0f, 0.0f);
+            initialPositions[i][0] = new Vector3(-quarterTable, 0.0f, 0.0f);
         }
 
         {
@@ -1980,7 +1981,7 @@ public class BilliardsModule : UdonSharpBehaviour
                 {
                     initialPositions[0][break_order_8ball[k++]] = new Vector3
                     (
-                       k_SPOT_POSITION_X + i * k_BALL_PL_Y /*+ UnityEngine.Random.Range(-k_RANDOMIZE_F, k_RANDOMIZE_F)*/,
+                       quarterTable + i * k_BALL_PL_Y /*+ UnityEngine.Random.Range(-k_RANDOMIZE_F, k_RANDOMIZE_F)*/,
                        0.0f,
                        (-i + j * 2) * k_BALL_PL_X /*+ UnityEngine.Random.Range(-k_RANDOMIZE_F, k_RANDOMIZE_F)*/
                     );
@@ -1999,7 +2000,7 @@ public class BilliardsModule : UdonSharpBehaviour
                 {
                     initialPositions[1][break_order_9ball[k++]] = new Vector3
                     (
-                       k_SPOT_POSITION_X + i * k_BALL_PL_Y + UnityEngine.Random.Range(-k_RANDOMIZE_F, k_RANDOMIZE_F),
+                       quarterTable + i * k_BALL_PL_Y + UnityEngine.Random.Range(-k_RANDOMIZE_F, k_RANDOMIZE_F),
                        0.0f,
                        (-rown + j * 2) * k_BALL_PL_X + UnityEngine.Random.Range(-k_RANDOMIZE_F, k_RANDOMIZE_F)
                     );
