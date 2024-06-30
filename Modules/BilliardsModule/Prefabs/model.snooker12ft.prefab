@@ -180,7 +180,7 @@ Transform:
   m_GameObject: {fileID: 2241850681803263754}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -0.6868, y: 0.7967979, z: -1.0195}
+  m_LocalPosition: {x: -0.6868, y: 0.7967979, z: -1.019538}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -622,7 +622,7 @@ GameObject:
   - component: {fileID: 6124647987978075688}
   - component: {fileID: 4585559866347780627}
   m_Layer: 22
-  m_Name: model.snooker
+  m_Name: model.snooker12ft
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -666,7 +666,7 @@ MonoBehaviour:
     PrefabModifications: []
     SerializationNodes: []
   _udonSharpBackingUdonBehaviour: {fileID: 6124647987978075688}
-  TABLENAME: Snooker Table
+  TABLENAME: Snooker 12ft
   tableMesh: {fileID: 5313054784033644111}
   tableWidth: 1.8085
   tableHeight: 0.913

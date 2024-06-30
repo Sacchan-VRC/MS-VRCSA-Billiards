@@ -7,7 +7,7 @@ Material:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: SnookerM
+  m_Name: snooker10
   m_Shader: {fileID: 4800000, guid: 4d2b9e4ef22d6924993fad8181636136, type: 3}
   m_Parent: {fileID: 0}
   m_ModifiedSerializedProperties: 0
@@ -48,7 +48,7 @@ Material:
         m_Scale: {x: 256, y: 256}
         m_Offset: {x: 0, y: 0}
     - _DetailClothMask:
-        m_Texture: {fileID: 2800000, guid: ad1b9df66b0231145b540fcebe705d3c, type: 3}
+        m_Texture: {fileID: 2800000, guid: b64f89e17df0c2844a814089741c1f19, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _DetailMask:
@@ -64,15 +64,15 @@ Material:
         m_Scale: {x: 12, y: 12}
         m_Offset: {x: 0, y: 0}
     - _EmissionMap:
-        m_Texture: {fileID: 2800000, guid: ff296674dc633904e98ba0446c7dce18, type: 3}
+        m_Texture: {fileID: 2800000, guid: 499e5e3726041af4da3923be9f7ccb02, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _MainTex:
-        m_Texture: {fileID: 2800000, guid: 6616e351e6e6a0c4399bc5c6828aa9c2, type: 3}
+        m_Texture: {fileID: 2800000, guid: d7734508cc72a3c498daeb0af15a0185, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _Metalic:
-        m_Texture: {fileID: 2800000, guid: 937b56f73ed55e64fb1fbcbe8e4fad71, type: 3}
+        m_Texture: {fileID: 2800000, guid: 589c02bd7aacad94d9f7d9d336ba5141, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _MetallicGlossMap:
@@ -125,6 +125,6 @@ Material:
     - _UseDetailOther: 0
     - _ZWrite: 1
     m_Colors:
-    - _Color: {r: 0.8980392, g: 0.8980392, b: 0.8980392, a: 1}
+    - _Color: {r: 1, g: 1, b: 1, a: 1}
     - _EmissionColor: {r: 0, g: 0.95294124, b: 1, a: 1}
   m_BuildTextureStacks: []
