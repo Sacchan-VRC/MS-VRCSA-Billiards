@@ -27,6 +27,10 @@ public class CollisionVisualizer : MonoBehaviour
     [SerializeField] public float k_RAIL_HEIGHT_LOWER;
     [SerializeField] public float k_RAIL_DEPTH_WIDTH;
     [SerializeField] public float k_RAIL_DEPTH_HEIGHT;
+    [SerializeField] public float baulkLine;
+    [SerializeField] public float blackSpotFromR;
+    [SerializeField] public float semiCircleRadius;
+    [SerializeField] public float rackTrianglePosition;
     [SerializeField] public Transform table_Surface;
 
     [SerializeField] public bool DrawUnused;
@@ -281,7 +285,11 @@ public class CollisionVisualizer : MonoBehaviour
             drawCylinder(cornerPocket, pocketInnerRadiusCorner, Color.red, k_RAIL_HEIGHT_UPPER);
             drawCylinder(sidePocket, pocketInnerRadiusSide, Color.red, k_RAIL_HEIGHT_UPPER);
         }
-
+        _drawline_applyparent(new Vector3(baulkLine, 0, -tableWidth * .5f), new Vector3(baulkLine, 0, tableWidth * .5f), Color.red);
+        _drawline_applyparent(new Vector3(baulkLine - .1f, 0, -semiCircleRadius), new Vector3(baulkLine + .1f, 0, -semiCircleRadius), Color.red);
+        _drawline_applyparent(new Vector3(baulkLine - .1f, 0, semiCircleRadius), new Vector3(baulkLine + .1f, 0, semiCircleRadius), Color.red);
+        _drawline_applyparent(new Vector3(rackTrianglePosition, 0, 0), new Vector3(rackTrianglePosition, .2f, 0), Color.red);
+        _drawline_applyparent(new Vector3(blackSpotFromR, 0, 0), new Vector3(blackSpotFromR, .2f, 0), Color.red);
         _phy_table_init();
 #endif
 
@@ -548,6 +556,10 @@ public class CollisionVisualizer : MonoBehaviour
             sidePocket = (Vector3)table.GetProgramVariable("k_vF"); // k_vF
             facingAngleCorner = (float)table.GetProgramVariable("k_FACING_ANGLE_CORNER");
             facingAngleSide = (float)table.GetProgramVariable("k_FACING_ANGLE_SIDE");
+            baulkLine = (float)table.GetProgramVariable("K_BAULK_LINE");
+            blackSpotFromR = (float)table.GetProgramVariable("K_BLACK_SPOT");
+            semiCircleRadius = (float)table.GetProgramVariable("k_SEMICIRCLERADIUS");
+            rackTrianglePosition = (float)table.GetProgramVariable("k_SPOT_POSITION_X");
         }
 
         _phy_ball_table_new();

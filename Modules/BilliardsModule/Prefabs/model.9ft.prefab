@@ -700,7 +700,6 @@ MonoBehaviour:
   pocketDepthSide: 0.06
   facingAngleSide: 100
   pocketInnerRadiusSide: 0.06
-  rackTrianglePosition: 0.5334
   railHeightUpper: 0.0447334
   useRailHeightLower: 0
   railHeightLower: 0.032
@@ -724,9 +723,10 @@ MonoBehaviour:
   bs_Friction: 1
   bs_BallDiameter: 57.15
   bs_BallMass: 0.16
-  baulkLine: 0.46
-  blackSpotFromR: 0.19
+  baulkLine: 0.8227
+  blackSpot: 1.0927
   semiCircleRadius: 0.23
+  pinkSpot: 0.5334
   CueOrange: {fileID: 8637197935828598094}
   CueBlue: {fileID: 6407733907242776791}
   DesktopUIScaleFactor: 1.14

@@ -1249,7 +1249,7 @@ public class BilliardsModule : UdonSharpBehaviour
                     repoMaxX = k_pR.x;
                     break;
                 case 3://snooker D
-                    repoMaxX = -k_TABLE_WIDTH + K_BAULK_LINE;
+                    repoMaxX = K_BAULK_LINE;
                     break;
             }
             setFoulPickupEnabled(true);
@@ -1661,7 +1661,7 @@ public class BilliardsModule : UdonSharpBehaviour
             {
                 if (isScratch)
                 {
-                    ballsP[0] = new Vector3(-k_TABLE_WIDTH + K_BAULK_LINE - k_SEMICIRCLERADIUS * .5f, 0f, 0f);
+                    ballsP[0] = new Vector3(K_BAULK_LINE - k_SEMICIRCLERADIUS * .5f, 0f, 0f);
                     moveBallInDirUntilNotTouching(0, Vector3.back * k_BALL_RADIUS * .051f);
                 }
                 isOpponentSink = false;
@@ -1832,7 +1832,7 @@ public class BilliardsModule : UdonSharpBehaviour
                     deferLossCondition = false;
                     foulCondition = false;
                     sixRedReturnColoredBalls(11);
-                    ballsP[0] = new Vector3(-k_TABLE_WIDTH + K_BAULK_LINE - k_SEMICIRCLERADIUS * .5f, 0f, 0f);
+                    ballsP[0] = new Vector3(K_BAULK_LINE - k_SEMICIRCLERADIUS * .5f, 0f, 0f);
                     snookerDraw = true;
                 }
                 else
@@ -2029,10 +2029,10 @@ public class BilliardsModule : UdonSharpBehaviour
         {
             // Snooker
             initialBallsPocketed[4] = 0xE000u;
-            initialPositions[4][0] = new Vector3(-k_TABLE_WIDTH + K_BAULK_LINE - k_SEMICIRCLERADIUS * .5f, 0f, 0f);//whte, middle of the semicircle
+            initialPositions[4][0] = new Vector3(K_BAULK_LINE - k_SEMICIRCLERADIUS * .5f, 0f, 0f);//whte, middle of the semicircle
             initialPositions[4][1] = new Vector3//black
                     (
-                      k_TABLE_WIDTH - K_BLACK_SPOT,
+                       K_BLACK_SPOT,
                        0f,
                        0f
                     );
@@ -2044,19 +2044,19 @@ public class BilliardsModule : UdonSharpBehaviour
                     );
             initialPositions[4][2] = new Vector3//yellow
                     (
-                       -k_TABLE_WIDTH + K_BAULK_LINE,
+                       K_BAULK_LINE,
                        0f,
                        -k_SEMICIRCLERADIUS
                     );
             initialPositions[4][7] = new Vector3//green
                     (
-                       -k_TABLE_WIDTH + K_BAULK_LINE,
+                       K_BAULK_LINE,
                        0f,
                        k_SEMICIRCLERADIUS
                     );
             initialPositions[4][8] = new Vector3//brown
                     (
-                       -k_TABLE_WIDTH + K_BAULK_LINE,
+                       K_BAULK_LINE,
                        0f,
                        0f
                     );
@@ -2131,8 +2131,8 @@ public class BilliardsModule : UdonSharpBehaviour
         k_INNER_RADIUS_SIDE = data.pocketInnerRadiusSide;
         k_FACING_ANGLE_CORNER = data.facingAngleCorner;
         k_FACING_ANGLE_SIDE = data.facingAngleSide;
-        K_BAULK_LINE = data.baulkLine;
-        K_BLACK_SPOT = data.blackSpotFromR;
+        K_BAULK_LINE = -data.baulkLine;
+        K_BLACK_SPOT = data.blackSpot;
         k_SEMICIRCLERADIUS = data.semiCircleRadius;
         k_BALL_DIAMETRE = data.bs_BallDiameter / 1000f;
         k_BALL_RADIUS = k_BALL_DIAMETRE / 2f;
@@ -2141,7 +2141,7 @@ public class BilliardsModule : UdonSharpBehaviour
         k_RAIL_HEIGHT_LOWER = data.railHeightLower;
         k_RAIL_DEPTH_WIDTH = data.railDepthWidth;
         k_RAIL_DEPTH_HEIGHT = data.railDepthHeight;
-        k_SPOT_POSITION_X = data.rackTrianglePosition;
+        k_SPOT_POSITION_X = data.pinkSpot;
         k_POCKET_RESTITUTION = data.bt_PocketRestitutionFactor;
         k_vE = data.cornerPocket;
         k_vF = data.sidePocket;

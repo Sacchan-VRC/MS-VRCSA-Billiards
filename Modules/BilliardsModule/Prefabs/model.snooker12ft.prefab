@@ -56,7 +56,7 @@ Transform:
   m_GameObject: {fileID: 824382231649042149}
   serializedVersion: 2
   m_LocalRotation: {x: 0.000000081460335, y: 0, z: -0, w: 1}
-  m_LocalPosition: {x: -1.804, y: 0.8837556, z: -0.6258642}
+  m_LocalPosition: {x: -1.864, y: 0.8837556, z: -0.626}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -294,7 +294,7 @@ Transform:
   m_GameObject: {fileID: 2639078898474419366}
   serializedVersion: 2
   m_LocalRotation: {x: 0.000000081460335, y: 0, z: -0, w: 1}
-  m_LocalPosition: {x: 1.804, y: 0.8837556, z: -0.6258642}
+  m_LocalPosition: {x: 1.87, y: 0.8837556, z: -0.626}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -679,7 +679,6 @@ MonoBehaviour:
   pocketDepthSide: 0.011
   facingAngleSide: 104.93142
   pocketInnerRadiusSide: 0.055
-  rackTrianglePosition: 0.872
   railHeightUpper: 0.040536
   useRailHeightLower: 0
   railHeightLower: 0.028472
@@ -703,9 +702,10 @@ MonoBehaviour:
   bs_Friction: 1
   bs_BallDiameter: 52.5
   bs_BallMass: 0.16
-  baulkLine: 0.76
-  blackSpotFromR: 0.324
+  baulkLine: 1.0485
+  blackSpot: 1.4845
   semiCircleRadius: 0.2921
+  pinkSpot: 0.872
   CueOrange: {fileID: 3490835628016806087}
   CueBlue: {fileID: 3064140435133851898}
   DesktopUIScaleFactor: 1.5

@@ -135,6 +135,11 @@ public class ModelConfigurationEditor : Editor
             this.cdata_displayTarget.k_RAIL_DEPTH_WIDTH = data.railDepthWidth;
             this.cdata_displayTarget.k_RAIL_DEPTH_HEIGHT = data.railDepthHeight;
 
+            this.cdata_displayTarget.baulkLine = -data.baulkLine;
+            this.cdata_displayTarget.blackSpotFromR = data.blackSpot;
+            this.cdata_displayTarget.semiCircleRadius = data.semiCircleRadius;
+            this.cdata_displayTarget.rackTrianglePosition = data.pinkSpot;
+
             Transform table_artwork = data.transform.Find("table_artwork");
             Transform tableSurface = table_artwork.transform.Find(".TABLE_SURFACE");
             if (tableSurface)
