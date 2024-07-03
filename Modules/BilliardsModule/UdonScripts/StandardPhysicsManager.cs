@@ -1,4 +1,4 @@
-﻿#define HT8B_DRAW_REGIONS
+﻿// #define HT8B_DRAW_REGIONS
 using System;
 using BestHTTP.SecureProtocol.Org.BouncyCastle.Crypto.Modes.Gcm;
 using UdonSharp;
@@ -922,8 +922,6 @@ public class StandardPhysicsManager : UdonSharpBehaviour
         k_vE = table.k_vE;
         k_vF = table.k_vF;
 
-        float r_k_CUSHION_RADIUS = k_CUSHION_RADIUS + k_BALL_RADIUS;
-
         Collider[] collider = table.GetComponentsInChildren<Collider>();
         for (int i = 0; i < collider.Length; i++)
         {
@@ -935,13 +933,13 @@ public class StandardPhysicsManager : UdonSharpBehaviour
 
         // Major source vertices
         k_vA.x = k_POCKET_RADIUS_SIDE;
-        k_vA.z = k_TABLE_HEIGHT;
+        k_vA.z = k_TABLE_HEIGHT + k_CUSHION_RADIUS;
 
-        k_vB.x = k_TABLE_WIDTH - k_POCKET_WIDTH_CORNER;
-        k_vB.z = k_TABLE_HEIGHT;
+        k_vB.x = k_TABLE_WIDTH;
+        k_vB.z = k_TABLE_HEIGHT + k_CUSHION_RADIUS;
 
-        k_vC.x = k_TABLE_WIDTH;
-        k_vC.z = k_TABLE_HEIGHT - k_POCKET_HEIGHT_CORNER;
+        k_vC.x = k_TABLE_WIDTH + k_CUSHION_RADIUS;
+        k_vC.z = k_TABLE_HEIGHT;
 
         k_vD = k_vA;
         Vector3 Rotationk_vD = new Vector3(k_POCKET_DEPTH_SIDE, 0, 0);
@@ -990,17 +988,59 @@ public class StandardPhysicsManager : UdonSharpBehaviour
         k_pK.x -= k_CUSHION_RADIUS;
 
         k_pO = k_vB;
-        k_pO.z -= r_k_CUSHION_RADIUS;
+        k_pO.z -= k_CUSHION_RADIUS; // only used in carom, but also used to draw point in HT8B_DRAW_REGIONS, carom requires it to be r_k_cushion_radius;
         k_pP = k_vB + k_vB_vY_normal * k_CUSHION_RADIUS;
         k_pQ = k_vC + k_vC_vZ_normal * k_CUSHION_RADIUS;
 
         k_pR = k_vC;
-        k_pR.x -= r_k_CUSHION_RADIUS;
+        k_pR.x -= k_CUSHION_RADIUS; // only used in carom, but also used to draw point in HT8B_DRAW_REGIONS, carom requires it to be r_k_cushion_radius;
+
+        // move points to enable pocket radius tweaking and adjusting cushion radius without moving cushions
+        // also makes table width and height actual equal the playable space on the table
+        // k_pM is only used for drawing lines, and this
+        k_pM = k_vA + k_vA_vD_normal * k_CUSHION_RADIUS;
+
+        float sideXdifA = k_vA.x - k_pM.x;
+        float sideXdifD = k_vD.x - k_pM.x;
+        float sideXdifN = k_pN.x - k_pM.x;
+        float sideXdifT = k_pT.x - k_pM.x;
+        float sideXdifL = k_pL.x - k_pM.x;
+        float sideXdifK = k_pK.x - k_pM.x;
+        float sideXdifX = k_vX.x - k_pM.x;
+        k_pN.x += k_POCKET_RADIUS_SIDE;
+        k_pM.x = k_pN.x;
+        k_pN.x = k_pM.x + sideXdifN;
+        k_pT.x = k_pM.x + sideXdifT;
+        k_pL.x = k_pM.x + sideXdifL;
+        k_pK.x = k_pM.x + sideXdifK;
+        k_vA.x = k_pM.x + sideXdifA;
+        k_vD.x = k_pM.x + sideXdifD;
+        k_vX.x = k_pM.x + sideXdifX;
+
+        float widthXdifB = k_vB.x - k_pP.x;
+        float widthXdifR = k_pO.x - k_pP.x;
+        float widthXdifY = k_vY.x - k_pP.x;
+        // float widthXdifV = k_pU.x - k_pP.x;
+        k_pO.x -= k_POCKET_WIDTH_CORNER;
+        k_pP.x = k_pO.x;
+        k_pO.x = k_pP.x + widthXdifR;
+        k_vB.x = k_pP.x + widthXdifB;
+        k_vY.x = k_pP.x + widthXdifY;
+        // k_pU.x = k_pP.x + widthXdifV;
+
+        float heightZdifC = k_vC.z - k_pQ.z;
+        float heightZdifZ = k_vZ.z - k_pQ.z;
+        // float heightZdifR = k_pR.z - k_pQ.z;
+        // float heightZdifV = k_pV.z - k_pQ.z;
+        k_pR.z -= k_POCKET_HEIGHT_CORNER;
+        k_pQ.z = k_pR.z;
+        // k_pR.z = k_pQ.z + heightZdifR;
+        k_vC.z = k_pQ.z + heightZdifC;
+        k_vZ.z = k_pQ.z + heightZdifZ;
+        // k_pV.z = k_pQ.z + heightZdifV;
 
 #if HT8B_DRAW_REGIONS
         // for drawing lines only
-        k_pM = k_vA + k_vA_vD_normal * k_CUSHION_RADIUS;
-
         k_pT = k_vX;
         k_pT.x -= k_CUSHION_RADIUS;
 
@@ -1121,17 +1161,17 @@ public class StandardPhysicsManager : UdonSharpBehaviour
         {
             if (newPos.x > newPos.z + k_MINOR_REGION_CONST) // Minor B
             {
-                if (newPos.z < k_TABLE_HEIGHT - k_POCKET_HEIGHT_CORNER)
+                if (newPos.z < k_vC.z)
                 {
                     // Region H
 #if HT8B_DRAW_REGIONS
                     Debug.DrawLine(new Vector3(0.0f, 0.0f, 0.0f), new Vector3(k_TABLE_WIDTH, 0.0f, 0.0f), Color.red);
                     Debug.DrawLine(k_vC, k_vC + k_vC_vW_normal, Color.red);
 #endif
-                    if (newPos.x > k_TABLE_WIDTH - r_k_CUSHION_RADIUS)
+                    if (newPos.x > k_TABLE_WIDTH - k_BALL_RADIUS)
                     {
                         // Static resolution
-                        newPos.x = k_TABLE_WIDTH - r_k_CUSHION_RADIUS;
+                        newPos.x = k_TABLE_WIDTH - k_BALL_RADIUS;
                         // Dynamic
                         _phy_bounce_cushion(id, Vector3.Scale(k_vC_vW_normal, _sign_pos));
 #if HT8B_DRAW_REGIONS

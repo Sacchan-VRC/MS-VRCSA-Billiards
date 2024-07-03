@@ -1,5 +1,6 @@
 ﻿using UdonSharp;
 using UnityEngine;
+using UnityEditor;
 
 [UdonBehaviourSyncMode(BehaviourSyncMode.None)]
 public class ModelData : UdonSharpBehaviour
@@ -146,9 +147,9 @@ public class ModelData : UdonSharpBehaviour
 
         [Header("Snooker:")]
         [SerializeField] public float baulkLine = 0.7367f;
-        [SerializeField] public float blackSpot = 1.46048f;
         [SerializeField] public float semiCircleRadius = 0.2921f;
         [SerializeField] public float pinkSpot = 0.892251f;
+        [SerializeField] public float blackSpot = 1.46048f;
         [Header("Cue Positions:")]
         [SerializeField] public Transform CueOrange;
         [SerializeField] public Transform CueBlue;

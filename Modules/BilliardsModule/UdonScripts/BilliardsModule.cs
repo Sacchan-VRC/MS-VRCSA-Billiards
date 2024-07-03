@@ -1976,7 +1976,7 @@ public class BilliardsModule : UdonSharpBehaviour
     {
         float k_BALL_PL_X = k_BALL_RADIUS; // break placement X
         float k_BALL_PL_Y = Mathf.Sin(60 * Mathf.Deg2Rad) * k_BALL_DIAMETRE; // break placement Y
-        float quarterTable = (k_TABLE_WIDTH - k_CUSHION_RADIUS) / 2;
+        float quarterTable = k_TABLE_WIDTH / 2;
         for (int i = 0; i < 5; i++)
         {
             initialPositions[i] = new Vector3[16];
@@ -2120,8 +2120,8 @@ public class BilliardsModule : UdonSharpBehaviour
         tableModelLocal = newTableModel;
 
         ModelData data = tableModels[tableModelLocal];
-        k_TABLE_WIDTH = data.tableWidth;
-        k_TABLE_HEIGHT = data.tableHeight;
+        k_TABLE_WIDTH = data.tableWidth * .5f;
+        k_TABLE_HEIGHT = data.tableHeight * .5f;
         k_CUSHION_RADIUS = data.cushionRadius;
         k_POCKET_WIDTH_CORNER = data.pocketWidthCorner;
         k_POCKET_HEIGHT_CORNER = data.pocketHeightCorner;
@@ -2131,17 +2131,17 @@ public class BilliardsModule : UdonSharpBehaviour
         k_INNER_RADIUS_SIDE = data.pocketInnerRadiusSide;
         k_FACING_ANGLE_CORNER = data.facingAngleCorner;
         k_FACING_ANGLE_SIDE = data.facingAngleSide;
-        K_BAULK_LINE = -data.baulkLine;
-        K_BLACK_SPOT = data.blackSpot;
+        K_BAULK_LINE = -(k_TABLE_WIDTH - data.baulkLine);
+        K_BLACK_SPOT = k_TABLE_WIDTH - data.blackSpot;
         k_SEMICIRCLERADIUS = data.semiCircleRadius;
         k_BALL_DIAMETRE = data.bs_BallDiameter / 1000f;
-        k_BALL_RADIUS = k_BALL_DIAMETRE / 2f;
+        k_BALL_RADIUS = k_BALL_DIAMETRE * .5f;
         k_BALL_MASS = data.bs_BallMass;
         k_RAIL_HEIGHT_UPPER = data.railHeightUpper;
         k_RAIL_HEIGHT_LOWER = data.railHeightLower;
         k_RAIL_DEPTH_WIDTH = data.railDepthWidth;
         k_RAIL_DEPTH_HEIGHT = data.railDepthHeight;
-        k_SPOT_POSITION_X = data.pinkSpot;
+        k_SPOT_POSITION_X = k_TABLE_WIDTH - data.pinkSpot;
         k_POCKET_RESTITUTION = data.bt_PocketRestitutionFactor;
         k_vE = data.cornerPocket;
         k_vF = data.sidePocket;

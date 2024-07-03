@@ -25531,7 +25531,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!4 &8803897271943655740
 Transform:
   m_ObjectHideFlags: 0
@@ -25611,30 +25611,30 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   table: {fileID: 5951911174870518006}
   getFromTable: 0
-  tableWidth: 1.0026
-  tableHeight: 0.5073
-  pocketWidthCorner: 0.098
-  pocketHeightCorner: 0.096
+  previewCollision: 0
+  tableWidth: 0.9906
+  tableHeight: 0.4953
+  pocketWidthCorner: 0.079
+  pocketHeightCorner: 0.077
   pocketDepthSide: 0.06
-  pocketRadiusSide: 0.07518
+  pocketRadiusSide: 0.0317
   cushionRadius: 0.012
   pocketInnerRadiusCorner: 0.058
   pocketInnerRadiusSide: 0.06
-  cornerPocket: {x: 1.005, y: 0, z: 0.515}
+  cornerPocket: {x: 1.008, y: 0, z: 0.515}
   sidePocket: {x: 0, y: 0, z: 0.565}
   facingAngleCorner: 144
   facingAngleSide: 100
   k_BALL_RADIUS: 0.028575001
-  k_RAIL_HEIGHT_UPPER: 0.0447334
+  k_RAIL_HEIGHT_UPPER: 0.03911
   k_RAIL_HEIGHT_LOWER: 0.032
-  k_RAIL_DEPTH_WIDTH: 0.15895
-  k_RAIL_DEPTH_HEIGHT: 0.16855
+  k_RAIL_DEPTH_WIDTH: 0.158167
+  k_RAIL_DEPTH_HEIGHT: 0.16526
+  baulkLine: -0.57652915
+  blackSpot: 0.8028021
+  semiCircleRadius: 0.3340303
+  pinkSpot: 0.43815
   table_Surface: {fileID: 8961411784017491322}
-  DrawUnused: 0
-  cornerPocketDiameter: 6.8
-  cornerOffset: 0.079
-  sidePocketDiameter: 5.22
-  sidePocketMouth: 2.95
 --- !u!1 &8819256076505211055
 GameObject:
   m_ObjectHideFlags: 0
@@ -27060,6 +27060,11 @@ PrefabInstance:
       propertyPath: m_Name
       value: model.snooker10ft
       objectReference: {fileID: 0}
+    - target: {fileID: 8088446947538128258, guid: 08bd5b68d43d7cd4988c4d1dd0d80dc7,
+        type: 3}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 8111757641509926229, guid: 08bd5b68d43d7cd4988c4d1dd0d80dc7,
         type: 3}
       propertyPath: serializationData.Prefab
@@ -27152,6 +27157,11 @@ PrefabInstance:
       propertyPath: m_Name
       value: model.9ft
       objectReference: {fileID: 0}
+    - target: {fileID: 6972134349969228780, guid: 6baf253ecfeddd64a88b9b69b0d184f9,
+        type: 3}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 7380631686010442280, guid: 6baf253ecfeddd64a88b9b69b0d184f9,
         type: 3}
       propertyPath: serializationData.Prefab
@@ -27215,6 +27225,11 @@ PrefabInstance:
         type: 3}
       propertyPath: m_Name
       value: model.snooker12ft
+      objectReference: {fileID: 0}
+    - target: {fileID: 8329953892555422358, guid: 1709734a6a13c0842af58ad2ba78ee32,
+        type: 3}
+      propertyPath: m_IsActive
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 8761911423124048442, guid: 1709734a6a13c0842af58ad2ba78ee32,
         type: 3}
@@ -27311,6 +27326,11 @@ PrefabInstance:
         type: 3}
       propertyPath: m_Name
       value: model.8ft
+      objectReference: {fileID: 0}
+    - target: {fileID: 296872531685664135, guid: cd4cef5a6002c004086ffb377c21b15f,
+        type: 3}
+      propertyPath: m_IsActive
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 3199149930687364159, guid: cd4cef5a6002c004086ffb377c21b15f,
         type: 3}
@@ -27536,6 +27556,11 @@ PrefabInstance:
         type: 3}
       propertyPath: m_Name
       value: model.7ft
+      objectReference: {fileID: 0}
+    - target: {fileID: 7275841668396531701, guid: ad23838c8c1465443bc2cc458c72defc,
+        type: 3}
+      propertyPath: m_IsActive
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 8048825193074976079, guid: ad23838c8c1465443bc2cc458c72defc,
         type: 3}

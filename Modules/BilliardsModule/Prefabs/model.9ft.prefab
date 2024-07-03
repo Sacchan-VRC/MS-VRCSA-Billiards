@@ -218,7 +218,7 @@ MeshFilter:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1814409066170123631}
-  m_Mesh: {fileID: 7651013255574508525, guid: 2c143c67f4b76e14d95bb7dc2aee90d1, type: 3}
+  m_Mesh: {fileID: 6517809741624404149, guid: 2c143c67f4b76e14d95bb7dc2aee90d1, type: 3}
 --- !u!23 &7031536659027876377
 MeshRenderer:
   m_ObjectHideFlags: 0
@@ -282,7 +282,7 @@ MeshCollider:
   serializedVersion: 5
   m_Convex: 0
   m_CookingOptions: 30
-  m_Mesh: {fileID: 7651013255574508525, guid: 2c143c67f4b76e14d95bb7dc2aee90d1, type: 3}
+  m_Mesh: {fileID: 6517809741624404149, guid: 2c143c67f4b76e14d95bb7dc2aee90d1, type: 3}
 --- !u!1 &1954036873208825060
 GameObject:
   m_ObjectHideFlags: 0
@@ -689,24 +689,24 @@ MonoBehaviour:
   _udonSharpBackingUdonBehaviour: {fileID: 3969798012597450322}
   TABLENAME: Pool 9ft
   tableMesh: {fileID: 2986212287177495013}
-  tableWidth: 1.2827
-  tableHeight: 0.6474
+  tableWidth: 2.54
+  tableHeight: 1.27
   cushionRadius: 0.012
-  pocketWidthCorner: 0.098
-  pocketHeightCorner: 0.096
+  pocketWidthCorner: 0.0787
+  pocketHeightCorner: 0.07705
   pocketInnerRadiusCorner: 0.058
   facingAngleCorner: 144
-  pocketRadiusSide: 0.07518
-  pocketDepthSide: 0.06
+  pocketRadiusSide: 0.0317
+  pocketDepthSide: 0.0377
   facingAngleSide: 100
   pocketInnerRadiusSide: 0.06
-  railHeightUpper: 0.0447334
+  railHeightUpper: 0.03911
   useRailHeightLower: 0
   railHeightLower: 0.032
-  railDepthWidth: 0.15895
-  railDepthHeight: 0.16855
-  cornerPocket: {x: 1.285, y: 0, z: 0.655}
-  sidePocket: {x: 0, y: 0, z: 0.705}
+  railDepthWidth: 0.158167
+  railDepthHeight: 0.16526
+  cornerPocket: {x: 1.2857, y: 0, z: 0.6535}
+  sidePocket: {x: 0, y: 0, z: 0.7047}
   bt_CoefSlide: 0.2
   bt_CoefRoll: 0.008
   bt_CoefSpin: 0.022
@@ -723,10 +723,10 @@ MonoBehaviour:
   bs_Friction: 1
   bs_BallDiameter: 57.15
   bs_BallMass: 0.16
-  baulkLine: 0.8227
-  blackSpot: 1.0927
-  semiCircleRadius: 0.23
-  pinkSpot: 0.5334
+  baulkLine: 0.517525
+  blackSpot: 0.2667
+  semiCircleRadius: 0.2413
+  pinkSpot: 0.7112
   CueOrange: {fileID: 8637197935828598094}
   CueBlue: {fileID: 6407733907242776791}
   DesktopUIScaleFactor: 1.14

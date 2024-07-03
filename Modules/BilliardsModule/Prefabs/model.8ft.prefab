@@ -72,7 +72,7 @@ Transform:
   m_GameObject: {fileID: 132550072588340163}
   serializedVersion: 2
   m_LocalRotation: {x: -0.000000029802322, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0, y: 0.796, z: -0.7403488}
+  m_LocalPosition: {x: -0.000012873787, y: 0.796, z: -0.7341}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -137,22 +137,22 @@ MonoBehaviour:
   _udonSharpBackingUdonBehaviour: {fileID: 6790043569213103559}
   TABLENAME: Pool 8ft
   tableMesh: {fileID: 5206910715089613212}
-  tableWidth: 1.1327
-  tableHeight: 0.5724
+  tableWidth: 2.2352
+  tableHeight: 1.1176
   cushionRadius: 0.012
-  pocketWidthCorner: 0.098
-  pocketHeightCorner: 0.096
+  pocketWidthCorner: 0.0787
+  pocketHeightCorner: 0.07705
   pocketInnerRadiusCorner: 0.058
   facingAngleCorner: 144
-  pocketRadiusSide: 0.07518
-  pocketDepthSide: 0.06
+  pocketRadiusSide: 0.0317
+  pocketDepthSide: 0.0377
   facingAngleSide: 100
   pocketInnerRadiusSide: 0.06
-  railHeightUpper: 0.0447334
+  railHeightUpper: 0.03911
   useRailHeightLower: 0
   railHeightLower: 0.032
-  railDepthWidth: 0.15895
-  railDepthHeight: 0.16855
+  railDepthWidth: 0.158167
+  railDepthHeight: 0.16526
   cornerPocket: {x: 1.135, y: 0, z: 0.58}
   sidePocket: {x: 0, y: 0, z: 0.63}
   bt_CoefSlide: 0.2
@@ -171,10 +171,10 @@ MonoBehaviour:
   bs_Friction: 1
   bs_BallDiameter: 57.15
   bs_BallMass: 0.16
-  baulkLine: 0.6727
-  blackSpot: 0.9427
-  semiCircleRadius: 0.23
-  pinkSpot: 0.5334
+  baulkLine: 0.4826
+  semiCircleRadius: 0.1905
+  pinkSpot: 0.5588
+  blackSpot: 0.2159
   CueOrange: {fileID: 3729624123456568210}
   CueBlue: {fileID: 3565299103806277299}
   DesktopUIScaleFactor: 1.1
@@ -304,7 +304,7 @@ Transform:
   m_GameObject: {fileID: 1201508001939606607}
   serializedVersion: 2
   m_LocalRotation: {x: 0.00000017881393, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0.654655, y: 0.6625, z: -0.7403488}
+  m_LocalPosition: {x: 0.6546421, y: 0.6625, z: -0.7341}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -451,7 +451,7 @@ Transform:
   m_GameObject: {fileID: 4463058510363842735}
   serializedVersion: 2
   m_LocalRotation: {x: -0.00000011920929, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0, y: 0.8580891, z: 0.034189224}
+  m_LocalPosition: {x: -0, y: 0.8580891, z: 0.0352}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -532,7 +532,7 @@ Transform:
   m_GameObject: {fileID: 5189228226114902750}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -0.653, y: 0.7967979, z: -0.7403488}
+  m_LocalPosition: {x: -0.6530129, y: 0.7967979, z: -0.7341}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -877,7 +877,7 @@ Transform:
   m_GameObject: {fileID: 7653073010853105257}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0.653, y: 0.7967979, z: -0.7403488}
+  m_LocalPosition: {x: 0.6529871, y: 0.7967979, z: -0.7341}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -939,7 +939,7 @@ Transform:
   m_GameObject: {fileID: 8559011713363749784}
   serializedVersion: 2
   m_LocalRotation: {x: 0.00000017881393, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -0.65408707, y: 0.6625, z: -0.7403488}
+  m_LocalPosition: {x: -0.6541, y: 0.6625, z: -0.7341}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
