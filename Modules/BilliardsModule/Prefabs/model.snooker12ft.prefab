@@ -56,7 +56,7 @@ Transform:
   m_GameObject: {fileID: 824382231649042149}
   serializedVersion: 2
   m_LocalRotation: {x: 0.000000081460335, y: 0, z: -0, w: 1}
-  m_LocalPosition: {x: -1.804, y: 0.8837556, z: -0.6258642}
+  m_LocalPosition: {x: -1.864, y: 0.8837556, z: -0.626}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -294,7 +294,7 @@ Transform:
   m_GameObject: {fileID: 2639078898474419366}
   serializedVersion: 2
   m_LocalRotation: {x: 0.000000081460335, y: 0, z: -0, w: 1}
-  m_LocalPosition: {x: 1.804, y: 0.8837556, z: -0.6258642}
+  m_LocalPosition: {x: 1.87, y: 0.8837556, z: -0.626}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -668,23 +668,22 @@ MonoBehaviour:
   _udonSharpBackingUdonBehaviour: {fileID: 6124647987978075688}
   TABLENAME: Snooker 12ft
   tableMesh: {fileID: 5313054784033644111}
-  tableWidth: 1.8085
-  tableHeight: 0.913
-  cushionRadius: 0.024
-  pocketWidthCorner: 0.0964
-  pocketHeightCorner: 0.0964
+  tableWidth: 3.569
+  tableHeight: 1.778
+  cushionRadius: 0.0327
+  pocketWidthCorner: 0.052595
+  pocketHeightCorner: 0.05282
   pocketInnerRadiusCorner: 0.055
   facingAngleCorner: 135
-  pocketRadiusSide: 0.068
-  pocketDepthSide: 0.011
-  facingAngleSide: 104.93142
+  pocketRadiusSide: 0.0205
+  pocketDepthSide: 0.04
+  facingAngleSide: 90
   pocketInnerRadiusSide: 0.055
-  rackTrianglePosition: 0.872
-  railHeightUpper: 0.040536
+  railHeightUpper: 0.0380024
   useRailHeightLower: 0
   railHeightLower: 0.028472
-  railDepthWidth: 0.098
-  railDepthHeight: 0.098
+  railDepthWidth: 0.1148986
+  railDepthHeight: 0.1148986
   cornerPocket: {x: 1.7988, y: 0, z: 0.9045}
   sidePocket: {x: 0, y: 0, z: 0.9448}
   bt_CoefSlide: 0.2
@@ -703,9 +702,10 @@ MonoBehaviour:
   bs_Friction: 1
   bs_BallDiameter: 52.5
   bs_BallMass: 0.16
-  baulkLine: 0.76
-  blackSpotFromR: 0.324
+  baulkLine: 0.7366
+  blackSpot: 0.3175
   semiCircleRadius: 0.2921
+  pinkSpot: 0.889
   CueOrange: {fileID: 3490835628016806087}
   CueBlue: {fileID: 3064140435133851898}
   DesktopUIScaleFactor: 1.5

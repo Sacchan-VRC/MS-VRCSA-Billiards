@@ -1,4 +1,7 @@
-﻿using System;
+﻿#define EIJIS_SNOOKER15REDS
+#define EIJIS_PYRAMID
+
+using System;
 using UdonSharp;
 using UnityEngine;
 using UnityEngine.UI;
@@ -8,7 +11,7 @@ using TMPro;
 [UdonBehaviourSyncMode(BehaviourSyncMode.None)]
 public class MenuManager : UdonSharpBehaviour
 {
-    private readonly uint[] TIMER_VALUES = new uint[] { 0, 60, 45, 30, 15 };
+    private readonly uint[] TIMER_VALUES = new uint[] { 0, 60, 45,30, 15 };
 
     [SerializeField] private GameObject menuStart;
     [SerializeField] private GameObject menuJoinLeave;
@@ -134,7 +137,7 @@ public class MenuManager : UdonSharpBehaviour
         switch (mode)
         {
             case 0:
-                modeName = "8 Ball";
+                modeName = selectedTable == 2 ? "CN 8 Ball" : "EN 8 Ball";
                 selectionPoint = table.transform.Find("intl.menu/MenuAnchor/LobbyMenu/GameMode/SelectionPoints/8ball");
                 table.setTransform(selectionPoint, selection, true);
                 break;
@@ -154,10 +157,21 @@ public class MenuManager : UdonSharpBehaviour
                 table.setTransform(selectionPoint, selection, true);
                 break;
             case 4:
+#if EIJIS_SNOOKER15REDS
+                modeName = "Snooker 15 Red";
+#else
                 modeName = "Snooker 6 Red";
+#endif
                 selectionPoint = table.transform.Find("intl.menu/MenuAnchor/LobbyMenu/GameMode/SelectionPoints/6red");
                 table.setTransform(selectionPoint, selection, true);
                 break;
+#if EIJIS_PYRAMID
+            case BilliardsModule.GAMEMODE_PYRAMID:
+                modeName = "Russian Pyramid";
+                selectionPoint = table.transform.Find("intl.menu/MenuAnchor/LobbyMenu/GameMode/SelectionPoints/Pyramid");
+                table.setTransform(selectionPoint, selection, true);
+                break;
+#endif
         }
         gameModeDisplay.text = modeName;
     }
@@ -339,6 +353,12 @@ public class MenuManager : UdonSharpBehaviour
     {
         table._TriggerGameModeChanged(4);
     }
+#if EIJIS_PYRAMID
+    public void ModePyramid()
+    {
+        table._TriggerGameModeChanged(BilliardsModule.GAMEMODE_PYRAMID);
+    }
+#endif
     [SerializeField] private Toggle TeamsToggle_button;
     public void TeamsToggle()
     {
@@ -475,6 +495,12 @@ public class MenuManager : UdonSharpBehaviour
             {
                 table._TriggerGameModeChanged(4);
             }
+#if EIJIS_PYRAMID
+            else if (button.name == "Pyramid")
+            {
+                table._TriggerGameModeChanged(BilliardsModule.GAMEMODE_PYRAMID);
+            }
+#endif
             else if (button.name == "TeamsToggle")
             {
                 table._TriggerTeamsChanged(button.toggleState);

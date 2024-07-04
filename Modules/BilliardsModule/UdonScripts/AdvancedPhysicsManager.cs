@@ -1,12 +1,25 @@
+#define EIJIS_ISSUE_FIX
+#define EIJIS_MANY_BALLS
+#define EIJIS_SNOOKER15REDS
+#define EIJIS_PYRAMID
+#define EIJIS_CUEBALLSWAP
+
 // #define HT8B_DRAW_REGIONS
 using System;
 using UdonSharp;
 using UnityEngine;
+#if EIJIS_CUEBALLSWAP
+using VRC.SDKBase;
+#endif
 
 [UdonBehaviourSyncMode(BehaviourSyncMode.NoVariableSync)]
 public class AdvancedPhysicsManager : UdonSharpBehaviour
 {
+#if EIJIS_MANY_BALLS
+    public string PHYSICSNAME = "<color=#FFD700>Advanced V0.5K (max32balls)</color>";
+#else
     public string PHYSICSNAME = "<color=#FFD700>Advanced V0.5K</color>";
+#endif
     [SerializeField] AudioClip[] hitSounds;
     [SerializeField] AudioClip[] bounceSounds;
     [SerializeField] AudioClip[] cushionSounds;
@@ -118,10 +131,17 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
         balls_P = table.ballsP;
         balls_V = table.ballsV;
         balls_W = table.ballsW;
+#if EIJIS_MANY_BALLS
+        balls_inBounds = new bool[BilliardsModule.MAX_BALLS];
+        for (int i = 0; i < BilliardsModule.MAX_BALLS; i++) { balls_inBounds[i] = true; }
+        balls_transitioningBounds = new bool[BilliardsModule.MAX_BALLS];
+        balls_inPocketBounds = new bool[BilliardsModule.MAX_BALLS];
+#else
         balls_inBounds = new bool[16];
         for (int i = 0; i < 16; i++) { balls_inBounds[i] = true; }
         balls_transitioningBounds = new bool[16];
         balls_inPocketBounds = new bool[16];
+#endif
     }
 
     public void _FixedTick()
@@ -201,6 +221,29 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
             }
             else
             {
+#if EIJIS_CUEBALLSWAP
+                if (!ReferenceEquals(null, Networking.LocalPlayer) && Networking.LocalPlayer.IsUserInVR())
+                {
+                    if (table.isPyramid)
+                    {
+                        bool hit = false;
+                        for (int i = 1; i < balls_P.Length; i++)
+                        {
+                            if ((lpos2 - balls_P[i]).sqrMagnitude < k_BALL_RSQR)
+                            {
+                                table._TriggerOtherBallHit(i, false);
+                                hit = true;
+                                break;
+                            }
+                        }
+                        if (!hit)
+                        {
+                            table._TriggerOtherBallHit(-1, false);
+                        }
+                    }
+                }
+
+#endif
                 cue_vdir = this.transform.InverseTransformVector(cuetip.transform.forward);//new Vector2( cuetip.transform.forward.z, -cuetip.transform.forward.x ).normalized;
 
                 // Get where the cue will strike the ball
@@ -338,7 +381,11 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
 
         uint ball_bit = 0x1u;
         bool is4Ball = table.is4Ball;
+#if EIJIS_MANY_BALLS
+        for (int i = 0; i < BilliardsModule.MAX_BALLS; i++)
+#else
         for (int i = 0; i < 16; i++)
+#endif
         {
             float moveTimeLeft = k_FIXED_TIME_STEP;
             int collidedBall = -1; // used to stop from colliding with the same ball twice in one step
@@ -462,16 +509,32 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
         // Check if simulation has settled
         if (!ballsMoving)
         {
-            if (Time.time - pocketedTime > 1f)
+            if(table.isChinese8Ball)
             {
-                table._TriggerSimulationEnded(false);
-                return;
+                if (Time.time - pocketedTime > 6f)
+                {
+                    table._TriggerSimulationEnded(false);
+                    return;
+                }
             }
+            else
+            {
+                if (Time.time - pocketedTime > 1f)
+                {
+                    table._TriggerSimulationEnded(false);
+                    return;
+                }
+            }
+
         }
 
         if (is4Ball) return;
 
+#if EIJIS_SNOOKER15REDS
+        if (table.isSnooker)
+#else
         if (table.isSnooker6Red)
+#endif
         {
             if (!cueBallHasCollided && balls_P[0].y > 0)
             {
@@ -523,7 +586,11 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
         // Loop balls look for collisions
         uint ball_bit = 0x1U;
 
+#if EIJIS_MANY_BALLS
+        for (int i = 0; i < BilliardsModule.MAX_BALLS; i++)
+#else
         for (int i = 0; i < 16; i++)
+#endif
         {
             if (i == id
             || (ball_bit & sn_pocketed) != 0U
@@ -631,9 +698,9 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
                 // and not get stuck at the edge due to it running every substep
                 if (originalDelta.x > 0)
                 {
-                    if (pos.x + k_BALL_RADIUS <= tableEdge_x.x)
+                    if (pos.x + k_BALL_RADIUS <= k_pR.x)
                     {
-                        Vector3 cushionPos = tableEdge_x;
+                        Vector3 cushionPos = k_pR;
                         cushionPos.x += 0.001f;
                         if (_phy_ball_plane(pos, norm, cushionPos, -Vector3.right))
                         {
@@ -649,9 +716,9 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
                 }
                 else
                 {
-                    if (pos.x - k_BALL_RADIUS >= -tableEdge_x.x)
+                    if (pos.x - k_BALL_RADIUS >= -k_pR.x)
                     {
-                        Vector3 cushionPos = -tableEdge_x;
+                        Vector3 cushionPos = -k_pR;
                         cushionPos.x -= 0.001f;
                         if (_phy_ball_plane(pos, norm, cushionPos, Vector3.right))
                         {
@@ -667,9 +734,9 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
                 }
                 if (originalDelta.z > 0)
                 {
-                    if (pos.z + k_BALL_RADIUS <= tableEdge_z.z)
+                    if (pos.z + k_BALL_RADIUS <= k_pN.z)
                     {
-                        Vector3 cushionPos = tableEdge_z;
+                        Vector3 cushionPos = k_pN;
                         cushionPos.z += 0.001f;
                         if (_phy_ball_plane(pos, norm, cushionPos, -Vector3.forward))
                         {
@@ -685,9 +752,9 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
                 }
                 else
                 {
-                    if (pos.z - k_BALL_RADIUS >= -tableEdge_z.z)
+                    if (pos.z - k_BALL_RADIUS >= -k_pN.z)
                     {
-                        Vector3 cushionPos = -tableEdge_z;
+                        Vector3 cushionPos = -k_pN;
                         cushionPos.z -= 0.001f;
                         if (_phy_ball_plane(pos, norm, cushionPos, Vector3.forward))
                         {
@@ -875,7 +942,11 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
                 float dot = Vector3.Dot(velocityDelta, normal);
                 g_ball_current.GetComponent<AudioSource>().PlayOneShot(hitSounds[id % 3], Mathf.Clamp01(dot));
 
+#if EIJIS_SNOOKER15REDS
+                if (table.isSnooker)
+#else
                 if (table_.isSnooker6Red)
+#endif
                 {
                     if (!cueBallHasCollided && id == 0 && balls_P[0].y > 0)
                     {
@@ -1643,7 +1714,11 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
     public void _ResetSimulationVariables()
     {
         jumpShotFlewOver = cueBallHasCollided = false;
+#if EIJIS_MANY_BALLS
+        for (int i = 0; i < BilliardsModule.MAX_BALLS; i++)
+#else
         for (int i = 0; i < 16; i++)
+#endif
         {
             balls_inBounds[i] = true;
             balls_inPocketBounds[i] = false;
@@ -1672,8 +1747,16 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
                     k_RAIL_HEIGHT_LOWER = k_BALL_DIAMETRE * 0.6504065040650407f;
                     break;
                 case 4: // 6red
+#if EIJIS_PYRAMID
+                case BilliardsModule.GAMEMODE_PYRAMID: // Russian Pyramid
+#endif
                     k_RAIL_HEIGHT_LOWER = k_BALL_DIAMETRE * 0.7f;
                     break;
+#if EIJIS_ISSUE_FIX
+                default:
+                    k_RAIL_HEIGHT_LOWER = k_BALL_DIAMETRE * 0.635f;
+                    break;
+#endif
             }
         }
     }
@@ -1701,7 +1784,11 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
 
     private bool isCueBallTouching()
     {
+#if EIJIS_SNOOKER15REDS
+        if (table.is8Ball)
+#else
         if (table.is8Ball || table.isSnooker6Red)
+#endif
         {
             // Check all
             for (int i = 1; i < 16; i++)
@@ -1723,6 +1810,25 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
                 }
             }
         }
+#if EIJIS_SNOOKER15REDS
+        else if (table.isSnooker)
+        {
+            for (int i = 1; i < 16; i++)
+            {
+                if ((balls_P[0] - balls_P[i]).sqrMagnitude < k_BALL_DSQR)
+                {
+                    return true;
+                }
+            }
+            for (int i = 25; i < 31; i++)
+            {
+                if ((balls_P[0] - balls_P[i]).sqrMagnitude < k_BALL_DSQR)
+                {
+                    return true;
+                }
+            }
+        }
+#endif
         else // 4
         {
             if ((balls_P[0] - balls_P[9]).sqrMagnitude < k_BALL_DSQR)
@@ -2263,8 +2369,6 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
     Vector3 _sign_pos = new Vector3(0.0f, 1.0f, 0.0f);
 
     Vector2 tableEdge; // distances at which ball falls off table
-    Vector3 tableEdge_x; // distances at which ball falls off table
-    Vector3 tableEdge_z; // distances at which ball falls off table
 
     public void _InitConstants()
     {
@@ -2290,14 +2394,14 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
         k_BALL_DSQR = k_BALL_DIAMETRE * k_BALL_DIAMETRE;
         k_BALL_RSQR = k_BALL_RADIUS * k_BALL_RADIUS;
         k_BALL_MASS = table.k_BALL_MASS;
-        k_RAIL_HEIGHT_UPPER = table.k_RAIL_HEIGHT_UPPER;
-        k_RAIL_HEIGHT_LOWER_CACHED = table.k_RAIL_HEIGHT_LOWER;
-        k_RAIL_DEPTH_WIDTH = table.k_RAIL_DEPTH_WIDTH;
-        k_RAIL_DEPTH_HEIGHT = table.k_RAIL_DEPTH_HEIGHT;
         k_vE = table.k_vE; //cornerPocket
         k_vF = table.k_vF; //sidePocket
 
         // Advanced only
+        k_RAIL_HEIGHT_UPPER = table.k_RAIL_HEIGHT_UPPER;
+        k_RAIL_HEIGHT_LOWER_CACHED = table.k_RAIL_HEIGHT_LOWER;
+        k_RAIL_DEPTH_WIDTH = table.k_RAIL_DEPTH_WIDTH;
+        k_RAIL_DEPTH_HEIGHT = table.k_RAIL_DEPTH_HEIGHT;
         useRailLower = table.useRailLower;
         k_F_SLIDE = table.k_F_SLIDE;
         k_F_ROLL = table.k_F_ROLL;
@@ -2327,24 +2431,18 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
             collider[i].enabled = true;
         }
 
-        //MeshCollider collider = table.table.GetComponent<MeshCollider>();
-        //if (collider != null) collider.enabled = false;
-        //collider = table.auto_pocketblockers.GetComponent<MeshCollider>();
-        //if (collider != null) collider.enabled = false;
-
         // Handy values
         k_MINOR_REGION_CONST = k_TABLE_WIDTH - k_TABLE_HEIGHT;
 
         // Major source vertices
         k_vA.x = k_POCKET_RADIUS_SIDE;
-        k_vA.z = k_TABLE_HEIGHT;
-        k_vA_Mirror = k_vA + new Vector3(k_vA.x * -2, 0, 0);
+        k_vA.z = k_TABLE_HEIGHT + k_CUSHION_RADIUS;
 
-        k_vB.x = k_TABLE_WIDTH - k_POCKET_WIDTH_CORNER;
-        k_vB.z = k_TABLE_HEIGHT;
+        k_vB.x = k_TABLE_WIDTH;
+        k_vB.z = k_TABLE_HEIGHT + k_CUSHION_RADIUS;
 
-        k_vC.x = k_TABLE_WIDTH;
-        k_vC.z = k_TABLE_HEIGHT - k_POCKET_HEIGHT_CORNER;
+        k_vC.x = k_TABLE_WIDTH + k_CUSHION_RADIUS;
+        k_vC.z = k_TABLE_HEIGHT;
 
         k_vD = k_vA;
         Vector3 Rotationk_vD = new Vector3(k_POCKET_DEPTH_SIDE, 0, 0);
@@ -2393,25 +2491,64 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
         k_pK.x -= k_CUSHION_RADIUS;
 
         k_pO = k_vB;
-        k_pO.z -= r_k_CUSHION_RADIUS;
+        k_pO.z -= k_CUSHION_RADIUS; // only used in carom, but also used to draw point in HT8B_DRAW_REGIONS, carom requires it to be r_k_cushion_radius;
         k_pP = k_vB + k_vB_vY_normal * k_CUSHION_RADIUS;
         k_pQ = k_vC + k_vC_vZ_normal * k_CUSHION_RADIUS;
 
         k_pR = k_vC;
-        k_pR.x -= r_k_CUSHION_RADIUS;
+        k_pR.x -= k_CUSHION_RADIUS; // only used in carom, but also used to draw point in HT8B_DRAW_REGIONS, carom requires it to be r_k_cushion_radius;
 
         tableEdge.x = k_TABLE_WIDTH + k_RAIL_DEPTH_WIDTH + k_BALL_RADIUS;
         tableEdge.y = k_TABLE_HEIGHT + k_RAIL_DEPTH_HEIGHT + k_BALL_RADIUS;
 
-        tableEdge_x.x = k_vC.x - k_CUSHION_RADIUS;
-        tableEdge_z.z = k_pN.z;
+        // move points to enable pocket radius tweaking and adjusting cushion radius without moving cushions
+        // also makes table width and height actual equal the playable space on the table
+        // k_pM is only used for drawing lines, and this
+        k_pM = k_vA + k_vA_vD_normal * k_CUSHION_RADIUS;
 
-        // visualize points like this
-        // Debug.DrawRay(balls[0].transform.parent.TransformPoint(tableEdge_x), Vector3.up * .3f, Color.red, 3f);
+        float sideXdifA = k_vA.x - k_pM.x;
+        float sideXdifD = k_vD.x - k_pM.x;
+        float sideXdifN = k_pN.x - k_pM.x;
+        float sideXdifT = k_pT.x - k_pM.x;
+        float sideXdifL = k_pL.x - k_pM.x;
+        float sideXdifK = k_pK.x - k_pM.x;
+        float sideXdifX = k_vX.x - k_pM.x;
+        k_pN.x += k_POCKET_RADIUS_SIDE;
+        k_pM.x = k_pN.x;
+        k_vA.x = k_pM.x + sideXdifA;
+        k_vD.x = k_pM.x + sideXdifD;
+        k_pN.x = k_pM.x + sideXdifN;
+        k_pT.x = k_pM.x + sideXdifT;
+        k_pL.x = k_pM.x + sideXdifL;
+        k_pK.x = k_pM.x + sideXdifK;
+        k_vX.x = k_pM.x + sideXdifX;
 
+        k_vA_Mirror = new Vector3(-k_vA.x, k_vA.y, k_vA.z);
+
+        float widthXdifB = k_vB.x - k_pP.x;
+        float widthXdifR = k_pO.x - k_pP.x;
+        float widthXdifY = k_vY.x - k_pP.x;
+        // float widthXdifV = k_pU.x - k_pP.x;
+        k_pO.x -= k_POCKET_WIDTH_CORNER;
+        k_pP.x = k_pO.x;
+        k_vB.x = k_pP.x + widthXdifB;
+        k_pO.x = k_pP.x + widthXdifR;
+        k_vY.x = k_pP.x + widthXdifY;
+        // k_pU.x = k_pP.x + widthXdifV;
+
+        float heightZdifC = k_vC.z - k_pQ.z;
+        float heightZdifZ = k_vZ.z - k_pQ.z;
+        // float heightZdifR = k_pR.z - k_pQ.z;
+        // float heightZdifV = k_pV.z - k_pQ.z;
+        k_pR.z -= k_POCKET_HEIGHT_CORNER;
+        k_pQ.z = k_pR.z;
+        // k_pR.z = k_pQ.z + heightZdifR;
+        k_vC.z = k_pQ.z + heightZdifC;
+        k_vZ.z = k_pQ.z + heightZdifZ;
+        // k_pV.z = k_pQ.z + heightZdifV;
 #if HT8B_DRAW_REGIONS
         // for drawing lines only
-        k_pM = k_vA + k_vA_vD_normal * k_CUSHION_RADIUS;
+       
 
         k_pT = k_vX;
         k_pT.x -= k_CUSHION_RADIUS;
@@ -2615,6 +2752,33 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
         newPosPR.z += k_BALL_RADIUS;
 
 #if HT8B_DRAW_REGIONS
+        // To Identify the points
+        // side pocket
+        // Color alpha1 = new Color(0, 0, 0, 1);// remove transparency
+        // Debug.DrawRay(k_pN, Vector3.up, alpha1 + Color.red * .5f);
+        // Debug.DrawRay(k_pM, Vector3.up, Color.white);
+        // Debug.DrawRay(k_vA, Vector3.up, alpha1 + Color.magenta * .25f);
+        // Debug.DrawRay(k_pK, Vector3.up, Color.cyan);
+        // Debug.DrawRay(k_pL, Vector3.up, Color.magenta);
+        // Debug.DrawRay(k_vD, Vector3.up, alpha1 + Color.magenta * .5f);
+        // Debug.DrawRay(k_pT, Vector3.up, Color.gray);
+        // Debug.DrawRay(k_vX, Vector3.up, alpha1 + Color.cyan * .5f);
+        // // corner pocket on side
+        // Debug.DrawRay(k_pO, Vector3.up, Color.blue);
+        // Debug.DrawRay(k_pP, Vector3.up, Color.green);
+        // Debug.DrawRay(k_pU, Vector3.up, alpha1 + Color.red * .25f);
+        // Debug.DrawRay(k_vY, Vector3.up, alpha1 + Color.green * .5f);
+        // Debug.DrawRay(k_vB, Vector3.up, alpha1 + Color.cyan * .25f);
+        // // corner pocket on end
+        // Debug.DrawRay(k_pQ, Vector3.up, Color.yellow);
+        // Debug.DrawRay(k_pR, Vector3.up, Color.red);
+        // Debug.DrawRay(k_vZ, Vector3.up, alpha1 + Color.yellow * .5f);
+        // Debug.DrawRay(k_vC, Vector3.up, alpha1 + Color.blue * .25f);
+        // Debug.DrawRay(k_pV, Vector3.up, alpha1 + Color.green * .25f);
+        // // center on end
+        // Debug.DrawRay(k_pS, Vector3.up, Color.black);
+        // Debug.DrawRay(k_vW, Vector3.up, alpha1 + Color.blue * .5f);
+
         Debug.DrawLine(k_vA, k_vB, Color.white);
         Debug.DrawLine(k_vD, k_vA, Color.white);
         Debug.DrawLine(k_vB, k_vY, Color.white);
@@ -2646,17 +2810,17 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
         {
             if (newPos.x > newPos.z + k_MINOR_REGION_CONST) // Minor B
             {
-                if (newPos.z < k_TABLE_HEIGHT - k_POCKET_HEIGHT_CORNER)
+                if (newPos.z < k_vC.z)
                 {
                     // Region H
 #if HT8B_DRAW_REGIONS
                     Debug.DrawLine(new Vector3(0.0f, 0.0f, 0.0f), new Vector3(k_TABLE_WIDTH, 0.0f, 0.0f), Color.red);
                     Debug.DrawLine(k_vC, k_vC + k_vC_vW_normal, Color.red);
 #endif
-                    if (newPos.x > k_TABLE_WIDTH - r_k_CUSHION_RADIUS)
+                    if (newPos.x > k_TABLE_WIDTH - k_BALL_RADIUS)
                     {
                         // Static resolution
-                        newPos.x = k_TABLE_WIDTH - r_k_CUSHION_RADIUS;
+                        newPos.x = k_TABLE_WIDTH - k_BALL_RADIUS;
                         N = k_vC_vW_normal;
                         // Dynamic
                         _phy_bounce_cushion(ref newVel, ref newAngVel, id, Vector3.Scale(N, _sign_pos));

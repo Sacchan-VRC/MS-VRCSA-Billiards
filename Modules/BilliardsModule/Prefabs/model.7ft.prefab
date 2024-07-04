@@ -109,7 +109,7 @@ Transform:
   m_GameObject: {fileID: 1383070046084678505}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0.653, y: 0.7967979, z: -0.6753496}
+  m_LocalPosition: {x: 0.65298706, y: 0.7967979, z: -0.6705}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -140,7 +140,7 @@ Transform:
   m_GameObject: {fileID: 2281117375296516138}
   serializedVersion: 2
   m_LocalRotation: {x: -0.000000029802322, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0.6546552, y: 0.663, z: -0.6753496}
+  m_LocalPosition: {x: 0.6546423, y: 0.663, z: -0.6705}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -171,7 +171,7 @@ Transform:
   m_GameObject: {fileID: 2356492632824006315}
   serializedVersion: 2
   m_LocalRotation: {x: -0.000000029802322, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0, y: 0.796, z: -0.6753496}
+  m_LocalPosition: {x: -0.0000129338, y: 0.796, z: -0.6705}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -602,7 +602,7 @@ Transform:
   m_GameObject: {fileID: 6280841411936170249}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -0.653, y: 0.7967979, z: -0.6753496}
+  m_LocalPosition: {x: -0.65301293, y: 0.7967979, z: -0.6705}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -664,7 +664,7 @@ Transform:
   m_GameObject: {fileID: 7088563451905916406}
   serializedVersion: 2
   m_LocalRotation: {x: -0.000000029802322, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -0.6540871, y: 0.663, z: -0.6753496}
+  m_LocalPosition: {x: -0.6541, y: 0.663, z: -0.6705}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -729,24 +729,23 @@ MonoBehaviour:
   _udonSharpBackingUdonBehaviour: {fileID: -6722354520385974396}
   TABLENAME: Pool 7ft
   tableMesh: {fileID: 1158493604116298499}
-  tableWidth: 1.0026
-  tableHeight: 0.5073
+  tableWidth: 1.9812
+  tableHeight: 0.9906
   cushionRadius: 0.012
-  pocketWidthCorner: 0.098
-  pocketHeightCorner: 0.096
+  pocketWidthCorner: 0.079
+  pocketHeightCorner: 0.077
   pocketInnerRadiusCorner: 0.058
   facingAngleCorner: 144
-  pocketRadiusSide: 0.07518
+  pocketRadiusSide: 0.0317
   pocketDepthSide: 0.06
   facingAngleSide: 100
   pocketInnerRadiusSide: 0.06
-  rackTrianglePosition: 0.5334
-  railHeightUpper: 0.0447334
+  railHeightUpper: 0.03911
   useRailHeightLower: 0
   railHeightLower: 0.032
-  railDepthWidth: 0.15895
-  railDepthHeight: 0.16855
-  cornerPocket: {x: 1.005, y: 0, z: 0.515}
+  railDepthWidth: 0.158167
+  railDepthHeight: 0.16526
+  cornerPocket: {x: 1.008, y: 0, z: 0.515}
   sidePocket: {x: 0, y: 0, z: 0.565}
   bt_CoefSlide: 0.2
   bt_CoefRoll: 0.008
@@ -764,9 +763,10 @@ MonoBehaviour:
   bs_Friction: 1
   bs_BallDiameter: 57.15
   bs_BallMass: 0.16
-  baulkLine: 0.46
-  blackSpotFromR: 0.19
-  semiCircleRadius: 0.23
+  baulkLine: 0.4140708
+  semiCircleRadius: 0.3340303
+  pinkSpot: 0.55245
+  blackSpot: 0.1877979
   CueOrange: {fileID: 543142896622143520}
   CueBlue: {fileID: 9012212504501021619}
   DesktopUIScaleFactor: 1.08
@@ -912,7 +912,7 @@ MeshFilter:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 8772431994874535493}
-  m_Mesh: {fileID: 6644412044834502715, guid: 7a4da995e268ad549bf48e06099bd4c2, type: 3}
+  m_Mesh: {fileID: 4519361359662348747, guid: 7a4da995e268ad549bf48e06099bd4c2, type: 3}
 --- !u!23 &3841950982888401998
 MeshRenderer:
   m_ObjectHideFlags: 0
@@ -976,4 +976,4 @@ MeshCollider:
   serializedVersion: 5
   m_Convex: 0
   m_CookingOptions: 30
-  m_Mesh: {fileID: 6644412044834502715, guid: 7a4da995e268ad549bf48e06099bd4c2, type: 3}
+  m_Mesh: {fileID: 4519361359662348747, guid: 7a4da995e268ad549bf48e06099bd4c2, type: 3}

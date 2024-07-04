@@ -1,4 +1,6 @@
-﻿using System;
+﻿#define EIJIS_ISSUE_FIX
+
+using System;
 using UdonSharp;
 using UnityEngine;
 using VRC.SDKBase;
@@ -79,7 +81,16 @@ public class CueController : UdonSharpBehaviour
 
     public override void OnDeserialization()
     {
+#if EIJIS_ISSUE_FIX
+        VRCPlayerApi ownerPlayer = Networking.GetOwner(this.gameObject);
+        if (ReferenceEquals(null, ownerPlayer))
+        {
+            return;
+        }
+        int owner = ownerPlayer.playerId;
+#else
         int owner = Networking.GetOwner(this.gameObject).playerId;
+#endif
 
         activeCueSkin = table._CanUseCueSkin(owner, syncedCueSkin) ? syncedCueSkin : 0;
 
@@ -100,6 +111,9 @@ public class CueController : UdonSharpBehaviour
 
     private void refreshCueSmoothing()
     {
+#if EIJIS_ISSUE_FIX
+        if (ReferenceEquals(null, Networking.LocalPlayer)) return;
+#endif
         if (!Networking.LocalPlayer.IsOwner(gameObject) || !primaryHolding)
         {
             cueSmoothing = 30;

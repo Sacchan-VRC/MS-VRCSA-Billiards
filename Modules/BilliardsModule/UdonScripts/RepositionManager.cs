@@ -1,4 +1,5 @@
-﻿
+﻿#define EIJIS_SNOOKER15REDS
+
 using System;
 using UdonSharp;
 using UnityEngine;
@@ -68,7 +69,11 @@ public class RepositionManager : UdonSharpBehaviour
             boundedLocation.z = Mathf.Clamp(boundedLocation.z, -k_pO.z, k_pO.z);
             boundedLocation.y = 0.0f;
             //confine do D
+#if EIJIS_SNOOKER15REDS
+            if (!table.isPracticeMode && table.isSnooker && i == 0)
+#else
             if (!table.isPracticeMode && table.isSnooker6Red && i == 0)
+#endif
             {
                 boundedLocation = ConfineToD(boundedLocation, maxX);
             }

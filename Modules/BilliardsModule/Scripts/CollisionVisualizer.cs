@@ -7,7 +7,10 @@ using VRC.Udon;
 public class CollisionVisualizer : MonoBehaviour
 {
     [SerializeField] UdonBehaviour table;
+    [Tooltip("Only works in play mode")]
     public bool getFromTable = false;
+    [Tooltip("This function hasn't been updated for MS-VRCSA, may show something incorrect")]
+    public bool previewCollision = false;
     [SerializeField] public float tableWidth;
     [SerializeField] public float tableHeight;
     [SerializeField] public float pocketWidthCorner;
@@ -27,19 +30,13 @@ public class CollisionVisualizer : MonoBehaviour
     [SerializeField] public float k_RAIL_HEIGHT_LOWER;
     [SerializeField] public float k_RAIL_DEPTH_WIDTH;
     [SerializeField] public float k_RAIL_DEPTH_HEIGHT;
+    [SerializeField] public float baulkLine;
+    [SerializeField] public float blackSpot;
+    [SerializeField] public float semiCircleRadius;
+    [SerializeField] public float pinkSpot;
     [SerializeField] public Transform table_Surface;
 
-    [SerializeField] public bool DrawUnused;
-    [SerializeField][Range(2f, 10f)] public float cornerPocketDiameter;
-    // [SerializeField] [Range(2f, 6f)] public float cornerPocketMouth;
-    [SerializeField][Range(0f, 0.5f)] public float cornerOffset;
-
-    // [SerializeField] public float sidePocketPosition;
-    [SerializeField][Range(2f, 6f)] public float sidePocketDiameter;
-    [SerializeField][Range(2f, 6f)] public float sidePocketMouth;
-
     float k_MINOR_REGION_CONST;
-    float r_k_CUSHION_RADIUS;
 
     Vector3 k_vA = new Vector3();
     Vector3 k_vB = new Vector3();
@@ -97,13 +94,13 @@ public class CollisionVisualizer : MonoBehaviour
 
         // Major source vertices
         k_vA.x = pocketRadiusSide;
-        k_vA.z = tableHeight;
+        k_vA.z = tableHeight + cushionRadius;
 
-        k_vB.x = tableWidth - pocketWidthCorner;
-        k_vB.z = tableHeight;
+        k_vB.x = tableWidth;
+        k_vB.z = tableHeight + cushionRadius;
 
-        k_vC.x = tableWidth;
-        k_vC.z = tableHeight - pocketHeightCorner;
+        k_vC.x = tableWidth + cushionRadius;
+        k_vC.z = tableHeight;
 
         k_vD = k_vA;
         Vector3 Rotationk_vD = new Vector3(pocketDepthSide, 0, 0);
@@ -148,33 +145,68 @@ public class CollisionVisualizer : MonoBehaviour
 
         // Minkowski difference
         k_pN = k_vA;
-        k_pN.z -= r_k_CUSHION_RADIUS;
+        k_pN.z -= cushionRadius;
 
-        k_pM = k_vA + k_vA_vD_normal * r_k_CUSHION_RADIUS;
-        k_pL = k_vD + k_vA_vD_normal * r_k_CUSHION_RADIUS;
+        k_pM = k_vA + k_vA_vD_normal * cushionRadius;
+        k_pL = k_vD + k_vA_vD_normal * cushionRadius;
 
         k_pK = k_vD;
-        k_pK.x -= r_k_CUSHION_RADIUS;
+        k_pK.x -= cushionRadius;
 
         k_pO = k_vB;
-        k_pO.z -= r_k_CUSHION_RADIUS;
-        k_pP = k_vB + k_vB_vY_normal * r_k_CUSHION_RADIUS;
-        k_pQ = k_vC + k_vC_vZ_normal * r_k_CUSHION_RADIUS;
+        k_pO.z -= cushionRadius;
+
+        k_pP = k_vB + k_vB_vY_normal * cushionRadius;
+
+        k_pQ = k_vC + k_vC_vZ_normal * cushionRadius;
+
 
         k_pR = k_vC;
-        k_pR.x -= r_k_CUSHION_RADIUS;
+        k_pR.x -= cushionRadius;
+
 
         k_pT = k_vX;
-        k_pT.x -= r_k_CUSHION_RADIUS;
+        k_pT.x -= cushionRadius;
 
         k_pS = k_vW;
-        k_pS.x -= r_k_CUSHION_RADIUS;
+        k_pS.x -= cushionRadius;
 
-        k_pU = k_vY + k_vB_vY_normal * r_k_CUSHION_RADIUS;
-        k_pV = k_vZ + k_vC_vZ_normal * r_k_CUSHION_RADIUS;
+        k_pU = k_vY + k_vB_vY_normal * cushionRadius;
+        k_pV = k_vZ + k_vC_vZ_normal * cushionRadius;
 
-        k_pS = k_vW;
-        k_pS.x -= r_k_CUSHION_RADIUS;
+        //move points to enable pocket radius tweaking and adjusting cushion radius without moving edges
+        float heightXdifN = k_pN.x - k_pM.x;
+        float heightXdifT = k_pT.x - k_pM.x;
+        float heightXdifL = k_pL.x - k_pM.x;
+        float heightXdifK = k_pK.x - k_pM.x;
+        float heightXdifA = k_vA.x - k_pM.x;
+        float heightXdifD = k_vD.x - k_pM.x;
+        k_pN.x += pocketRadiusSide;
+        k_pM.x = k_pN.x;
+        k_pN.x = k_pM.x + heightXdifN;
+        k_pT.x = k_pM.x + heightXdifT;
+        k_pL.x = k_pM.x + heightXdifL;
+        k_pK.x = k_pM.x + heightXdifK;
+        k_vA.x = k_pM.x + heightXdifA;
+        k_vD.x = k_pM.x + heightXdifD;
+
+        float widthXdifR = k_pO.x - k_pP.x;
+        float widthXdifV = k_pU.x - k_pP.x;
+        float widthXdifB = k_vB.x - k_pP.x;
+        k_pO.x -= pocketWidthCorner;
+        k_pP.x = k_pO.x;
+        k_pO.x = k_pP.x + widthXdifR;
+        k_pU.x = k_pP.x + widthXdifV;
+        k_vB.x = k_pP.x + widthXdifB;
+
+        float heightZdifR = k_pR.z - k_pQ.z;
+        float heightZdifV = k_pV.z - k_pQ.z;
+        float heightZdifC = k_vC.z - k_pQ.z;
+        k_pR.z -= pocketHeightCorner;
+        k_pQ.z = k_pR.z;
+        k_pR.z = k_pQ.z + heightZdifR;
+        k_pV.z = k_pQ.z + heightZdifV;
+        k_vC.z = k_pQ.z + heightZdifC;
 
         // Rail Height Stuff
         railCornerOuter = Vector3.right * (tableWidth + k_RAIL_DEPTH_WIDTH) + Vector3.forward * (tableHeight + k_RAIL_DEPTH_HEIGHT);
@@ -189,18 +221,18 @@ public class CollisionVisualizer : MonoBehaviour
         return $"v {v.x} {v.y} {v.z}\n";
     }
 
-    void drawCylinder(Vector3 at, float r, Color colour, float wallHeight = 0.048f)
+    void drawCylinder(Vector3 at, float r, Color colour, float wallHeight = 0.048f, uint density = 16, uint sides = 32)
     {
-        Vector3 last = at + Vector3.forward * r;
-        Vector3 cur = Vector3.zero;
+        Vector3 last = Vector3.forward * r;
+        Vector3 cur = last;
+        float angle = 360f / sides;
+        Quaternion rotQuat = Quaternion.AngleAxis(angle, Vector3.up);
 
-        for (int i = 1; i < 32; i++)
+        for (int i = 0; i < sides; i++)
         {
-            float angle = ((float)i / 31.0f) * 6.283185307179586f;
-            cur.x = at.x + Mathf.Sin(angle) * r;
-            cur.z = at.z + Mathf.Cos(angle) * r;
+            cur = rotQuat * cur;
 
-            drawPlane(last, cur, colour, wallHeight);
+            drawPlane(at + last, at + cur, colour, wallHeight, density);
             last = cur;
         }
     }
@@ -212,14 +244,14 @@ public class CollisionVisualizer : MonoBehaviour
     }
 
     // Reflective, stacked by n
-    void drawPlane(Vector3 from, Vector3 to, Color colour, float wallHeight = 0.048f)
+    void drawPlane(Vector3 from, Vector3 to, Color colour, float wallHeight = 0.048f, uint density = 16)
     {
         Vector3 reflect_x = new Vector3(-1.0f, 1.0f, 1.0f);
         Vector3 reflect_z = new Vector3(1.0f, 1.0f, -1.0f);
         Vector3 reflect_xz = Vector3.Scale(reflect_x, reflect_z);
 
-        float heightInterval = wallHeight / 16;
-        for (int n = 0; n < 16; n++)
+        float heightInterval = wallHeight / (density - 1);
+        for (int n = 0; n < density; n++)
         {
             Vector3 height = Vector3.up * (heightInterval * n);
 
@@ -247,8 +279,6 @@ public class CollisionVisualizer : MonoBehaviour
 
 #if HT8B_DRAW_REGIONS
 
-        r_k_CUSHION_RADIUS = cushionRadius;
-
         _phy_table_init();
 
         //side pockets
@@ -271,7 +301,7 @@ public class CollisionVisualizer : MonoBehaviour
         drawPlane(k_pQ, k_pR, Color.yellow, k_RAIL_HEIGHT_UPPER);
         drawPlane(k_pR, k_pS, Color.yellow, k_RAIL_HEIGHT_UPPER);
 
-        if (_phy_ball_pockets())
+        if (_phy_ball_pockets() && previewCollision)
         {
             drawCylinder(cornerPocket, pocketInnerRadiusCorner, Color.green, k_RAIL_HEIGHT_UPPER);
             drawCylinder(sidePocket, pocketInnerRadiusSide, Color.green, k_RAIL_HEIGHT_UPPER);
@@ -281,9 +311,20 @@ public class CollisionVisualizer : MonoBehaviour
             drawCylinder(cornerPocket, pocketInnerRadiusCorner, Color.red, k_RAIL_HEIGHT_UPPER);
             drawCylinder(sidePocket, pocketInnerRadiusSide, Color.red, k_RAIL_HEIGHT_UPPER);
         }
+        _drawline_applyparent(new Vector3(baulkLine, 0, -tableWidth * .5f), new Vector3(baulkLine, 0, tableWidth * .5f), Color.red);
+        _drawline_applyparent(new Vector3(baulkLine, 0, -semiCircleRadius), new Vector3(baulkLine, .12f, -semiCircleRadius), Color.yellow);
+        _drawline_applyparent(new Vector3(baulkLine, 0, semiCircleRadius), new Vector3(baulkLine, .12f, semiCircleRadius), Color.green);
+        _drawline_applyparent(new Vector3(baulkLine, 0, 0), new Vector3(baulkLine, .12f, 0), new Color(.3f, .12f, .05f));
+        _drawline_applyparent(new Vector3(pinkSpot, 0, 0), new Vector3(pinkSpot, .12f, 0), (Color.red + Color.white) / 2f);
+        _drawline_applyparent(new Vector3(blackSpot, 0, 0), new Vector3(blackSpot, .12f, 0), Color.black);
+        _drawline_applyparent(new Vector3(0, 0, 0), new Vector3(0, .12f, 0), Color.blue);
 
-        _phy_table_init();
+        drawCylinder(k_vA, cushionRadius, Color.yellow, k_RAIL_HEIGHT_UPPER, 2);
+        drawCylinder(k_vB, cushionRadius, Color.yellow, k_RAIL_HEIGHT_UPPER, 2);
+        drawCylinder(k_vC, cushionRadius, Color.yellow, k_RAIL_HEIGHT_UPPER, 2);
+        drawCylinder(k_vD, cushionRadius, Color.yellow, k_RAIL_HEIGHT_UPPER, 2);
 #endif
+        if (!previewCollision) { return; }
 
         if (A.x > k_vA.x) // Major Regions
         {
@@ -533,6 +574,10 @@ public class CollisionVisualizer : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
+        drawTable();
+    }
+    public void drawTable()
+    {
         if (getFromTable && Application.isPlaying)
         {
             tableWidth = (float)table.GetProgramVariable("k_TABLE_WIDTH");
@@ -548,12 +593,13 @@ public class CollisionVisualizer : MonoBehaviour
             sidePocket = (Vector3)table.GetProgramVariable("k_vF"); // k_vF
             facingAngleCorner = (float)table.GetProgramVariable("k_FACING_ANGLE_CORNER");
             facingAngleSide = (float)table.GetProgramVariable("k_FACING_ANGLE_SIDE");
+            baulkLine = (float)table.GetProgramVariable("K_BAULK_LINE");
+            blackSpot = (float)table.GetProgramVariable("K_BLACK_SPOT");
+            semiCircleRadius = (float)table.GetProgramVariable("k_SEMICIRCLERADIUS");
+            pinkSpot = (float)table.GetProgramVariable("k_SPOT_POSITION_X");
         }
 
         _phy_ball_table_new();
-
-        calculateConstants();
-        drawPhysics();
         checkCushionCollision();
     }
 
@@ -570,59 +616,10 @@ public class CollisionVisualizer : MonoBehaviour
     private Vector3 cornerFacingSide;
     private Vector3 cornerFacingEnd;
 
-    private void calculateConstants()
-    {
-        // sidePocket = new Vector3(0, 0, sidePocketPosition);
-        // cornerPocket = new Vector3(cornerPocketPosition.x, 0, cornerPocketPosition.y);
-
-        sidePocketRadius = inchToM(sidePocketDiameter / 2f);
-        cornerPocketRadius = inchToM(cornerPocketDiameter / 2f);
-
-        float sidePocketMouthHalf = inchToM(sidePocketMouth);
-        // float cornerPocketMouthHalf = inchToM(cornerPocketMouth);
-
-        sideStart = new Vector3(sidePocketMouthHalf, 0, tableHeight);
-        sideEnd = new Vector3(tableWidth - cornerOffset, 0, tableHeight);
-        endStart = new Vector3(tableWidth, 0, 0);
-        endEnd = new Vector3(tableWidth, 0, tableHeight - cornerOffset);
-
-        // sideFacingStart = new Vector3(0, 0, -Mathf.Tan(Mathf.Deg2Rad * (180 - sideFacingAngle)) * (0 - sideStart.x) + tableHeight);
-        // cornerFacingSide = new Vector3(((cornerPocket.z + cornerPocketRadius) - sideEnd.z) / Mathf.Tan(Mathf.Deg2Rad * (180 - cornerFacingAngle)) + sideEnd.x, 0, (cornerPocket.z + cornerPocketRadius));
-        // cornerFacingEnd = new Vector3(cornerPocket.x + cornerPocketRadius, 0, Mathf.Tan(Mathf.Deg2Rad * (cornerFacingAngle - 90)) * (cornerPocket.x + cornerPocketRadius - endEnd.x) + endEnd.z);
-    }
-
-    private void drawPhysics()
-    {
-        // draw pockets
-        if (!DrawUnused) { return; }
-
-        drawCylinder(sidePocket, sidePocketRadius, Color.red);
-        drawCylinder(cornerPocket, cornerPocketRadius, Color.red);
-
-        // draw boundarie
-        sideFacingStart = sideStart;
-        Vector3 Rotationk_sideStart = new Vector3(1, 0, 0);
-        Rotationk_sideStart = Quaternion.AngleAxis(-facingAngleSide, Vector3.up) * Rotationk_sideStart;
-        sideFacingStart += Rotationk_sideStart;
-        drawPlane(sideFacingStart, sideStart, Color.green);
-        drawPlane(sideStart, sideEnd, Color.yellow);
-
-        cornerFacingSide = sideEnd;
-        Vector3 Rotationk_sideEnd = new Vector3(-1, 0, 0);
-        Rotationk_sideEnd = Quaternion.AngleAxis(facingAngleCorner, Vector3.up) * Rotationk_sideEnd;
-        cornerFacingSide += Rotationk_sideEnd;
-        drawPlane(sideEnd, cornerFacingSide, Color.green);
-
-        drawPlane(endStart, endEnd, Color.yellow);
-        cornerFacingEnd = endEnd;
-        Vector3 Rotationk_endEnd = new Vector3(0, 0, -1);
-        Rotationk_endEnd = Quaternion.AngleAxis(-facingAngleCorner, Vector3.up) * Rotationk_endEnd;
-        cornerFacingEnd += Rotationk_endEnd;
-        drawPlane(endEnd, cornerFacingEnd, Color.green);
-    }
 
     private void checkCushionCollision()
     {
+        if (!previewCollision) { return; }
         float signX = Mathf.Sign(this.transform.localPosition.x);
         float signZ = Mathf.Sign(this.transform.localPosition.z);
 

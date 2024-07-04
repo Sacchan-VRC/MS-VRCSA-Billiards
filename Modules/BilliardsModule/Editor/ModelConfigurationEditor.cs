@@ -4,8 +4,7 @@ using UnityEditor;
 [CustomEditor(typeof(ModelConfiguration))]
 public class ModelConfigurationEditor : Editor
 {
-    bool bShowCollision = false;
-
+    bool bShowCollisionModel = true;
     static GUIStyle styleHeader;
     static GUIStyle styleError;
     static GUIStyle styleWarning;
@@ -87,7 +86,6 @@ public class ModelConfigurationEditor : Editor
         {
             gui_resource_init();
         }
-
         ModelConfiguration _editor = (ModelConfiguration)target;
 
         base.DrawDefaultInspector();
@@ -100,7 +98,10 @@ public class ModelConfigurationEditor : Editor
 
             if (!cdata_displayTarget)
             {
-                Transform table = _editor.transform.parent.parent.Find("intl.balls");
+                Transform table = null;
+                if (_editor.transform.parent)
+                    if (_editor.transform.parent.parent)
+                        table = _editor.transform.parent.parent.Find("intl.balls");
                 if (table)
                 {
                     Transform refiner = table.Find("__table_refiner__");
@@ -112,53 +113,70 @@ public class ModelConfigurationEditor : Editor
             }
             if (cdata_displayTarget == null) { return; }
 
-            this.bShowCollision = EditorGUILayout.Toggle("Draw collision data", this.cdata_displayTarget.gameObject.activeSelf);
-            this.cdata_displayTarget.gameObject.SetActive(this.bShowCollision);
+            this.bShowCollisionModel = EditorGUILayout.Toggle("Draw collision model", this.cdata_displayTarget.gameObject.activeSelf);
+            this.cdata_displayTarget.gameObject.SetActive(this.bShowCollisionModel);
 
             Ht8bUIGroupEnd();
-            this.cdata_displayTarget.tableWidth = data.tableWidth;
-            this.cdata_displayTarget.tableHeight = data.tableHeight;
-            this.cdata_displayTarget.k_BALL_RADIUS = (data.bs_BallDiameter / 2f) / 1000f;
-            this.cdata_displayTarget.pocketWidthCorner = data.pocketWidthCorner;
-            this.cdata_displayTarget.pocketHeightCorner = data.pocketHeightCorner;
-            this.cdata_displayTarget.pocketRadiusSide = data.pocketRadiusSide;
-            this.cdata_displayTarget.pocketDepthSide = data.pocketDepthSide;
-            this.cdata_displayTarget.cushionRadius = data.cushionRadius;
-            this.cdata_displayTarget.pocketInnerRadiusCorner = data.pocketInnerRadiusCorner;
-            this.cdata_displayTarget.pocketInnerRadiusSide = data.pocketInnerRadiusSide;
-            this.cdata_displayTarget.cornerPocket = data.cornerPocket;
-            this.cdata_displayTarget.sidePocket = data.sidePocket;
-            this.cdata_displayTarget.facingAngleCorner = data.facingAngleCorner;
-            this.cdata_displayTarget.facingAngleSide = data.facingAngleSide;
-            this.cdata_displayTarget.k_RAIL_HEIGHT_UPPER = data.railHeightUpper;
-            this.cdata_displayTarget.k_RAIL_HEIGHT_LOWER = data.railHeightLower;
-            this.cdata_displayTarget.k_RAIL_DEPTH_WIDTH = data.railDepthWidth;
-            this.cdata_displayTarget.k_RAIL_DEPTH_HEIGHT = data.railDepthHeight;
-
-            Transform table_artwork = data.transform.Find("table_artwork");
-            Transform tableSurface = table_artwork.transform.Find(".TABLE_SURFACE");
-            if (tableSurface)
-            { this.cdata_displayTarget.table_Surface = tableSurface; }
+            sendValuesToVisualizerAndUpdateView(data);
         }
+    }
+    float lastUpdate;
+    void sendValuesToVisualizerAndUpdateView(ModelData data)
+    {
+        // Same conversions as in BilliardsModule.setTableModel()
+        this.cdata_displayTarget.tableWidth = data.tableWidth * .5f;
+        this.cdata_displayTarget.tableHeight = data.tableHeight * .5f;
+        this.cdata_displayTarget.k_BALL_RADIUS = (data.bs_BallDiameter * .5f) / 1000f;
+        this.cdata_displayTarget.pocketWidthCorner = data.pocketWidthCorner;
+        this.cdata_displayTarget.pocketHeightCorner = data.pocketHeightCorner;
+        this.cdata_displayTarget.pocketRadiusSide = data.pocketRadiusSide;
+        this.cdata_displayTarget.pocketDepthSide = data.pocketDepthSide;
+        this.cdata_displayTarget.cushionRadius = data.cushionRadius;
+        this.cdata_displayTarget.pocketInnerRadiusCorner = data.pocketInnerRadiusCorner;
+        this.cdata_displayTarget.pocketInnerRadiusSide = data.pocketInnerRadiusSide;
+        this.cdata_displayTarget.cornerPocket = data.cornerPocket;
+        this.cdata_displayTarget.sidePocket = data.sidePocket;
+        this.cdata_displayTarget.facingAngleCorner = data.facingAngleCorner;
+        this.cdata_displayTarget.facingAngleSide = data.facingAngleSide;
+        this.cdata_displayTarget.k_RAIL_HEIGHT_UPPER = data.railHeightUpper;
+        this.cdata_displayTarget.k_RAIL_HEIGHT_LOWER = data.railHeightLower;
+        this.cdata_displayTarget.k_RAIL_DEPTH_WIDTH = data.railDepthWidth;
+        this.cdata_displayTarget.k_RAIL_DEPTH_HEIGHT = data.railDepthHeight;
+
+        this.cdata_displayTarget.baulkLine = -((data.tableWidth * .5f) - data.baulkLine);
+        this.cdata_displayTarget.blackSpot = (data.tableWidth * .5f) - data.blackSpot;
+        this.cdata_displayTarget.semiCircleRadius = data.semiCircleRadius;
+        this.cdata_displayTarget.pinkSpot = (data.tableWidth * .5f) - data.pinkSpot;
+
+        Transform table_artwork = data.transform.Find("table_artwork");
+        Transform tableSurface = table_artwork.transform.Find(".TABLE_SURFACE");
+        if (tableSurface)
+        { this.cdata_displayTarget.table_Surface = tableSurface; }
+        SceneView.RepaintAll();
     }
     void OnEnable()
     {
+        ModelConfiguration _editor = (ModelConfiguration)target;
         if (!cdata_displayTarget)
         {
-            ModelConfiguration _editor = (ModelConfiguration)target;
-            cdata_displayTarget = _editor.transform.parent.parent.Find("intl.balls").Find("__table_refiner__").gameObject.GetComponent<CollisionVisualizer>();
-            if (cdata_displayTarget == null) { return; }
+            if (_editor.transform.parent)
+                if (_editor.transform.parent.parent)
+                    cdata_displayTarget = _editor.transform.parent.parent.Find("intl.balls").Find("__table_refiner__").gameObject.GetComponent<CollisionVisualizer>();
+            if (cdata_displayTarget == null)
+            {
+                return;
+            }
         }
-        cdata_displayTarget.gameObject.SetActive(true);
+        ModelData data = _editor.data;
+        cdata_displayTarget.gameObject.SetActive(this.bShowCollisionModel);
+        cdata_displayTarget.drawTable();
+        sendValuesToVisualizerAndUpdateView(data);
     }
     void OnDisable()
     {
-        if (!cdata_displayTarget)
+        if (cdata_displayTarget)
         {
-            ModelConfiguration _editor = (ModelConfiguration)target;
-            cdata_displayTarget = _editor.transform.parent.parent.Find("intl.balls").Find("__table_refiner__").gameObject.GetComponent<CollisionVisualizer>();
-            if (cdata_displayTarget == null) { return; }
+            cdata_displayTarget.gameObject.SetActive(false);
         }
-        cdata_displayTarget.gameObject.SetActive(false);
     }
 }

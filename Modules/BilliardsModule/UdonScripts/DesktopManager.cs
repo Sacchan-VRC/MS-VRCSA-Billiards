@@ -1,6 +1,16 @@
-﻿
+﻿#define EIJIS_ISSUE_FIX
+#define EIJIS_PYRAMID
+#define EIJIS_CUEBALLSWAP
+
+// #define EIJIS_DEBUG_BALLORDER
+
+#if EIJIS_CUEBALLSWAP
+using System;
+#endif
 using Metaphira.Modules.CameraOverride;
+#if !EIJIS_ISSUE_FIX
 using Microsoft.SqlServer.Server;
+#endif
 using UdonSharp;
 using UnityEngine;
 using VRC.SDKBase;
@@ -87,7 +97,7 @@ public class DesktopManager : UdonSharpBehaviour
         OneOSF = 1 / SF;
     }
 
-    public void _Tick()
+    public void _Tick(uint gameModeLocal)
     {
         if (!isDesktopUser) return;
 
@@ -127,11 +137,11 @@ public class DesktopManager : UdonSharpBehaviour
 
         if (inUI)
         {
-            tickUI();
+            tickUI(gameModeLocal);
         }
     }
 
-    private void tickUI()
+    private void tickUI(uint gameModeLocal)
     {
         bool clickNow = Input.GetKeyDown(KeyCode.Mouse0);
         bool click = Input.GetKey(KeyCode.Mouse0);
@@ -222,6 +232,12 @@ public class DesktopManager : UdonSharpBehaviour
                         // we still keep the same shot direction if we're shooting
                         shotDirection = initialShotDirection;
 
+#if EIJIS_ISSUE_FIX
+                        if (table.balls[0].transform.localPosition.y > 0)
+                        {
+                            power = 0;
+                        }
+#endif
                         if (power > 0)
                         {
                             if (((string)table.currentPhysicsManager.GetProgramVariable("PHYSICSNAME")).Contains("Legacy"))
@@ -252,6 +268,10 @@ public class DesktopManager : UdonSharpBehaviour
                 renderCuePosition(shotDirection);
                 updateSpinIndicator();
                 updateJumpIndicator();
+#if EIJIS_CUEBALLSWAP
+                if(gameModeLocal==BilliardsModule.GAMEMODE_PYRAMID)     //cheese add
+                     updateCallShotIndicator();
+#endif
             }
         }
 
@@ -316,6 +336,129 @@ public class DesktopManager : UdonSharpBehaviour
         jumpIndicator.transform.localPosition = new Vector3(-Mathf.Cos(jumpAngle) * 1.1f, 0, Mathf.Sin(jumpAngle) * 1.1f);
     }
 
+#if EIJIS_CUEBALLSWAP
+    private int nextBallOrder(bool asc)
+    {
+#if EIJIS_DEBUG_BALLORDER
+        table._LogInfo($"DesktopManager::nextBallOrder(asc = {asc})");
+#endif
+        int id = 0;
+        uint calledBalls = table.calledBallsLocal;
+        for (int i = 1; i < table.ballsP.Length; i++)
+        {
+            if (((calledBalls >> i) & 0x1u) != 0)
+            {
+                id = i;
+                break;
+            }
+        }
+#if EIJIS_DEBUG_BALLORDER
+        table._LogInfo($"  before called ball id = {id}");
+#endif
+
+        uint ballsPocketed = table.ballsPocketedLocal;
+        float before_x = table.ballsP[id].x;
+        float before_z = table.ballsP[id].z;
+        float nearest_x = asc ? float.MaxValue : float.MinValue;
+        float nearest_z = asc ? float.MaxValue : float.MinValue;
+        int farestId = 0;
+        float farest_x = asc ? float.MaxValue : float.MinValue;
+        float farest_z = asc ? float.MaxValue : float.MinValue;
+        for (int i = 0; i < BilliardsModule.MAX_BALLS; i++)
+        {
+            if (i == id)
+            {
+                continue;
+            }
+            
+            if (((ballsPocketed >> i) & 0x1u) != 0)
+            {
+                continue;
+            }
+
+            float current_x = table.ballsP[i].x;
+            float current_z = table.ballsP[i].z;
+#if EIJIS_DEBUG_BALLORDER
+            // table._LogInfo($"  before_x = {before_x}, current_x = {current_x}");
+#endif
+            if ((asc && before_x < current_x) || (!asc && before_x > current_x))
+            {
+                if ((asc && current_x < nearest_x) || (!asc && current_x > nearest_x))
+                {
+                    nearest_x = current_x;
+                    id = i;
+#if EIJIS_DEBUG_BALLORDER
+                    // table._LogInfo($"  found ball by x id = {id}");
+#endif
+                }
+                else if (current_x == nearest_x)
+                {
+#if EIJIS_DEBUG_BALLORDER
+                    // table._LogInfo($"  before_z = {before_z}, current_z = {current_z}");
+#endif
+                    if ((asc && before_z < current_z) || (!asc && before_z > current_z))
+                    {
+                        if ((asc && current_z < nearest_z) || (!asc && current_z > nearest_z))
+                        {
+                            nearest_z = current_z;
+                            id = i;
+#if EIJIS_DEBUG_BALLORDER
+                            // table._LogInfo($"  found ball by z id = {id}");
+#endif
+                        }
+                    }
+                }
+            }
+            
+#if EIJIS_DEBUG_BALLORDER
+            table._LogInfo($"  farest_x = {farest_x}, current_x = {current_x}");
+#endif
+            if ((!asc && farest_x < current_x) || (asc && farest_x > current_x))
+            {
+                farest_x = current_x;
+                farestId = i;
+#if EIJIS_DEBUG_BALLORDER
+                table._LogInfo($"  found ball by x farestId = {farestId}");
+#endif
+            }
+            else if (current_x == farest_x)
+            {
+#if EIJIS_DEBUG_BALLORDER
+                table._LogInfo($"  farest_z = {farest_z}, current_z = {current_z}");
+#endif
+                if ((!asc && farest_z < current_z) || (asc && farest_z > current_z))
+                {
+                    farest_z = current_z;
+                    farestId = i;
+#if EIJIS_DEBUG_BALLORDER
+                    table._LogInfo($"  found ball by z farestId = {farestId}");
+#endif
+                }
+            }
+        }
+
+#if EIJIS_DEBUG_BALLORDER
+        table._LogInfo($"  nearest_x = {nearest_x}");
+        table._LogInfo($"  reverse side farestId = {farestId}");
+#endif
+        if (nearest_x == float.MaxValue || nearest_x == float.MinValue)
+        {
+            id = farestId;
+        }
+
+        return id;
+    }
+    
+    private void updateCallShotIndicator()
+    {
+        if (Input.GetKeyDown(KeyCode.B) )
+        {
+            int id = nextBallOrder(!(Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift)));
+            table._TriggerOtherBallHit(id, true);
+        }
+    }
+
+#endif
     private void renderCuePosition(Vector3 dir)
     {
         CueController cue = table.activeCue;

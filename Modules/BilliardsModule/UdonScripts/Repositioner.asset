@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c333ccfdd0cbdbc4ca30cef2dd6e6b9b, type: 3}
   m_Name: Repositioner
   m_EditorClassIdentifier: 
-  serializedUdonProgramAsset: {fileID: 11400000, guid: 03e958d9f9f60d34a9c2dc774f58ca48,
+  serializedUdonProgramAsset: {fileID: 11400000, guid: 76652dcf6392be84686daca528eda814,
     type: 2}
   udonAssembly: 
   assemblyError: 

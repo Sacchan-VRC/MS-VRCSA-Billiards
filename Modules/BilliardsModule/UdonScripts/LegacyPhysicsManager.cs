@@ -1,4 +1,6 @@
-﻿
+﻿#define EIJIS_MANY_BALLS
+#define EIJIS_SNOOKER15REDS
+
 using System;
 using UdonSharp;
 using UnityEngine;
@@ -216,7 +218,11 @@ public class LegacyPhysicsManager : UdonSharpBehaviour
         // Run main simulation / inter-ball collision
 
         uint ball_bit = 0x1u;
+#if EIJIS_MANY_BALLS
+        for (int i = 1; i < BilliardsModule.MAX_BALLS; i++)
+#else
         for (int i = 1; i < 16; i++)
+#endif
         {
             ball_bit <<= 1;
 
@@ -255,7 +261,11 @@ public class LegacyPhysicsManager : UdonSharpBehaviour
         {
             ball_bit = 0x1U;
             // Run edge collision
+#if EIJIS_MANY_BALLS
+            for (int i = 0; i < BilliardsModule.MAX_BALLS; i++)
+#else
             for (int i = 0; i < 16; i++)
+#endif
             {
                 if (moved[i] && (ball_bit & sn_pocketed) == 0U && (i != 0 || canCueBallBounceOffCushion))
                 {
@@ -284,7 +294,11 @@ public class LegacyPhysicsManager : UdonSharpBehaviour
 
         // Run triggers
         table._BeginPerf(table.PERF_PHYSICS_POCKET);
+#if EIJIS_MANY_BALLS
+        for (int i = 0; i < BilliardsModule.MAX_BALLS; i++)
+#else
         for (int i = 0; i < 16; i++)
+#endif
         {
             if (moved[i] && (ball_bit & sn_pocketed) == 0U && (i != 0 || !outOfBounds))
             {
@@ -318,7 +332,11 @@ public class LegacyPhysicsManager : UdonSharpBehaviour
         uint ball_bit = 0x1U;
 
         // Loop balls look for collisions
+#if EIJIS_MANY_BALLS
+        for (int i = 1; i < BilliardsModule.MAX_BALLS; i++)
+#else
         for (int i = 1; i < 16; i++)
+#endif
         {
             ball_bit <<= 1;
 
@@ -371,7 +389,11 @@ public class LegacyPhysicsManager : UdonSharpBehaviour
 
         // check for collisions. a non-moving ball might be collided by a moving one
         uint ball_bit = 0x1U << id;
+#if EIJIS_MANY_BALLS
+        for (int i = id + 1; i < BilliardsModule.MAX_BALLS; i++)
+#else
         for (int i = id + 1; i < 16; i++)
+#endif
         {
             ball_bit <<= 1;
 
@@ -558,6 +580,25 @@ public class LegacyPhysicsManager : UdonSharpBehaviour
                 }
             }
         }
+#if EIJIS_SNOOKER15REDS
+        else if (table.isSnooker)
+        {
+            for (int i = 1; i < 16; i++)
+            {
+                if ((balls_P[0] - balls_P[i]).sqrMagnitude < k_BALL_DSQR)
+                {
+                    return true;
+                }
+            }
+            for (int i = 25; i < 31; i++)
+            {
+                if ((balls_P[0] - balls_P[i]).sqrMagnitude < k_BALL_DSQR)
+                {
+                    return true;
+                }
+            }
+        }
+#endif
         else // 4
         {
             if ((balls_P[0] - balls_P[9]).sqrMagnitude < k_BALL_DSQR)

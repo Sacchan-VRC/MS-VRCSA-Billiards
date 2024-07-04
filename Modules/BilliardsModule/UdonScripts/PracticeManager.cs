@@ -1,4 +1,5 @@
-﻿
+﻿#define EIJIS_SNOOKER15REDS
+
 using System;
 using UdonSharp;
 
@@ -98,7 +99,11 @@ public class PracticeManager : UdonSharpBehaviour
 
     public void _SnookerUndo()
     {
+#if EIJIS_SNOOKER15REDS
+        if (!table.isSnooker) { return; }
+#else
         if (!table.isSnooker6Red) { return; }
+#endif
         if (table.foulStateLocal == 0 || table.fourBallCueBallLocal == 0) { return; }
         if (!table.isMyTurn()) { return; }
 

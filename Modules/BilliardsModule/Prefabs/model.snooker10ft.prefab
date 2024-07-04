@@ -865,23 +865,22 @@ MonoBehaviour:
   _udonSharpBackingUdonBehaviour: {fileID: 214310003378732053}
   TABLENAME: Snooker 10ft
   tableMesh: {fileID: 1591270469497172618}
-  tableWidth: 1.4725
-  tableHeight: 0.761
-  cushionRadius: 0.05
-  pocketWidthCorner: 0.1296
-  pocketHeightCorner: 0.1285
+  tableWidth: 2.845
+  tableHeight: 1.422
+  cushionRadius: 0.083
+  pocketWidthCorner: 0.024
+  pocketHeightCorner: 0.024
   pocketInnerRadiusCorner: 0.05
-  facingAngleCorner: 134.1
-  pocketRadiusSide: 0.11
-  pocketDepthSide: 0.03
-  facingAngleSide: 138.93
+  facingAngleCorner: 124.18
+  pocketRadiusSide: 0.019
+  pocketDepthSide: 0.02
+  facingAngleSide: 96.64
   pocketInnerRadiusSide: 0.05
-  rackTrianglePosition: 0.711045
-  railHeightUpper: 0.0447334
+  railHeightUpper: 0.0372255
   useRailHeightLower: 0
   railHeightLower: 0.032
-  railDepthWidth: 0.0718
-  railDepthHeight: 0.0718
+  railDepthWidth: 0.1216
+  railDepthHeight: 0.1216
   cornerPocket: {x: 1.444, y: 0, z: 0.733}
   sidePocket: {x: 0, y: 0, z: 0.764}
   bt_CoefSlide: 0.2
@@ -900,9 +899,10 @@ MonoBehaviour:
   bs_Friction: 1
   bs_BallDiameter: 52.5
   bs_BallMass: 0.16
-  baulkLine: 0.646945
-  blackSpotFromR: 0.31697
-  semiCircleRadius: 0.241638
+  baulkLine: 0.5969
+  blackSpot: 0.2667
+  semiCircleRadius: 0.2413
+  pinkSpot: 0.7112
   CueOrange: {fileID: 8237096186961417132}
   CueBlue: {fileID: 99551414715784392}
   DesktopUIScaleFactor: 1.2

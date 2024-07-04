@@ -1,4 +1,9 @@
-﻿
+﻿#define EIJIS_MANY_BALLS
+#define EIJIS_SNOOKER15REDS
+#define EIJIS_PYRAMID
+
+// #define EIJIS_DEBUG_PIRAMIDSCORE
+
 using UdonSharp;
 using UnityEngine;
 using VRC.SDKBase;
@@ -35,7 +40,12 @@ public class GraphicsManager : UdonSharpBehaviour
     [SerializeField] GameObject[] timers;
 
     private Mesh[] meshOverrideFourBall = new Mesh[4];
+#if EIJIS_PYRAMID
+    private Mesh[] meshOverridePyramidBall = new Mesh[BilliardsModule.PYRAMID_BALLS];
+    private Mesh[] meshOverrideRegular = new Mesh[BilliardsModule.PYRAMID_BALLS];
+#else
     private Mesh[] meshOverrideRegular = new Mesh[4];
+#endif
 
     private Color gripColorActive = new Color(0.0f, 0.5f, 1.1f, 1.0f);
     private Color gripColorInactive = new Color(0.34f, 0.34f, 0.34f, 1.0f);
@@ -61,7 +71,7 @@ public class GraphicsManager : UdonSharpBehaviour
     private GameObject scorecard_info;
     private Color[] scorecardColors = new Color[15];
 
-    private bool usColors;
+    private bool usColors=true;
     private bool shadowsDisabled;
 
     private GameObject[] balls;
@@ -100,11 +110,22 @@ public class GraphicsManager : UdonSharpBehaviour
         {
             meshOverrideFourBall[i] = balls[12 + i].GetComponent<MeshFilter>().sharedMesh;
         }
+#if EIJIS_PYRAMID
+        for (int i = 0; i < meshOverrideRegular.Length; i++)
+        {
+            meshOverrideRegular[i] = balls[i].GetComponent<MeshFilter>().sharedMesh;
+        }
+        for (int i = 0; i < meshOverridePyramidBall.Length; i++)
+        {
+            meshOverridePyramidBall[i] = balls[i].GetComponent<MeshFilter>().sharedMesh;
+        }
+#else
         meshOverrideRegular[0] = balls[0].GetComponent<MeshFilter>().sharedMesh;
         for (int i = 0; i < 3; i++)
         {
             meshOverrideRegular[i + 1] = balls[13 + i].GetComponent<MeshFilter>().sharedMesh;
         }
+#endif
     }
 
     public void _InitializeTable()
@@ -140,7 +161,11 @@ public class GraphicsManager : UdonSharpBehaviour
 
         uint ball_bit = 0x1u;
         uint pocketed = table.ballsPocketedLocal;
+#if EIJIS_MANY_BALLS
+        for (int i = 0; i < BilliardsModule.MAX_BALLS; i++)
+#else
         for (int i = 0; i < 16; i++)
+#endif
         {
             if ((ball_bit & pocketed) == 0x0u)
             {
@@ -207,7 +232,11 @@ public class GraphicsManager : UdonSharpBehaviour
         // Cueball drops late
         tickIntroBall(table.balls[0].transform, 0.33f);
 
+#if EIJIS_MANY_BALLS
+        for (int i = 1; i < BilliardsModule.MAX_BALLS; i++)
+#else
         for (int i = 1; i < 16; i++)
+#endif
         {
             tickIntroBall(table.balls[i].transform, 0.84f + i * 0.03f);
         }
@@ -547,7 +576,11 @@ int uniform_cue_colour;
         {
             tableSrcColour = pColour2;
         }
+#if EIJIS_SNOOKER15REDS
+        else if (table.isSnooker)
+#else
         else if (table.isSnooker6Red)
+#endif
         {
             if ((teamId ^ table.teamColorLocal) == 0)
             {
@@ -625,12 +658,20 @@ int uniform_cue_colour;
             for (int i = 0; i <= 9; i++)
                 table.balls[i].SetActive(true);
 
+#if EIJIS_MANY_BALLS
+            for (int i = 10; i < BilliardsModule.MAX_BALLS; i++)
+#else
             for (int i = 10; i < 16; i++)
+#endif
                 table.balls[i].SetActive(false);
         }
         else if (table.is4Ball)
         {
+#if EIJIS_MANY_BALLS
+            for (int i = 1; i < BilliardsModule.MAX_BALLS; i++)
+#else
             for (int i = 1; i < 16; i++)
+#endif
                 table.balls[i].SetActive(false);
 
             table.balls[0].SetActive(true);
@@ -638,12 +679,27 @@ int uniform_cue_colour;
             table.balls[14].SetActive(true);
             table.balls[15].SetActive(true);
         }
+#if EIJIS_SNOOKER15REDS
+        else if (table.isSnooker)
+#else
         else if (table.isSnooker6Red)
+#endif
         {
+#if EIJIS_SNOOKER15REDS
+            for (int i = 0; i < 16; i++)
+                table.balls[i].SetActive(true);
+            for (int i = 16; i < 25; i++)
+                table.balls[i].SetActive(false);
+            for (int i = 25; i < 31; i++)
+                table.balls[i].SetActive(true);
+            for (int i = 31; i < BilliardsModule.MAX_BALLS; i++)
+                table.balls[i].SetActive(false);
+#else
             for (int i = 0; i < 13; i++)
                 table.balls[i].SetActive(true);
             for (int i = 13; i < 16; i++)
                 table.balls[i].SetActive(false);
+#endif
         }
         else
         {
@@ -651,6 +707,10 @@ int uniform_cue_colour;
             {
                 table.balls[i].SetActive(true);
             }
+#if EIJIS_MANY_BALLS
+            for (int i = 16; i < BilliardsModule.MAX_BALLS; i++)
+                table.balls[i].SetActive(false);
+#endif
         }
     }
 
@@ -669,14 +729,22 @@ int uniform_cue_colour;
         if (table.gameModeLocal == uint.MaxValue) { return; }
         scorecard_info.SetActive(true);
         scorecard_gameobject.SetActive(true);
+#if EIJIS_PYRAMID
+        scorecard.SetInt("_GameMode", (int)(table.isPyramid ? 0 : table.gameModeLocal));
+#else
         scorecard.SetInt("_GameMode", (int)table.gameModeLocal);
+#endif
         scorecard.SetInt("_SolidsMode", 0);
         scorecard_gameobject.SetActive(true);
         for (int i = 0; i < playerNames.Length; i++)
         {
             playerNames[i].gameObject.SetActive(true);
         }
+#if EIJIS_SNOOKER15REDS
+        if (table.isSnooker)
+#else
         if (table.isSnooker6Red)
+#endif
         {
             orangeScore.gameObject.SetActive(true);
             blueScore.gameObject.SetActive(true);
@@ -701,10 +769,27 @@ int uniform_cue_colour;
         }
         else
         {
+#if EIJIS_PYRAMID
+            if(table.isPyramid)
+            {
+                for(int i = 0; i < meshOverridePyramidBall.Length; i++)
+                {
+                    balls[i].GetComponent<MeshFilter>().sharedMesh = meshOverridePyramidBall[i];
+                }
+            }
+            else
+            {
+                for(int i = 0; i < meshOverrideRegular.Length; i++)
+                {
+                    balls[i].GetComponent<MeshFilter>().sharedMesh = meshOverrideRegular[i];
+                }
+            }
+#else
             balls[0].GetComponent<MeshFilter>().sharedMesh = meshOverrideRegular[0];
             balls[13].GetComponent<MeshFilter>().sharedMesh = meshOverrideRegular[1];
             balls[14].GetComponent<MeshFilter>().sharedMesh = meshOverrideRegular[2];
             balls[15].GetComponent<MeshFilter>().sharedMesh = meshOverrideRegular[3];
+#endif
         }
     }
 
@@ -732,7 +817,11 @@ int uniform_cue_colour;
 
             ballMaterial.SetTexture("_MainTex", table.textureSets[1]);
         }
+#if EIJIS_SNOOKER15REDS
+        else if (table.isSnooker)
+#else
         else if (table.isSnooker6Red)
+#endif
         {
             pColourErr = table.k_colour_foul;
             pColour2 = table.k_colour_default;
@@ -742,6 +831,18 @@ int uniform_cue_colour;
 
             ballMaterial.SetTexture("_MainTex", table.textureSets[2]);
         }
+#if EIJIS_PYRAMID
+        else if (table.isPyramid)
+        {
+            pColourErr = table.k_colour_foul;
+            pColour2 = table.k_colour_default;
+
+            pColour0 = table.k_snookerTeamColour_0;
+            pColour1 = table.k_snookerTeamColour_1;
+
+            ballMaterial.SetTexture("_MainTex", table.textureSets[3]);
+        }
+#endif
         else // Standard 8 ball derivatives
         {
             pColourErr = table.k_colour_foul;
@@ -777,7 +878,11 @@ int uniform_cue_colour;
     {
         uint ball_bit = 0x1u;
 
+#if EIJIS_MANY_BALLS
+        for (int i = 0; i < BilliardsModule.MAX_BALLS; i++)
+#else
         for (int i = 0; i < 16; i++)
+#endif
         {
             table.balls[i].GetComponent<Rigidbody>().isKinematic = true;
 
@@ -816,7 +921,11 @@ int uniform_cue_colour;
                 {
                     playerNames[i].gameObject.SetActive(true);
                 }
+#if EIJIS_SNOOKER15REDS
+                if (table.isSnooker)
+#else
                 if (table.isSnooker6Red)
+#endif
                 {
                     orangeScore.gameObject.SetActive(true);
                     blueScore.gameObject.SetActive(true);
@@ -847,7 +956,11 @@ int uniform_cue_colour;
             scorecardColors[1] = table.k_colour4Ball_team_1;
             scorecard.SetColorArray("_Colors", scorecardColors);
         }
+#if EIJIS_SNOOKER15REDS
+        else if (table.isSnooker)
+#else
         else if (table.isSnooker6Red)
+#endif
         {
             orangeScore.text = table.fbScoresLocal[0].ToString();
             blueScore.text = table.fbScoresLocal[1].ToString();
@@ -868,7 +981,11 @@ int uniform_cue_colour;
                 else
                 {
                     int nextcolor = table.sixRedFindLowestUnpocketedColor(table.ballsPocketedLocal);
+#if EIJIS_SNOOKER15REDS
+                    if (-1 < nextcolor && nextcolor < table.break_order_sixredsnooker.Length)
+#else
                     if (nextcolor < 12 && nextcolor > -1)
+#endif
                     {
                         snookerInstruction.text = "Pot " + table.sixRedNumberToColor(nextcolor, true);
                         if (freeBall)
@@ -879,6 +996,33 @@ int uniform_cue_colour;
                 }
             }
         }
+#if EIJIS_PYRAMID
+        else if (table.isPyramid)
+        {
+#if EIJIS_DEBUG_PIRAMIDSCORE
+            table._LogInfo($"  teamIdLocal = {table.teamIdLocal}, teamColorLocal = {table.teamColorLocal}");
+            table._LogInfo($"  pColour0 = {pColour0}, pColour1 = {pColour1}");
+#endif
+            int counter0 = table.fbScoresLocal[0];
+            int counter1 = table.fbScoresLocal[1];
+            scorecard.SetInt("_LeftScore", counter0);
+            scorecard.SetInt("_RightScore", counter1);
+            counter0 = (7 < counter0) ? 7 : counter0;//maybe 7->8?
+            counter1 = (7 < counter1) ? 7 : counter1;
+            for (int i = 0; i < counter0; i++) scorecardColors[i] = pColour1 / 1.5f;
+            for (int i = 0; i < counter1; i++) scorecardColors[14 - i] = pColour0 / 1.5f;
+            if (!table.gameLive && table.winningTeamLocal < 2)
+            {
+                scorecardColors[7] = (table.winningTeamLocal == 0 ? pColour1 : pColour0) / 1.5f;
+            }
+#if EIJIS_DEBUG_PIRAMIDSCORE
+            for (int i = 0; i < scorecardColors.Length; i++)
+                table._LogInfo($"  scorecardColors[i = {i}] = {scorecardColors[i]}");
+#endif
+            scorecard.SetColorArray("_Colors", scorecardColors);
+            scorecard.SetInt("_SolidsMode", 0);
+        }
+#endif
         else
         {
             int[] counter0 = new int[2];
@@ -1002,7 +1146,11 @@ int uniform_cue_colour;
                 shadowMaterial.SetFloat("_Floor", height);
                 shadowMaterial.SetFloat("_Scale", table.k_BALL_RADIUS / 0.03f);//0.03f is the radius of the ball's 3D mesh
             }
+#if EIJIS_MANY_BALLS
+            for (int i = 0; i < BilliardsModule.MAX_BALLS; i++)
+#else
             for (int i = 0; i < 16; i++)
+#endif
             {
                 balls[i].GetComponent<MeshRenderer>().materials = newMaterials;
             }

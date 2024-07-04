@@ -94,12 +94,12 @@ Material:
     m_Ints: []
     m_Floats:
     - _BumpScale: 1
-    - _ClothHue: 0
+    - _ClothHue: 0.005
     - _ClothSaturation: 1
     - _Cutoff: 0.5
     - _DetailBrightness: 1
     - _DetailCloth: 0
-    - _DetailClothBrightness: 0.489
+    - _DetailClothBrightness: 0.374
     - _DetailCloth_b: 0
     - _DetailNormalMapScale: 1
     - _DetailOtherBrightness: 1
