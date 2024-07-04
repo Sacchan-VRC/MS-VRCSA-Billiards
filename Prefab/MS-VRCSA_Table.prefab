@@ -8061,7 +8061,6 @@ MonoBehaviour:
   bounceSounds:
   - {fileID: 8300000, guid: 70b124838479ce44a952b1251f336e00, type: 3}
   cushionSounds: []
-  transform_Surface: {fileID: 1961406577989517608}
   balls: []
   isHandleCollison5_2: 0
   muFactor_for_5_2: 0.7
@@ -8361,7 +8360,7 @@ GameObject:
   - component: {fileID: 8940515387125684272}
   - component: {fileID: 2762075949328285718}
   m_Layer: 17
-  m_Name: Settings (1)
+  m_Name: Label
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -8416,7 +8415,7 @@ MonoBehaviour:
       m_Calls: []
   m_text: 'MS-VRCSA
 
-    TABLE  v1.0'
+    TABLE  v1.1'
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
@@ -22119,7 +22118,6 @@ MonoBehaviour:
   - {fileID: 8300000, guid: c5c3277a589929d49be99bc2f100aae1, type: 3}
   - {fileID: 8300000, guid: e55c033e7d8b29e409baf5343b67bead, type: 3}
   - {fileID: 8300000, guid: feebba097cc8e2d4fb236753ecd5c137, type: 3}
-  transform_Surface: {fileID: 1961406577989517608}
   cue_vdir: {x: 0, y: 0, z: 0}
   dkTargetPos: {x: 0, y: 0, z: 0}
   k_pO: {x: 0, y: 0, z: 0}
@@ -26442,7 +26440,7 @@ Canvas:
   m_AdditionalShaderChannelsFlag: 25
   m_UpdateRectTransformForStandalone: 0
   m_SortingLayerID: 0
-  m_SortingOrder: 0
+  m_SortingOrder: 1
   m_TargetDisplay: 0
 --- !u!114 &4475664505369454635
 MonoBehaviour:
