@@ -2264,6 +2264,8 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
 
     Vector3 _sign_pos = new Vector3(0.0f, 1.0f, 0.0f);
 
+    float caromEdgeX, caromEdgeZ;
+
     Vector2 tableEdge; // distances at which ball falls off table
 
     public void _InitConstants()
@@ -2396,6 +2398,9 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
 
         tableEdge.x = k_TABLE_WIDTH + k_RAIL_DEPTH_WIDTH + k_BALL_RADIUS;
         tableEdge.y = k_TABLE_HEIGHT + k_RAIL_DEPTH_HEIGHT + k_BALL_RADIUS;
+
+        caromEdgeX = k_pR.x - k_BALL_RADIUS;
+        caromEdgeZ = k_pO.z - k_BALL_RADIUS;
 
         // move points to enable pocket radius tweaking and adjusting cushion radius without moving cushions
         // also makes table width and height actual equal the playable space on the table
@@ -2556,17 +2561,17 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
         Vector3 newVel = balls_V[id];
         Vector3 newAngVel = balls_W[id];
 
-        if (newPos.x > k_pR.x)
+        if (newPos.x > caromEdgeX)
         {
-            newPos.x = k_pR.x;
+            newPos.x = caromEdgeX;
             N = Vector3.left;
             _phy_bounce_cushion(ref newVel, ref newAngVel, id, N * _sign_pos.x);
             shouldBounce = true;
         }
 
-        if (newPos.z > k_pO.z)
+        if (newPos.z > caromEdgeZ)
         {
-            newPos.z = k_pO.z;
+            newPos.z = caromEdgeZ;
             N = Vector3.back;
             _phy_bounce_cushion(ref newVel, ref newAngVel, id, N * _sign_pos.z);
             shouldBounce = true;

@@ -892,6 +892,7 @@ public class StandardPhysicsManager : UdonSharpBehaviour
     Vector3 k_vC_vW_normal = new Vector3(-1.0f, 0.0f, 0.0f);
 
     Vector3 _sign_pos = new Vector3(0.0f, 1.0f, 0.0f);
+    float caromEdgeX, caromEdgeZ;
     float k_FACING_ANGLE_CORNER = 135f;
     float k_FACING_ANGLE_SIDE = 14.93142f;
 
@@ -996,6 +997,9 @@ public class StandardPhysicsManager : UdonSharpBehaviour
         k_pR = k_vC;
         k_pR.x -= k_CUSHION_RADIUS; // only used in carom, but also used to draw point in HT8B_DRAW_REGIONS, carom requires it to be r_k_cushion_radius;
 
+        caromEdgeX = k_pR.x - k_BALL_RADIUS;
+        caromEdgeZ = k_pO.z - k_BALL_RADIUS;
+
         // move points to enable pocket radius tweaking and adjusting cushion radius without moving cushions
         // also makes table width and height actual equal the playable space on the table
         // k_pM is only used for drawing lines, and this
@@ -1098,15 +1102,15 @@ public class StandardPhysicsManager : UdonSharpBehaviour
 
         // Setup major regions
 
-        if (A.x > k_pR.x)
+        if (A.x > caromEdgeX)
         {
-            A.x = k_pR.x;
+            A.x = caromEdgeX;
             _phy_bounce_cushion(id, Vector3.left * _sign_pos.x);
         }
 
-        if (A.z > k_pO.z)
+        if (A.z > caromEdgeZ)
         {
-            A.z = k_pO.z;
+            A.z = caromEdgeZ;
             _phy_bounce_cushion(id, Vector3.back * _sign_pos.z);
         }
         balls_P[id] = Vector3.Scale(A, _sign_pos);
