@@ -724,12 +724,12 @@ MonoBehaviour:
   bs_BallDiameter: 57.15
   bs_BallMass: 0.16
   baulkLine: 0.517525
-  blackSpot: 0.2667
   semiCircleRadius: 0.2413
   pinkSpot: 0.7112
+  blackSpot: 0.2667
   CueOrange: {fileID: 8637197935828598094}
   CueBlue: {fileID: 6407733907242776791}
-  DesktopUIScaleFactor: 1.14
+  DesktopUIScaleFactor: 1.1
 --- !u!114 &3969798012597450322
 MonoBehaviour:
   m_ObjectHideFlags: 0

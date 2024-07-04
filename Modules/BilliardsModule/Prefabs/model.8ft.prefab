@@ -177,7 +177,7 @@ MonoBehaviour:
   blackSpot: 0.2159
   CueOrange: {fileID: 3729624123456568210}
   CueBlue: {fileID: 3565299103806277299}
-  DesktopUIScaleFactor: 1.1
+  DesktopUIScaleFactor: 1
 --- !u!114 &6790043569213103559
 MonoBehaviour:
   m_ObjectHideFlags: 0

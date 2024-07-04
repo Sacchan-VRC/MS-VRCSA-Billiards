@@ -39,7 +39,6 @@ public class DesktopManager : UdonSharpBehaviour
     private Vector3 initialShotDirection;
     private float initialPower;
     Vector3 initialCursorPosition;
-    float OneOSF;
 
     private Vector3 spin;
     private float jumpAngle;
@@ -81,10 +80,11 @@ public class DesktopManager : UdonSharpBehaviour
     public void _RefreshTable()
     {
         Camera desktopCamera = root.GetComponentInChildren<Camera>();
+        Vector3 campos = desktopCamera.transform.position;
         float SF = table.tableModels[table.tableModelLocal].DesktopUIScaleFactor;
         desktopCamera.orthographicSize = cameraStartScale * SF;
         root.transform.localScale = rootStartScale * SF;
-        OneOSF = 1 / SF;
+        desktopCamera.transform.position = campos; // don't change camera position with it's parent's scale(root)
     }
 
     public void _Tick()
