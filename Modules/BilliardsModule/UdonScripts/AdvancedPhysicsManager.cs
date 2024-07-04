@@ -10,7 +10,7 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
     [SerializeField] AudioClip[] hitSounds;
     [SerializeField] AudioClip[] bounceSounds;
     [SerializeField] AudioClip[] cushionSounds;
-    [SerializeField] public Transform transform_Surface;
+    Transform table_Surface;
     public GameObject[] balls;
 #if HT_QUEST
    private  float k_MAX_DELTA =  0.05f; // Private Const Float 0.05f max time to process per frame on quest (~4)
@@ -110,6 +110,7 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
     public void _Init()
     {
         table = table_;
+        table_Surface = table.tableSurface;
 
         _InitConstants();
 
@@ -122,6 +123,7 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
         for (int i = 0; i < 16; i++) { balls_inBounds[i] = true; }
         balls_transitioningBounds = new bool[16];
         balls_inPocketBounds = new bool[16];
+
     }
 
     public void _FixedTick()
@@ -153,7 +155,7 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
     {
         GameObject cuetip = table.activeCue._GetCuetip();   // The tip of the cue is a single GameObject, meaning this is likely our Normal impact vector to the ball
 
-        cue_lpos = transform_Surface.InverseTransformPoint(cuetip.transform.position);  // Probably used for the Desktop, or  for the Aiming line, not sure yet, will revisit this later.
+        cue_lpos = table_Surface.InverseTransformPoint(cuetip.transform.position);  // Probably used for the Desktop, or  for the Aiming line, not sure yet, will revisit this later.
         Vector3 lpos2 = cue_lpos;
 
         // if shot is prepared for next hit  [Meaning: all the moving balls have come to rest, current turn has ended -> and now its a new turn = new player will be prepared for the next hit]
@@ -214,11 +216,11 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
                     table.devhit.transform.localPosition = RaySphere_output;
                     if (table.markerObj.activeSelf) { table.markerObj.SetActive(false); }
 
-                    Vector3 q = transform_Surface.InverseTransformDirection(cuetip.transform.forward); // direction of cue in surface space
-                    Vector3 o = balls_P[0]; o.y = 0;// location of ball in surface
+                    Vector3 q = table_Surface.InverseTransformDirection(cuetip.transform.forward); // direction of cue in surface space
+                    Vector3 o = balls_P[0]; /* o.y = 0; */// location of ball in surface
 
-                    Vector3 j = -Vector3.ProjectOnPlane(q, transform_Surface.up); // project cue direction onto table surface, gives us j
-                    Vector3 k = transform_Surface.up;
+                    Vector3 j = -Vector3.ProjectOnPlane(q, table_Surface.up); // project cue direction onto table surface, gives us j
+                    Vector3 k = table_Surface.up;
                     Vector3 i = Vector3.Cross(j, k);
 
                     Plane jkPlane = new Plane(i, o);
@@ -267,7 +269,7 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
 
                     // apply squirt
                     Vector3 before = v;
-                    v = Quaternion.AngleAxis(alpha, transform_Surface.up) * v;
+                    v = Quaternion.AngleAxis(alpha, table_Surface.up) * v;
                     Vector3 after = v;
 
                     cue_shotdir = v;
@@ -430,7 +432,7 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
                             // we don't need to run collision checks on balls that aren't moving
                             if (doColCheck) { stepOneBall(i, sn_pocketed, moved); }
 
-                            if (!balls_inBounds[i] && !moved[i])
+                            if (!balls_inBounds[i] && !moved[i] && !table.isPracticeMode)
                             {
                                 // ball came to rest on top of the rail
                                 table._TriggerBallFallOffFoul();
@@ -1645,7 +1647,7 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
         jumpShotFlewOver = cueBallHasCollided = false;
         for (int i = 0; i < 16; i++)
         {
-            balls_inBounds[i] = true;
+            balls_inBounds[i] = balls_P[i].y == 0;
             balls_inPocketBounds[i] = false;
             balls_transitioningBounds[i] = false;
         }
@@ -3274,12 +3276,11 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
     {
         GameObject cuetip = table.activeCue._GetCuetip();
 
-        Vector3 q = transform_Surface.InverseTransformDirection(cuetip.transform.forward); // direction of cue in surface space
+        Vector3 q = table_Surface.InverseTransformDirection(cuetip.transform.forward); // direction of cue in surface space
         Vector3 o = balls_P[0];
-        o.y = 0; // location of ball in surface
 
-        Vector3 j = -Vector3.ProjectOnPlane(q, transform_Surface.up); // project cue direction onto table surface, gives us j
-        Vector3 k = transform_Surface.up;
+        Vector3 j = -Vector3.ProjectOnPlane(q, table_Surface.up); // project cue direction onto table surface, gives us j
+        Vector3 k = table_Surface.up;
         Vector3 iVector = Vector3.Cross(j, k);
 
         Plane jkPlane = new Plane(iVector, o);
@@ -3336,7 +3337,7 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
         w = r * w;
 
         // apply squirt
-        v = Quaternion.AngleAxis(alpha, transform_Surface.up) * v;
+        v = Quaternion.AngleAxis(alpha, table_Surface.up) * v;
 
         // done
         balls_V[0] = v;

@@ -34,7 +34,7 @@ public class StandardPhysicsManager : UdonSharpBehaviour
     private Vector3 k_CONTACT_POINT = new Vector3(0.0f, -0.03f, 0.0f);
 
     [SerializeField] AudioClip[] hitSounds;
-    [SerializeField] public Transform transform_Surface;
+    Transform transform_Surface;
 
     private AudioSource audioSource;
     private float initialVolume;    // Ball-Slate
@@ -97,6 +97,7 @@ public class StandardPhysicsManager : UdonSharpBehaviour
     public void _Init()
     {
         table = table_;
+        transform_Surface = table.tableSurface;
 
         _InitConstants();
 
@@ -197,7 +198,7 @@ public class StandardPhysicsManager : UdonSharpBehaviour
                     table.devhit.transform.localPosition = RaySphere_output;
                     if (table.markerObj.activeSelf) { table.markerObj.SetActive(false); }
                     Vector3 q = transform_Surface.InverseTransformDirection(cuetip.transform.forward);  // direction of cue in surface space
-                    Vector3 o = balls_P[0]; o.y = 0;// location of ball in surface
+                    Vector3 o = balls_P[0];
 
                     Vector3 j = -Vector3.ProjectOnPlane(q, transform_Surface.up); // project cue direction onto table surface, gives us j
                     Vector3 k = transform_Surface.up;
@@ -1510,7 +1511,7 @@ public class StandardPhysicsManager : UdonSharpBehaviour
         GameObject cuetip = table.activeCue._GetCuetip();
 
         Vector3 q = transform_Surface.InverseTransformDirection(cuetip.transform.forward);// direction of cue in surface space
-        Vector3 o = balls_P[0]; o.y = 0;// location of ball in surface
+        Vector3 o = balls_P[0];
 
 
         Vector3 j = -Vector3.ProjectOnPlane(q, transform_Surface.up); // project cue direction onto table surface, gives us j

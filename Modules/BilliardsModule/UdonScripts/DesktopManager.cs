@@ -333,9 +333,9 @@ public class DesktopManager : UdonSharpBehaviour
         Vector3 cueGripPos = new Vector3(a, b + dist * Mathf.Sin(jumpAngle), -(c + dist * Mathf.Cos(jumpAngle)));
 
         Quaternion spinRot = Quaternion.AngleAxis(Mathf.Atan2(dir.x, dir.z) * Mathf.Rad2Deg, Vector3.up);
-        Transform transformSurface = (Transform)table.currentPhysicsManager.GetProgramVariable("transform_Surface");
-        cue._GetDesktopMarker().transform.position = transformSurface.TransformPoint(table.ballsP[0] + (spinRot * cueGripPos));
-        cue._GetDesktopMarker().transform.LookAt(transformSurface.TransformPoint(table.ballsP[0] + (spinRot * ballHitPos)));
+        Transform tableSurface = table.tableSurface;
+        cue._GetDesktopMarker().transform.position = tableSurface.TransformPoint(table.ballsP[0] + (spinRot * cueGripPos));
+        cue._GetDesktopMarker().transform.LookAt(tableSurface.TransformPoint(table.ballsP[0] + (spinRot * ballHitPos)));
     }
 
     private void stopRepositioning()

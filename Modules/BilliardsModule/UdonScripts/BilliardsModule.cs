@@ -168,6 +168,7 @@ public class BilliardsModule : UdonSharpBehaviour
     [SerializeField] public GameObject devhit;
     [SerializeField] public GameObject markerObj;
     [SerializeField] public GameObject marker9ball;
+    [NonSerialized] public Transform tableSurface;
 
     // Texts
     [SerializeField] Text ltext;
@@ -336,6 +337,7 @@ public class BilliardsModule : UdonSharpBehaviour
             tableModels[i]._Init();
         }
 
+        tableSurface = transform.Find("intl.balls");
         for (int i = 0; i < PhysicsManagers.Length; i++)
         {
             PhysicsManagers[i].SetProgramVariable("table_", this);
@@ -2171,13 +2173,12 @@ public class BilliardsModule : UdonSharpBehaviour
             balls[i].transform.localScale = newBallSize;
         }
         float table_base = _GetTableBase().transform.Find(".TABLE_SURFACE").localPosition.y;
-        balls[0].transform.parent.localPosition = new Vector3(0, table_base + k_BALL_RADIUS, 0);
+        tableSurface.localPosition = new Vector3(0, table_base + k_BALL_RADIUS, 0);
 
         SetTableTransforms();
 
-        Transform transformSurface = (Transform)currentPhysicsManager.GetProgramVariable("transform_Surface");
-        k_rack_position = transformSurface.InverseTransformPoint(auto_rackPosition.transform.position);
-        k_rack_direction = transformSurface.InverseTransformDirection(auto_rackPosition.transform.up);
+        k_rack_position = tableSurface.InverseTransformPoint(auto_rackPosition.transform.position);
+        k_rack_direction = tableSurface.InverseTransformDirection(auto_rackPosition.transform.up);
 
         currentPhysicsManager.SendCustomEvent("_InitConstants");
         graphicsManager._InitializeTable();

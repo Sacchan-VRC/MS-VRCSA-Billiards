@@ -7,13 +7,20 @@ using VRC.SDKBase;
 [UdonBehaviourSyncMode(BehaviourSyncMode.None)]
 public class RepositionManager : UdonSharpBehaviour
 {
-    private const float k_BALL_DSQR = 0.0036f;
-    private const float k_BALL_RADIUS = 0.03f;
 
     private BilliardsModule table;
 
     private int repositionCount;
     private bool[] repositioning;
+
+    int repositionMode = 0;
+    public void onUseDown()
+    {
+        repositionMode++;
+        if (repositionMode > 2)
+            repositionMode = 0;
+    }
+    public void onUseUp() { }
 
     public void _Init(BilliardsModule table_)
     {
@@ -34,9 +41,10 @@ public class RepositionManager : UdonSharpBehaviour
     {
         if (repositionCount == 0) return;
 
-        Vector3 k_pR = (Vector3)table.currentPhysicsManager.GetProgramVariable("k_pR");
-        Vector3 k_pO = (Vector3)table.currentPhysicsManager.GetProgramVariable("k_pO");
-        Transform transformSurface = (Transform)table.currentPhysicsManager.GetProgramVariable("transform_Surface");
+        float tableWidth = table.k_TABLE_WIDTH;
+        float tableHeight = table.k_TABLE_HEIGHT;
+        float k_BALL_RADIUS = table.k_BALL_RADIUS;
+        Transform tableSurface = table.tableSurface;
         for (int i = 0; i < repositioning.Length; i++)
         {
             if (!repositioning[i]) continue;
@@ -48,32 +56,60 @@ public class RepositionManager : UdonSharpBehaviour
             float maxX;
             if (table.isPracticeMode)
             {
-                maxX = k_pR.x;
+                maxX = tableWidth - k_BALL_RADIUS;
             }
             else if (i != 0)
             {
-                maxX = k_pR.x;
+                maxX = tableWidth - k_BALL_RADIUS;
             }
             else if (table._IsLocalPlayerReferee())
             {
-                maxX = k_pR.x;
+                maxX = tableWidth - k_BALL_RADIUS;
             }
             else
             {
                 maxX = table.repoMaxX;
             }
 
-            Vector3 boundedLocation = table.transform.InverseTransformPoint(pickupTransform.position);
-            boundedLocation.x = Mathf.Clamp(boundedLocation.x, -k_pR.x, maxX);
-            boundedLocation.z = Mathf.Clamp(boundedLocation.z, -k_pO.z, k_pO.z);
-            boundedLocation.y = 0.0f;
+            Vector3 boundedLocation = tableSurface.InverseTransformPoint(pickupTransform.position);
+            if (!table.isPracticeMode || repositionMode == 0)
+            {
+                boundedLocation.x = Mathf.Clamp(boundedLocation.x, -tableWidth + k_BALL_RADIUS, maxX);
+                boundedLocation.z = Mathf.Clamp(boundedLocation.z, -tableHeight + k_BALL_RADIUS, tableHeight - k_BALL_RADIUS);
+                boundedLocation.y = 0.0f;
+            }
+            else
+            {
+                float tableEdgeX = tableWidth + table.k_RAIL_DEPTH_WIDTH;
+                float tableEdgeY = tableHeight + table.k_RAIL_DEPTH_HEIGHT;
+                if (repositionMode == 1)
+                {
+                    // can be put on rails
+                    boundedLocation.x = Mathf.Clamp(boundedLocation.x, -tableEdgeX, tableEdgeX);
+                    boundedLocation.z = Mathf.Clamp(boundedLocation.z, -tableEdgeY, tableEdgeY);
+                    if (Mathf.Abs(boundedLocation.x) > tableWidth - k_BALL_RADIUS || Mathf.Abs(boundedLocation.z) > tableHeight - k_BALL_RADIUS)
+                    {
+                        boundedLocation.y = table.k_RAIL_HEIGHT_UPPER;
+                    }
+                    else
+                    {
+                        boundedLocation.y = 0f;
+                    }
+                }
+                else
+                {
+                    // can be put in air
+                    boundedLocation.x = Mathf.Clamp(boundedLocation.x, -tableEdgeX, tableEdgeX);
+                    boundedLocation.z = Mathf.Clamp(boundedLocation.z, -tableEdgeY, tableEdgeY);
+                }
+            }
             //confine do D
             if (!table.isPracticeMode && table.isSnooker6Red && i == 0)
             {
                 boundedLocation = ConfineToD(boundedLocation, maxX);
             }
 
-            bool collides = PreventCollision(transformSurface, boundedLocation, ball);
+            bool collides = PreventCollision(tableSurface, boundedLocation, ball);
 
             if (!collides)
             {
@@ -95,11 +131,11 @@ public class RepositionManager : UdonSharpBehaviour
         }
         return BallPos;
     }
-    public bool PreventCollision(Transform transformSurface, Vector3 ballPos, GameObject ball)
+    public bool PreventCollision(Transform tableSurface, Vector3 ballPos, GameObject ball)
     {            // ensure no collisions
         bool collides = false;
 
-        Collider[] colliders = Physics.OverlapSphere(transformSurface.TransformPoint(ballPos), k_BALL_RADIUS);
+        Collider[] colliders = Physics.OverlapSphere(tableSurface.TransformPoint(ballPos), table.k_BALL_RADIUS);
         for (int j = 0; j < colliders.Length; j++)
         {
             if (colliders[j] == null) continue;

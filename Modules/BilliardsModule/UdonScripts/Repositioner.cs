@@ -3,6 +3,7 @@ using UdonSharp;
 using UnityEngine;
 using VRC.SDKBase;
 
+[UdonBehaviourSyncMode(BehaviourSyncMode.None)]
 public class Repositioner : UdonSharpBehaviour
 {
     [NonSerialized] public int idx;
@@ -14,7 +15,7 @@ public class Repositioner : UdonSharpBehaviour
     {
         table = table_;
         idx = idx_;
-        
+
         pickup = (VRC_Pickup)GetComponent(typeof(VRC_Pickup));
     }
 
@@ -26,6 +27,16 @@ public class Repositioner : UdonSharpBehaviour
     public override void OnDrop()
     {
         table.repositionManager._EndReposition(this);
+    }
+
+    public override void OnPickupUseDown()
+    {
+        table.repositionManager.onUseDown();
+    }
+
+    public override void OnPickupUseUp()
+    {
+        table.repositionManager.onUseUp();
     }
 
     public void _Drop()
