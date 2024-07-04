@@ -940,6 +940,32 @@ public class NetworkingManager : UdonSharpBehaviour
     {
         if (!player.isLocal) return;
         validatePlayers();
+
+        // If Owner left while sim was running, make sure new owner runs _TriggerSimulationEnded(); 
+        VRCPlayerApi simOwner = VRCPlayerApi.GetPlayerById(table.simulationOwnerID);
+        if (table.isLocalSimulationRunning || table.waitingForUpdate || delayedDeserialization)
+        {
+            if (delayedDeserialization)
+            {
+                // The person who took ownership had the table LoD'd
+                table._LogInfo("Simulation changed ownership: New owner is in LoD mode, simulation end may be delayed");
+                table.checkDistanceLoD(); // Disables the LoD if owner & game is on
+                OnDeserialization(); // this will run the last recieved simulation
+            }
+            if (!Utilities.IsValid(simOwner) || simOwner.playerId == table.simulationOwnerID)
+            {
+                table.isLocalSimulationOurs = true;
+                if (!table.isLocalSimulationRunning)
+                {
+                    table._TriggerSimulationEnded(false, true);
+                    table._LogInfo("Simulation changed ownership: Owner probably lagged out during sim");
+                }
+                else
+                {
+                    table._LogInfo("Simulation changed ownership: Owner quit during sim");
+                }
+            }
+        }
     }
 
     public override void OnPlayerLeft(VRCPlayerApi player)

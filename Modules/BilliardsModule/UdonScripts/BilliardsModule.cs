@@ -238,7 +238,9 @@ public class BilliardsModule : UdonSharpBehaviour
 
     // physics simulation data, must be reset before every simulation
     [NonSerialized] public bool isLocalSimulationRunning;
-    private bool isLocalSimulationOurs = false;
+    [NonSerialized] public bool waitingForUpdate;
+    [NonSerialized] public bool isLocalSimulationOurs = false;
+    [NonSerialized] public int simulationOwnerID;
 
     private uint ballsPocketedOrig;
     private int firstHit = 0;
@@ -745,6 +747,7 @@ public class BilliardsModule : UdonSharpBehaviour
         _LogInfo("processing latest remote state (packet=" + networkingManager.packetIdSynced + ", state=" + networkingManager.stateIdSynced + ")");
 
         lastActionTime = Time.time;
+        waitingForUpdate = false;
 
         // propagate game settings first
         onRemoteGlobalSettingsUpdated(
@@ -1270,9 +1273,9 @@ public class BilliardsModule : UdonSharpBehaviour
     private void onRemoteTurnSimulate(Vector3 cueBallV, Vector3 cueBallW, bool fake = false)
     {
         VRCPlayerApi owner = Networking.GetOwner(networkingManager.gameObject);
-        int ownerID = Utilities.IsValid(owner) ? owner.playerId : -1;
+        simulationOwnerID = Utilities.IsValid(owner) ? owner.playerId : -1;
         bool isOwner = owner == Networking.LocalPlayer || fake;
-        _LogInfo($"onRemoteTurnSimulate cueBallV={cueBallV.ToString("F4")} cueBallW={cueBallW.ToString("F4")} owner={ownerID}");
+        _LogInfo($"onRemoteTurnSimulate cueBallV={cueBallV.ToString("F4")} cueBallW={cueBallW.ToString("F4")} owner={simulationOwnerID}");
 
         if (!fake)
             balls[0].GetComponent<AudioSource>().PlayOneShot(snd_hitball, 1.0f);
@@ -1312,7 +1315,7 @@ public class BilliardsModule : UdonSharpBehaviour
         currentPhysicsManager.SendCustomEvent("_ResetSimulationVariables");
         numBallsPocketedThisTurn = 0;
 
-        if (Networking.LocalPlayer.playerId == ownerID || fake)
+        if (Networking.LocalPlayer.playerId == simulationOwnerID || fake)
         {
             isLocalSimulationOurs = true;
         }
@@ -1542,6 +1545,8 @@ public class BilliardsModule : UdonSharpBehaviour
     {
         if (!isLocalSimulationRunning && !forceRun) return;
         isLocalSimulationRunning = false;
+        waitingForUpdate = !isLocalSimulationOurs;
+        _LogInfo("_TriggerSimulationEnded");
 
         if (!isLocalSimulationOurs && networkingManager.delayedDeserialization)
             networkingManager.OnDeserialization();
@@ -1554,6 +1559,7 @@ public class BilliardsModule : UdonSharpBehaviour
         // Make sure we only run this from the client who initiated the move
         if (isLocalSimulationOurs || forceRun)
         {
+            _LogInfo("_TriggerSimulationEnded + isLocalSimulationOurs");
             isLocalSimulationOurs = false;
 
             uint bmask = 0xFFFCu;
@@ -3322,7 +3328,8 @@ public class BilliardsModule : UdonSharpBehaviour
 
     public void checkDistanceLoD()
     {
-        bool nowDistant = (Vector3.Distance(Networking.LocalPlayer.GetPosition(), transform.position) > LoDDistance) && !noLOD;
+        bool nowDistant = (Vector3.Distance(Networking.LocalPlayer.GetPosition(), transform.position) > LoDDistance) && !noLOD
+        && !(networkingManager.gameStateSynced == 2 && Networking.IsOwner(networkingManager.gameObject));
         if (nowDistant == localPlayerDistant) { return; }
         if (isPlayer)
         {
