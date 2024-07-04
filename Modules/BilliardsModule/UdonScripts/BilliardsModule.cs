@@ -995,8 +995,6 @@ public class BilliardsModule : UdonSharpBehaviour
         auto_pocketblockers.SetActive(is4Ball);
         marker9ball.SetActive(is9Ball);
 
-        graphicsManager._ShowBalls();
-
         // Reflect game state
         graphicsManager._UpdateScorecard();
         isReposition = false;

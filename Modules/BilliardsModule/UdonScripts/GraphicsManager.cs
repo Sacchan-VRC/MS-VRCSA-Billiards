@@ -664,9 +664,12 @@ int uniform_cue_colour;
         winnerText.gameObject.SetActive(true);
     }
 
+    private uint loadedGameMode;
     public void _OnGameStarted()
     {
-        if (table.gameModeLocal == uint.MaxValue) { return; }
+        if (table.gameModeLocal == uint.MaxValue || table.gameModeLocal == loadedGameMode) { return; }
+        loadedGameMode = table.gameModeLocal;
+
         scorecard_info.SetActive(true);
         scorecard_gameobject.SetActive(true);
         scorecard.SetInt("_GameMode", (int)table.gameModeLocal);
@@ -706,6 +709,8 @@ int uniform_cue_colour;
             balls[14].GetComponent<MeshFilter>().sharedMesh = meshOverrideRegular[2];
             balls[15].GetComponent<MeshFilter>().sharedMesh = meshOverrideRegular[3];
         }
+
+        _ShowBalls();
     }
 
     public void _UpdateTableColorScheme()
@@ -811,6 +816,8 @@ int uniform_cue_colour;
         {
             if (table.gameStateLocal > 1 && (table.networkingManager.winningTeamSynced != 2)) // game has started or finished, && hasn't been reset
             {
+                _OnGameStarted();
+
                 scorecard_gameobject.SetActive(true);
                 for (int i = 0; i < playerNames.Length; i++)
                 {
