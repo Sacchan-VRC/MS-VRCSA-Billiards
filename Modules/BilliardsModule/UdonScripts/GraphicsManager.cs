@@ -664,7 +664,7 @@ int uniform_cue_colour;
         winnerText.gameObject.SetActive(true);
     }
 
-    private uint loadedGameMode;
+    private uint loadedGameMode = uint.MaxValue;
     public void _OnGameStarted()
     {
         if (table.gameModeLocal == uint.MaxValue || table.gameModeLocal == loadedGameMode) { return; }
