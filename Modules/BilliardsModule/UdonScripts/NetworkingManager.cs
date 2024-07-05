@@ -62,7 +62,7 @@ public class NetworkingManager : UdonSharpBehaviour
     [UdonSynced][NonSerialized] public byte gameModeSynced;
 
     // the timer for the current game in seconds
-    [UdonSynced][NonSerialized] public uint timerSynced;
+    [UdonSynced][NonSerialized] public byte timerSynced;
 
     // table being used
     [UdonSynced][NonSerialized] public byte tableModelSynced;
@@ -527,7 +527,7 @@ public class NetworkingManager : UdonSharpBehaviour
         bufferMessages(false);
     }
 
-    public void _OnTimerChanged(uint newTimer)
+    public void _OnTimerChanged(byte newTimer)
     {
         timerSynced = newTimer;
 
@@ -844,7 +844,7 @@ public class NetworkingManager : UdonSharpBehaviour
         teamColorSynced = gameState[0x71];
         turnStateSynced = gameState[0x72];
         gameModeSynced = gameState[0x73];
-        timerSynced = decodeU16(gameState, 0x74);
+        timerSynced = gameState[0x74];
         teamsSynced = gameState[0x76] != 0;
         fourBallScoresSynced[0] = gameState[0x77];
         fourBallScoresSynced[1] = gameState[0x78];
@@ -871,7 +871,7 @@ public class NetworkingManager : UdonSharpBehaviour
         gameState[0x71] = teamColorSynced;
         gameState[0x72] = turnStateSynced;
         gameState[0x73] = gameModeSynced;
-        encodeU16(gameState, 0x74, (ushort)timerSynced);
+        gameState[0x73] = timerSynced;
         gameState[0x76] = (byte)(teamsSynced ? 1 : 0);
         gameState[0x77] = (byte)fourBallScoresSynced[0];
         gameState[0x78] = (byte)fourBallScoresSynced[1];

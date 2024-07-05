@@ -8,7 +8,7 @@ using TMPro;
 [UdonBehaviourSyncMode(BehaviourSyncMode.None)]
 public class MenuManager : UdonSharpBehaviour
 {
-    private readonly uint[] TIMER_VALUES = new uint[] { 0, 60, 45, 30, 15 };
+    private readonly byte[] TIMER_VALUES = new byte[] { 0, 60, 45, 30, 15 };
 
     [SerializeField] private GameObject menuStart;
     [SerializeField] private GameObject menuJoinLeave;
@@ -110,7 +110,7 @@ public class MenuManager : UdonSharpBehaviour
 
     public void _RefreshTimer()
     {
-        int index = Array.IndexOf(TIMER_VALUES, table.timerLocal);
+        int index = Array.IndexOf(TIMER_VALUES, (byte)table.timerLocal);
         selectedTimer = index == -1 ? 0 : (uint)index;
         if (index > -1)
         {

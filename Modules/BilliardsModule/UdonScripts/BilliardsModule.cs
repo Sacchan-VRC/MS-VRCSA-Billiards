@@ -426,7 +426,7 @@ public class BilliardsModule : UdonSharpBehaviour
         networkingManager._OnNoLockingChanged(noLockingEnabled);
     }
 
-    public void _TriggerTimerChanged(uint timerSelected)
+    public void _TriggerTimerChanged(byte timerSelected)
     {
         networkingManager._OnTimerChanged(timerSelected);
     }
