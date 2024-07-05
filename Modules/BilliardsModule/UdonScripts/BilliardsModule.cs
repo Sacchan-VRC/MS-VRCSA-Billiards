@@ -1461,7 +1461,7 @@ public class BilliardsModule : UdonSharpBehaviour
         ballsPocketedLocal ^= 1U << id;
 
         bool foulPocket = false;
-        if (isSnooker6Red)//largely a copy of code from _TriggerSimulationEnded()
+        if (isSnooker6Red) // recreation of the rules in _TriggerSimulationEnded()
         {
             uint bmask = 0x1E50u;// reds
             int nextcolor = sixRedFindLowestUnpocketedColor(ballsPocketedOrig);
@@ -1469,7 +1469,8 @@ public class BilliardsModule : UdonSharpBehaviour
             bool freeBall = foulStateLocal == 5;
             if (colorTurnLocal)
             {
-                bmask = 0x1AE;//color balls
+                bmask = 0x1AE; // color balls
+                bmask &= 1u << break_order_sixredsnooker[firstHit]; // only firsthit is legal
             }
             else if (!redOnTable)
             {
