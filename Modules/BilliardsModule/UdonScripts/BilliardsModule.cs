@@ -1616,17 +1616,19 @@ public class BilliardsModule : UdonSharpBehaviour
                         pmask >>= 1;
                     }
 
-                    if (sink_blue != sink_orange)
+                    bool closeTable = false;
+                    if (sink_blue > 0 && sink_orange == 0)
                     {
-                        if (sink_blue > sink_orange)
-                        {
-                            teamColorLocal = teamIdLocal;
-                        }
-                        else
-                        {
-                            teamColorLocal = teamIdLocal ^ 0x1u;
-                        }
-
+                        teamColorLocal = teamIdLocal;
+                        closeTable = true;
+                    }
+                    else if (sink_orange > 0 && sink_blue == 0)
+                    {
+                        teamColorLocal = teamIdLocal ^ 0x1u;
+                        closeTable = true;
+                    }
+                    if (closeTable)
+                    {
                         networkingManager._OnTableClosed(teamColorLocal);
                     }
                 }
