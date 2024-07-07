@@ -82,7 +82,7 @@ public class NetworkingManager : UdonSharpBehaviour
     // whether this update is urgent and should interrupt any local simulations (0 is no, 1 is interrupt, 2 is interrupt and halt)
     [UdonSynced][NonSerialized] public byte isUrgentSynced;
 
-    // 6RedSnooker: currently a turn where a color should be pocketed
+    // 6RedSnooker: currently a turn where a color should be pocketed // Also re-used in 8ball and 9ball to track if it's the break
     [UdonSynced][NonSerialized] public bool colorTurnSynced;
 
     [SerializeField] private PlayerSlot playerSlot;
@@ -218,7 +218,6 @@ public class NetworkingManager : UdonSharpBehaviour
     {
         gameStateSynced = 3;
         winningTeamSynced = 2;
-        colorTurnSynced = false;
         for (int i = 0; i < MAX_PLAYERS; i++)
         {
             playerIDsSynced[i] = -1;
@@ -249,7 +248,6 @@ public class NetworkingManager : UdonSharpBehaviour
         if (table.isSnooker6Red)
         {
             fourBallCueBallSynced = 0;
-            isTableOpenSynced = true;
         }
 
         bufferMessages(false);
@@ -393,6 +391,14 @@ public class NetworkingManager : UdonSharpBehaviour
         else
         {
             foulStateSynced = 1;
+        }
+        if (table.is8Ball || table.is9Ball)
+        {
+            colorTurnSynced = true;// re-used to track if it's the break
+        }
+        else
+        {
+            colorTurnSynced = false;
         }
         turnStateSynced = 0;
         isTableOpenSynced = true;

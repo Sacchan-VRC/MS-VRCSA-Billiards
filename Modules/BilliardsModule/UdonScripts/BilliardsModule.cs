@@ -214,7 +214,6 @@ public class BilliardsModule : UdonSharpBehaviour
     [NonSerialized] public bool noGuidelineLocal;
     [NonSerialized] public bool noLockingLocal;
     [NonSerialized] public uint ballsPocketedLocal;
-    [NonSerialized] public bool ballBounced_9Ball;//tracks if any ball has touched the cushion after initial ball collision
     [NonSerialized] public uint teamIdLocal;
     [NonSerialized] public uint fourBallCueBallLocal;
     [NonSerialized] public bool isTableOpenLocal;
@@ -239,7 +238,9 @@ public class BilliardsModule : UdonSharpBehaviour
     [NonSerialized] public bool waitingForUpdate;
     [NonSerialized] public bool isLocalSimulationOurs = false;
     [NonSerialized] public int simulationOwnerID;
-
+    private uint numBallsHitCushion = 0; // used to check if 9ball break was legal (4 balls must hit cushion)
+    private bool[] ballhasHitCushion;
+    private bool ballBounced;//tracks if any ball has touched the cushion after initial ball collision
     private uint ballsPocketedOrig;
     private int firstHit = 0;
     private int secondHit = 0;
@@ -1263,7 +1264,9 @@ public class BilliardsModule : UdonSharpBehaviour
         thirdHit = 0;
         fbMadePoint = false;
         fbMadeFoul = false;
-        ballBounced_9Ball = false;
+        ballBounced = false;
+        numBallsHitCushion = 0;
+        ballhasHitCushion = new bool[16];
         ballsPocketedOrig = ballsPocketedLocal;
         jumpShotFoul = false;
         fallOffFoul = false;
@@ -1324,10 +1327,15 @@ public class BilliardsModule : UdonSharpBehaviour
     #endregion
 
     #region PhysicsEngineCallbacks
-    public void _TriggerBounceCushion()
+    public void _TriggerBounceCushion(int ball)
     {
+        if (!ballhasHitCushion[ball] && ball != 0)
+        {
+            numBallsHitCushion++;
+            ballhasHitCushion[ball] = true;
+        }
         if (firstHit != 0)
-        { ballBounced_9Ball = true; }
+        { ballBounced = true; }
     }
     public void _TriggerCollision(int srcId, int dstId)
     {
@@ -1502,12 +1510,10 @@ public class BilliardsModule : UdonSharpBehaviour
         if (!isLocalSimulationRunning && !forceRun) return;
         isLocalSimulationRunning = false;
         waitingForUpdate = !isLocalSimulationOurs;
-        _LogInfo("_TriggerSimulationEnded");
 
         if (!isLocalSimulationOurs && networkingManager.delayedDeserialization)
             networkingManager.OnDeserialization();
 
-        _LogInfo("local simulation completed");
         cameraManager._OnLocalSimEnd();
 
         auto_colliderBaseVFX.SetActive(false);
@@ -1515,7 +1521,6 @@ public class BilliardsModule : UdonSharpBehaviour
         // Make sure we only run this from the client who initiated the move
         if (isLocalSimulationOurs || forceRun)
         {
-            _LogInfo("_TriggerSimulationEnded + isLocalSimulationOurs");
             isLocalSimulationOurs = false;
 
             uint bmask = 0xFFFCu;
@@ -1557,6 +1562,8 @@ public class BilliardsModule : UdonSharpBehaviour
 
             if (is8Ball)
             {
+                // 8ball rules are based on APA, some rules are not yet implemented.
+
                 isObjectiveSink = (ballsPocketedLocal & bmask) > (ballsPocketedOrig & bmask);
                 isOpponentSink = (ballsPocketedLocal & emask) > (ballsPocketedOrig & emask);
 
@@ -1576,9 +1583,47 @@ public class BilliardsModule : UdonSharpBehaviour
                     moveBallInDirUntilNotTouching(1, Vector3.right * k_BALL_RADIUS * .051f);
                 }
 
-                foulCondition = isScratch || isWrongHit || fallOffFoul;
+                foulCondition = isScratch || isWrongHit || fallOffFoul || (!isObjectiveSink && (!ballBounced || (colorTurnLocal && numBallsHitCushion < 4)));
 
                 deferLossCondition = is8Sink;
+
+                // try and close the table if possible
+                if (!foulCondition && isTableOpenLocal)
+                {
+                    uint sink_orange = 0;
+                    uint sink_blue = 0;
+                    uint pmask = (ballsPocketedLocal ^ ballsPocketedOrig) >> 2; // only check balls that were pocketed this turn
+
+                    for (int i = 0; i < 7; i++)
+                    {
+                        if ((pmask & 0x1u) == 0x1u)
+                            sink_blue++;
+
+                        pmask >>= 1;
+                    }
+                    for (int i = 0; i < 7; i++)
+                    {
+                        if ((pmask & 0x1u) == 0x1u)
+                            sink_orange++;
+
+                        pmask >>= 1;
+                    }
+
+                    if (sink_blue != sink_orange)
+                    {
+                        if (sink_blue > sink_orange)
+                        {
+                            teamColorLocal = teamIdLocal;
+                        }
+                        else
+                        {
+                            teamColorLocal = teamIdLocal ^ 0x1u;
+                        }
+
+                        networkingManager._OnTableClosed(teamColorLocal);
+                    }
+                }
+                colorTurnLocal = false; // colorTurnLocal tracks if it's the break
             }
             else if (is9Ball)
             {
@@ -1591,7 +1636,9 @@ public class BilliardsModule : UdonSharpBehaviour
                 isOpponentSink = false;
                 deferLossCondition = false;
 
-                foulCondition = isWrongHit || isScratch || (!ballBounced_9Ball && !isObjectiveSink) || fallOffFoul;
+                foulCondition = isWrongHit || isScratch || fallOffFoul || (!isObjectiveSink && (!ballBounced || (colorTurnLocal && numBallsHitCushion < 4)));
+
+                colorTurnLocal = false;// colorTurnLocal tracks if it's the break,
 
                 // Win condition: Pocket 9 ball ( and do not foul )
                 winCondition = ((ballsPocketedLocal & 0x200u) == 0x200u) && !foulCondition;
@@ -2307,43 +2354,6 @@ public class BilliardsModule : UdonSharpBehaviour
     private void onLocalTurnContinue()
     {
         _LogInfo($"onLocalTurnContinue");
-
-        // try and close the table if possible
-        if (is8Ball && isTableOpenLocal)
-        {
-            uint sink_orange = 0;
-            uint sink_blue = 0;
-            uint pmask = (ballsPocketedLocal ^ ballsPocketedOrig) >> 2; // only check balls that were pocketed this turn
-
-            for (int i = 0; i < 7; i++)
-            {
-                if ((pmask & 0x1u) == 0x1u)
-                    sink_blue++;
-
-                pmask >>= 1;
-            }
-            for (int i = 0; i < 7; i++)
-            {
-                if ((pmask & 0x1u) == 0x1u)
-                    sink_orange++;
-
-                pmask >>= 1;
-            }
-
-            if (sink_blue != sink_orange)
-            {
-                if (sink_blue > sink_orange)
-                {
-                    teamColorLocal = teamIdLocal;
-                }
-                else
-                {
-                    teamColorLocal = teamIdLocal ^ 0x1u;
-                }
-
-                networkingManager._OnTableClosed(teamColorLocal);
-            }
-        }
 
         networkingManager._OnTurnContinue();
     }

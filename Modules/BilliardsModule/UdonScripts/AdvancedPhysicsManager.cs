@@ -2584,7 +2584,7 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
                 balls_P[id] = Vector3.Scale(newPos, _sign_pos);
                 balls_V[id] = newVel;
                 balls_W[id] = newAngVel;
-                table._TriggerBounceCushion();
+                table._TriggerBounceCushion(id);
                 balls_inBounds[id] = true;
             }
             else
@@ -3126,7 +3126,7 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
                 balls_P[id] = Vector3.Scale(newPos, _sign_pos);
                 balls_V[id] = newVel;
                 balls_W[id] = newAngVel;
-                table._TriggerBounceCushion();
+                table._TriggerBounceCushion(id);
                 balls_inBounds[id] = true;
                 balls_transitioningBounds[id] = false;
             }
