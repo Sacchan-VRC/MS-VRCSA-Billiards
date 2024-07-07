@@ -1,6 +1,5 @@
 ﻿
 using Metaphira.Modules.CameraOverride;
-using Microsoft.SqlServer.Server;
 using UdonSharp;
 using UnityEngine;
 using VRC.SDKBase;
@@ -162,7 +161,7 @@ public class DesktopManager : UdonSharpBehaviour
 
                         Vector3 localPos = new Vector3(cursor.x, 0, cursor.z);
                         Vector3 worldPos = table.balls[0].transform.parent.TransformPoint(localPos);
-                        Collider[] colliders = Physics.OverlapSphere(worldPos, k_BALL_RADIUS / 4f, 1 << 24);
+                        Collider[] colliders = Physics.OverlapSphere(worldPos, k_BALL_RADIUS / 4f, 1 << 22);
                         foreach (Collider c in colliders)
                         {
                             if (c != null && c.gameObject != null)
