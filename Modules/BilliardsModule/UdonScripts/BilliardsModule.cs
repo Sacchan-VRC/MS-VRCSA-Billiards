@@ -1523,18 +1523,7 @@ public class BilliardsModule : UdonSharpBehaviour
         {
             isLocalSimulationOurs = false;
 
-            uint bmask = 0xFFFCu;
-            uint emask = 0x0u;
-
-            // Quash down the mask if table has closed
-            if (!isTableOpenLocal)
-            {
-                bmask = bmask & (0x1FCu << ((int)(teamIdLocal ^ teamColorLocal) * 7));
-                emask = 0x1FCu << ((int)(teamIdLocal ^ teamColorLocal ^ 0x1U) * 7);
-            }
-
             // Common informations
-            bool isSetComplete = (ballsPocketedOrig & bmask) == bmask;
             bool isScratch = (ballsPocketedLocal & 0x1U) == 0x1U || forceScratch;
             bool nextTurnBlocked = false;
 
@@ -1542,12 +1531,6 @@ public class BilliardsModule : UdonSharpBehaviour
             if (isScratch) ballsP[0] = Vector3.zero;
             //keep moving ball down the table until it's not touching any other balls
             moveBallInDirUntilNotTouching(0, Vector3.right * k_BALL_RADIUS * .051f);
-
-            // Append black to mask if set is done
-            if (isSetComplete)
-            {
-                bmask |= 0x2U;
-            }
 
             // These are the resultant states we can set for each mode
             // then the rest is taken care of
@@ -1564,6 +1547,24 @@ public class BilliardsModule : UdonSharpBehaviour
             {
                 // 8ball rules are based on APA, some rules are not yet implemented.
 
+                uint bmask = 0xFFFCu;
+                uint emask = 0x0u;
+
+                // Quash down the mask if table has closed
+                if (!isTableOpenLocal)
+                {
+                    bmask = bmask & (0x1FCu << ((int)(teamIdLocal ^ teamColorLocal) * 7));
+                    emask = 0x1FCu << ((int)(teamIdLocal ^ teamColorLocal ^ 0x1U) * 7);
+                }
+
+                bool isSetComplete = (ballsPocketedOrig & bmask) == bmask;
+
+                // Append black to mask if set is done or it's the break (Golden break rule)
+                if (isSetComplete || colorTurnLocal)
+                {
+                    bmask |= 0x2U;
+                }
+
                 isObjectiveSink = (ballsPocketedLocal & bmask) > (ballsPocketedOrig & bmask);
                 isOpponentSink = (ballsPocketedLocal & emask) > (ballsPocketedOrig & emask);
 
@@ -1572,7 +1573,7 @@ public class BilliardsModule : UdonSharpBehaviour
 
                 bool is8Sink = (ballsPocketedLocal & 0x2U) == 0x2U;
 
-                winCondition = isSetComplete && is8Sink;
+                winCondition = (isSetComplete || colorTurnLocal) && is8Sink;
 
                 if (is8Sink && isPracticeMode && !winCondition)
                 {
