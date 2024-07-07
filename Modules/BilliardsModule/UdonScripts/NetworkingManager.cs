@@ -9,9 +9,6 @@ public class NetworkingManager : UdonSharpBehaviour
     private const int MAX_PLAYERS = 4;
     private const int MAX_BALLS = 16;
 
-    // the current packet id - this value should increment monotonically, once per network update
-    [UdonSynced][NonSerialized] public int packetIdSynced;
-
     // players in the game - this field should only be updated by the host, stored in the zeroth position
     [UdonSynced][NonSerialized] public int[] playerIDsSynced = { -1, -1, -1, -1 };
 
@@ -212,8 +209,6 @@ public class NetworkingManager : UdonSharpBehaviour
             }
             else if (isUrgentSynced == 2) table.isLocalSimulationRunning = false;
         }
-
-        lastProcessedPacketId = packetIdSynced;
 
         if (gameStateSynced == 0 || gameStateSynced == 3)
         {
@@ -675,7 +670,6 @@ public class NetworkingManager : UdonSharpBehaviour
         if (!hasBufferedMessages) return;
 
         hasBufferedMessages = false;
-        packetIdSynced++;
 
         Networking.SetOwner(Networking.LocalPlayer, this.gameObject);
         this.RequestSerialization();

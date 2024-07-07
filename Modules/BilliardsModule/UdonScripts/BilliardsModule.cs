@@ -744,7 +744,7 @@ public class BilliardsModule : UdonSharpBehaviour
     // the order is important, unfortunately
     public void _OnRemoteDeserialization()
     {
-        _LogInfo("processing latest remote state (packet=" + networkingManager.packetIdSynced + ", state=" + networkingManager.stateIdSynced + ")");
+        _LogInfo("processing latest remote state ("/*packet="  + networkingManager.packetIdSynced + " ,*/+ "state=" + networkingManager.stateIdSynced + ")");
 
         lastActionTime = Time.time;
         waitingForUpdate = false;
