@@ -667,7 +667,7 @@ int uniform_cue_colour;
     private uint loadedGameMode = uint.MaxValue;
     public void _OnGameStarted()
     {
-        if (table.gameModeLocal == uint.MaxValue || table.gameModeLocal == loadedGameMode) { return; }
+        if (table.gameModeLocal == uint.MaxValue || (scorecard_info.activeSelf && table.gameModeLocal == loadedGameMode)) { return; }
         loadedGameMode = table.gameModeLocal;
 
         scorecard_info.SetActive(true);
