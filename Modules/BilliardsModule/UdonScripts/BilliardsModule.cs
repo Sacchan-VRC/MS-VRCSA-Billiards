@@ -1586,6 +1586,12 @@ public class BilliardsModule : UdonSharpBehaviour
 
                 foulCondition = isScratch || isWrongHit || fallOffFoul || (!isObjectiveSink && (!ballBounced || (colorTurnLocal && numBallsHitCushion < 4)));
 
+                if (isScratch && colorTurnLocal)
+                {
+                    nextTurnBlocked = true; // re-using snooker variable for reposition to kitchen
+                    ballsP[0].x = -k_TABLE_WIDTH / 2;
+                }
+
                 deferLossCondition = is8Sink;
 
                 // try and close the table if possible

@@ -275,7 +275,12 @@ public class NetworkingManager : UdonSharpBehaviour
         timerStartSynced = Networking.GetServerTimeInMilliseconds();
         if (!table.isSnooker6Red)
         {
-            foulStateSynced = 2;
+            if (objBlocked)
+            {
+                foulStateSynced = 1;
+            }
+            else
+                foulStateSynced = 2;
         }
         else
         {
