@@ -671,12 +671,12 @@ public class BilliardsModule : UdonSharpBehaviour
 
         if (Time.time - lastResetTime > 0.3f)
         {
-            infReset.text = "Double click to reset"; ClearResetInfo();
+            infReset.text = "Double Click To Reset"; ClearResetInfo();
         }
         else if (allPlayersOffline || isAllowedPlayer || _IsModerator(Networking.LocalPlayer) || (Time.time - lastActionTime > 300) || allPlayersAway)
         {
             _LogInfo("force resetting game");
-
+            infReset.text = "Game Reset!"; ClearResetInfo();
             networkingManager._OnGameReset();
         }
         else
@@ -958,6 +958,13 @@ public class BilliardsModule : UdonSharpBehaviour
         graphicsManager._OnLobbyClosed();
         menuManager._RefreshLobby();
 
+        if (networkingManager.winningTeamSynced == 2)
+        {
+            _LogWarn("game reset");
+            graphicsManager._OnGameReset();
+        }
+        gameLive = false;
+
         resetCachedData();
 
         if (callbacks != null) callbacks.SendCustomEvent("_OnLobbyClosed");
@@ -1021,12 +1028,7 @@ public class BilliardsModule : UdonSharpBehaviour
 
         winningTeamLocal = winningTeamSynced;
 
-        if (winningTeamLocal == 2)
-        {
-            _LogWarn("game reset");
-            graphicsManager._OnGameReset();
-        }
-        else
+        if (winningTeamLocal < 2)
         {
             string p1str = "No one";
             string p2str = "No one";

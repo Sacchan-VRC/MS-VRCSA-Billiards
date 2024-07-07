@@ -277,6 +277,10 @@ public class GraphicsManager : UdonSharpBehaviour
             numGameResets++;
             SendCustomEventDelayedSeconds(nameof(disableWinnerText), 15f);
         }
+        else
+        {
+            winnerText.gameObject.SetActive(false);
+        }
     }
 
     int numGameResets = 0;
@@ -667,7 +671,7 @@ int uniform_cue_colour;
     private uint loadedGameMode = uint.MaxValue;
     public void _OnGameStarted()
     {
-        if (table.gameModeLocal == uint.MaxValue || (scorecard_info.activeSelf && table.gameModeLocal == loadedGameMode)) { return; }
+        if (table.gameModeLocal == uint.MaxValue || table.gameStateLocal != 2 || (scorecard_info.activeSelf && table.gameModeLocal == loadedGameMode)) { return; }
         loadedGameMode = table.gameModeLocal;
 
         scorecard_info.SetActive(true);
@@ -816,7 +820,7 @@ int uniform_cue_colour;
         {
             if (table.gameStateLocal > 1 && (table.networkingManager.winningTeamSynced != 2)) // game has started or finished, && hasn't been reset
             {
-                _OnGameStarted();
+                _OnGameStarted(); // make sure all visuals are set
 
                 scorecard_gameobject.SetActive(true);
                 for (int i = 0; i < playerNames.Length; i++)

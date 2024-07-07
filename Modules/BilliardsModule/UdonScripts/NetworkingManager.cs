@@ -108,6 +108,7 @@ public class NetworkingManager : UdonSharpBehaviour
         }
     }
 
+    // called by the PlayerSlot script
     public void _OnPlayerSlotChanged(PlayerSlot slot)
     {
         if (gameStateSynced == 0) return; // we don't process player registrations if the lobby isn't open
@@ -152,6 +153,7 @@ public class NetworkingManager : UdonSharpBehaviour
         {
             if (numPlayers == 0)
             {
+                winningTeamSynced = 0; // prevent it thinking it was a reset
                 if (!table.gameLive)
                 {
                     gameStateSynced = 0;
@@ -216,7 +218,7 @@ public class NetworkingManager : UdonSharpBehaviour
 
     public void _OnGameReset()
     {
-        gameStateSynced = 3;
+        gameStateSynced = 0;
         winningTeamSynced = 2;
         for (int i = 0; i < MAX_PLAYERS; i++)
         {
