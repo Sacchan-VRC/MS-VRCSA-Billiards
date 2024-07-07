@@ -48,7 +48,7 @@ public class RepositionManager : UdonSharpBehaviour
         for (int i = 0; i < repositioning.Length; i++)
         {
             if (!repositioning[i]) continue;
-            if (i > 0 && !table.isPracticeMode && !table._IsLocalPlayerReferee()) continue;
+            if (i > 0 && !table.isPracticeMode) continue;
 
             GameObject ball = table.balls[i];
             Transform pickupTransform = ball.transform.GetChild(0);
@@ -59,10 +59,6 @@ public class RepositionManager : UdonSharpBehaviour
                 maxX = tableWidth - k_BALL_RADIUS;
             }
             else if (i != 0)
-            {
-                maxX = tableWidth - k_BALL_RADIUS;
-            }
-            else if (table._IsLocalPlayerReferee())
             {
                 maxX = tableWidth - k_BALL_RADIUS;
             }
@@ -195,13 +191,13 @@ public class RepositionManager : UdonSharpBehaviour
         {
             return false;
         }
-        if (!table._IsPlayer(self) && !table._IsReferee(self))
+        if (!table._IsPlayer(self))
         {
             return false;
         }
         if (grip.idx > 0)
         {
-            if (!table.isPracticeMode && !table._IsReferee(self))
+            if (!table.isPracticeMode)
             {
                 return false;
             }

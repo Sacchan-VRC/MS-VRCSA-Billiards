@@ -46,9 +46,6 @@ public class NetworkingManager : UdonSharpBehaviour
     // which team won, only used if gameState is 3. (0 is team 0, 1 is team 1, 2 is force reset)
     [UdonSynced][NonSerialized] public byte winningTeamSynced;
 
-    // which team may have won, used during tournaments
-    [UdonSynced][NonSerialized] public byte previewWinningTeamSynced;
-
     // the current game state (0 is no lobby, 1 is lobby created, 2 is game started, 3 is game finished)
     [UdonSynced][NonSerialized] public byte gameStateSynced;
 
@@ -85,16 +82,11 @@ public class NetworkingManager : UdonSharpBehaviour
     // whether this update is urgent and should interrupt any local simulations (0 is no, 1 is interrupt, 2 is interrupt and halt)
     [UdonSynced][NonSerialized] public byte isUrgentSynced;
 
-    // the current tournament referee
-    [UdonSynced][NonSerialized] public int tournamentRefereeSynced = -1;
-
     // 6RedSnooker: currently a turn where a color should be pocketed
     [UdonSynced][NonSerialized] public bool colorTurnSynced;
 
     [SerializeField] private PlayerSlot playerSlot;
     private BilliardsModule table;
-
-    private int lastProcessedPacketId = 0;
 
     private bool hasBufferedMessages = false;
 
@@ -192,8 +184,6 @@ public class NetworkingManager : UdonSharpBehaviour
     {
         delayedDeserialization = false;
 
-        // if (lastProcessedPacketId == packetIdSynced) return;
-        // if (!hasLocalUpdate && !hasDeferredUpdate) return;
         if (table.localPlayerDistant)
         {
             delayedDeserialization = true;
@@ -210,28 +200,7 @@ public class NetworkingManager : UdonSharpBehaviour
             else if (isUrgentSynced == 2) table.isLocalSimulationRunning = false;
         }
 
-        if (gameStateSynced == 0 || gameStateSynced == 3)
-        {
-        }
-        else if (gameStateSynced == 1)
-        {
-        }
-        else if (gameStateSynced == 2)
-        {
-            int[] playerNames = new int[MAX_PLAYERS + 1];
-            Array.Copy(playerIDsSynced, playerNames, MAX_PLAYERS);
-            playerNames[MAX_PLAYERS] = tournamentRefereeSynced;
-        }
-
         table._OnRemoteDeserialization();
-
-        // processRemoteState();
-    }
-
-    private void processRemoteState()
-    {
-        // hasLocalUpdate = false;
-        // hasDeferredUpdate = false;
     }
 
     public void _OnGameWin(uint winnerId)
@@ -242,13 +211,6 @@ public class NetworkingManager : UdonSharpBehaviour
         {
             playerIDsSynced[i] = -1;
         }
-        bufferMessages(false);
-    }
-
-    public void _OnPreviewWinner(uint winnerId)
-    {
-        previewWinningTeamSynced = (byte)winnerId;
-
         bufferMessages(false);
     }
 
@@ -438,7 +400,6 @@ public class NetworkingManager : UdonSharpBehaviour
         fourBallCueBallSynced = 0;
         cueBallVSynced = Vector3.zero;
         cueBallWSynced = Vector3.zero;
-        previewWinningTeamSynced = 2;
         timerStartSynced = Networking.GetServerTimeInMilliseconds();
         Array.Copy(ballPositions, ballsPSynced, MAX_BALLS);
         Array.Clear(fourBallScoresSynced, 0, 2);
@@ -611,7 +572,7 @@ public class NetworkingManager : UdonSharpBehaviour
     (
         int stateIdLocal,
         Vector3[] newBallsP, uint ballsPocketed, int[] newScores, uint gameMode, uint teamId, uint foulState, bool isTableOpen, uint teamColor, uint fourBallCueBall,
-        byte turnStateLocal, Vector3 cueBallV, Vector3 cueBallW, byte previewWinningTeam, bool colorTurn
+        byte turnStateLocal, Vector3 cueBallV, Vector3 cueBallW, bool colorTurn
     )
     {
         stateIdSynced = stateIdLocal;
@@ -629,18 +590,16 @@ public class NetworkingManager : UdonSharpBehaviour
         cueBallWSynced = cueBallW;
         fourBallCueBallSynced = (byte)fourBallCueBall;
         timerStartSynced = Networking.GetServerTimeInMilliseconds();
-        previewWinningTeamSynced = previewWinningTeam;
         colorTurnSynced = colorTurn;
 
         bufferMessages(true);
         // OnDeserialization(); // jank! force deserialization so the practice manager knows to ignore it
     }
 
-    public void _OnGlobalSettingsChanged(int newTournamentReferee, byte newPhysics, byte newTableModel)
+    public void _OnGlobalSettingsChanged(byte newPhysics, byte newTableModel)
     {
         if (!Networking.LocalPlayer.IsOwner(gameObject)) return;
 
-        tournamentRefereeSynced = newTournamentReferee;
         physicsSynced = newPhysics;
         tableModelSynced = newTableModel;
 

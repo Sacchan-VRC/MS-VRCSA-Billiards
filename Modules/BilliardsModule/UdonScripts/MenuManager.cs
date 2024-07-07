@@ -24,7 +24,6 @@ public class MenuManager : UdonSharpBehaviour
     [SerializeField] private TextMeshProUGUI timelimitDisplay;
     [SerializeField] private TextMeshProUGUI tableDisplay;
     [SerializeField] private TextMeshProUGUI physicsDisplay;
-    [SerializeField] private TextMeshProUGUI refereeDisplay;
 
     private BilliardsModule table;
 
@@ -59,7 +58,6 @@ public class MenuManager : UdonSharpBehaviour
         _RefreshToggleSettings();
         _RefreshLobby();
         _RefreshPlayerList();
-        _RefreshRefereeDisplay();
 
         _DisableMenuJoinLeave();
         _DisableLobbyMenu();
@@ -290,13 +288,6 @@ public class MenuManager : UdonSharpBehaviour
             join_Blue.gameObject.SetActive(false);
         else
             join_Blue.gameObject.SetActive(true);
-    }
-    public void _RefreshRefereeDisplay()
-    {
-        if (table.tournamentRefereeLocal != -1)
-            refereeDisplay.text = $"\nTournament Mode ({table.tournamentRefereeLocal})";
-        else
-            refereeDisplay.text = string.Empty;
     }
 
     public void StartButton()
