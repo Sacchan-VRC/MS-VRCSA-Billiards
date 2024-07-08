@@ -2210,7 +2210,7 @@ public class BilliardsModule : UdonSharpBehaviour
         Vector3 newpos = guideDisplay.localPosition; newpos.y = 0;
         newpos += Vector3.down * (k_BALL_RADIUS - 0.003f) / guideline.transform.localScale.y;// divide to convert back to worldspace distance
         guideDisplay.localPosition = newpos;
-        guideDisplay.GetComponent<MeshRenderer>().material.SetVector("_Dims", new Vector4(k_TABLE_WIDTH, k_TABLE_HEIGHT, 0, 0));
+        guideDisplay.GetComponent<MeshRenderer>().material.SetVector("_Dims", new Vector4(k_vE.x, k_vE.z, 0, 0));
 
         //set height of 9ball marker
         newpos = marker9ball.transform.localPosition; newpos.y = 0;
