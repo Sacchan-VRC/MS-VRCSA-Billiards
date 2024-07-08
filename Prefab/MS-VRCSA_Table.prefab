@@ -25398,29 +25398,29 @@ MonoBehaviour:
   table: {fileID: 5951911174870518006}
   getFromTable: 0
   previewCollision: 0
-  tableWidth: 0.9906
-  tableHeight: 0.4953
-  pocketWidthCorner: 0.079
-  pocketHeightCorner: 0.077
-  pocketDepthSide: 0.06
-  pocketRadiusSide: 0.0317
+  tableWidth: 1.0487415
+  tableHeight: 0.588595
+  pocketWidthCorner: 0.08514
+  pocketHeightCorner: 0.0792
+  pocketDepthSide: 0.037
+  pocketRadiusSide: 0.0368
   cushionRadius: 0.012
-  pocketInnerRadiusCorner: 0.058
-  pocketInnerRadiusSide: 0.06
-  cornerPocket: {x: 1.008, y: 0, z: 0.515}
-  sidePocket: {x: 0, y: 0, z: 0.565}
-  facingAngleCorner: 144
-  facingAngleSide: 100
+  pocketInnerRadiusCorner: 0.078
+  pocketInnerRadiusSide: 0.072
+  cornerPocket: {x: 1.09, y: 0, z: 0.633}
+  sidePocket: {x: 0, y: 0, z: 0.665}
+  facingAngleCorner: 137.5
+  facingAngleSide: 105.45
   k_BALL_RADIUS: 0.028575001
-  k_RAIL_HEIGHT_UPPER: 0.03911
+  k_RAIL_HEIGHT_UPPER: 0.041938
   k_RAIL_HEIGHT_LOWER: 0.032
-  k_RAIL_DEPTH_WIDTH: 0.158167
-  k_RAIL_DEPTH_HEIGHT: 0.16526
-  baulkLine: -0.57652915
-  blackSpot: 0.8028021
-  semiCircleRadius: 0.3340303
-  pinkSpot: 0.43815
-  table_Surface: {fileID: 8961411784017491322}
+  k_RAIL_DEPTH_WIDTH: 0.167433
+  k_RAIL_DEPTH_HEIGHT: 0.174946
+  baulkLine: -0.6103674
+  blackSpot: 0.84992105
+  semiCircleRadius: 0.3536356
+  pinkSpot: 0.46722078
+  table_Surface: {fileID: 7427928884565601046}
 --- !u!1 &8819256076505211055
 GameObject:
   m_ObjectHideFlags: 0
@@ -26204,7 +26204,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 0, y: 0}
-  m_AnchoredPosition: {x: 0.007, y: 0.772}
+  m_AnchoredPosition: {x: 0, y: 0.772}
   m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!223 &899909905794720854
@@ -26228,7 +26228,7 @@ Canvas:
   m_AdditionalShaderChannelsFlag: 25
   m_UpdateRectTransformForStandalone: 0
   m_SortingLayerID: 0
-  m_SortingOrder: 1
+  m_SortingOrder: 0
   m_TargetDisplay: 0
 --- !u!114 &4475664505369454635
 MonoBehaviour:
@@ -26780,6 +26780,12 @@ MonoBehaviour:
 --- !u!4 &3978497915437557872 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 3855363360235652509, guid: 9b6bd4231d25b69419c7f31b90fe202a,
+    type: 3}
+  m_PrefabInstance: {fileID: 195755172296568301}
+  m_PrefabAsset: {fileID: 0}
+--- !u!4 &7427928884565601046 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 7323481631133255419, guid: 9b6bd4231d25b69419c7f31b90fe202a,
     type: 3}
   m_PrefabInstance: {fileID: 195755172296568301}
   m_PrefabAsset: {fileID: 0}
@@ -27421,9 +27427,3 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c9969258aa6757e4593d3c8fe783a236, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
---- !u!4 &8961411784017491322 stripped
-Transform:
-  m_CorrespondingSourceObject: {fileID: 109440263818596822, guid: ad23838c8c1465443bc2cc458c72defc,
-    type: 3}
-  m_PrefabInstance: {fileID: 9068450705313162412}
-  m_PrefabAsset: {fileID: 0}
