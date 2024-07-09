@@ -1435,14 +1435,14 @@ public class BilliardsModule : UdonSharpBehaviour
             if (colorTurnLocal)
             {
                 bmask = 0x1AE; // color balls
-                bmask &= 1u << break_order_sixredsnooker[firstHit]; // only firsthit is legal
+                bmask &= 1u << firstHit; // only firsthit is legal
             }
             else if (!redOnTable)
             {
                 bmask = 1u << break_order_sixredsnooker[nextcolor];
                 if (freeBall)
                 {
-                    bmask |= 1u << break_order_sixredsnooker[firstHit];
+                    bmask |= 1u << firstHit;
                 }
             }
             else
@@ -1471,6 +1471,8 @@ public class BilliardsModule : UdonSharpBehaviour
         else if (is8Ball)
         {
             uint bmask = 0x1FCU << ((int)(teamIdLocal ^ teamColorLocal) * 7);
+            if (colorTurnLocal)
+                bmask |= 2u; // add black to mask in case of golden break (colorturnlocal = break in 8/9ball)
             if (!(((0x1U << id) & ((bmask) | (isTableOpenLocal ? 0xFFFCU : 0x0000U) | ((bmask & ballsPocketedLocal) == bmask ? 0x2U : 0x0U))) > 0))
             {
                 foulPocket = true;
