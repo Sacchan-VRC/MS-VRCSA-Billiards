@@ -45,7 +45,7 @@ public class CueController : UdonSharpBehaviour
     private CueGrip primaryController;
     private CueGrip secondaryController;
 
-    private Renderer renderer;
+    private Renderer cueRenderer;
 
     private float gripSize;
     private float cuetipDistance;
@@ -56,7 +56,7 @@ public class CueController : UdonSharpBehaviour
 
     public void _Init()
     {
-        renderer = this.transform.Find("body/render").GetComponent<Renderer>();
+        cueRenderer = this.transform.Find("body/render").GetComponent<Renderer>();
 
         primaryController = primary.GetComponent<CueGrip>();
         secondaryController = secondary.GetComponent<CueGrip>();
@@ -89,8 +89,8 @@ public class CueController : UdonSharpBehaviour
 
     private void refreshCueSkin()
     {
-        renderer = this.transform.Find("body/render").GetComponent<Renderer>();
-        renderer.materials[1].SetTexture("_MainTex", table.cueSkins[activeCueSkin]);
+        cueRenderer = this.transform.Find("body/render").GetComponent<Renderer>();
+        cueRenderer.materials[1].SetTexture("_MainTex", table.cueSkins[activeCueSkin]);
     }
 
     private void refreshCueScale()
@@ -412,19 +412,19 @@ public class CueController : UdonSharpBehaviour
         // enable if live, in LoD range,
         // disable second cue if in practice mode
         if (table.gameLive && !table.localPlayerDistant && (!table.isPracticeMode || this == table.cueControllers[0]))
-            renderer.enabled = true;
+            cueRenderer.enabled = true;
         else
-            renderer.enabled = false;
+            cueRenderer.enabled = false;
     }
 
     public void _EnableRenderer()
     {
-        renderer.enabled = true;
+        cueRenderer.enabled = true;
     }
 
     public void _DisableRenderer()
     {
-        renderer.enabled = false;
+        cueRenderer.enabled = false;
     }
 
     public void setSmoothing(float smoothing)
