@@ -261,13 +261,13 @@ public class DesktopManager : UdonSharpBehaviour
         bool hitCtrl = Input.GetKey(KeyCode.LeftControl) || Input.GetKey(KeyCode.RightControl);
         bool hitZNow = Input.GetKeyDown(KeyCode.Z);
         bool hitZ = Input.GetKey(KeyCode.Z);
-        bool hitYNow = Input.GetKeyDown(KeyCode.Y);
-        bool hitY = Input.GetKey(KeyCode.Y);
+        bool hitXNow = Input.GetKeyDown(KeyCode.X);
+        bool hitX = Input.GetKey(KeyCode.X);
         if ((hitCtrlNow && hitZ) || (hitCtrl && hitZNow))
         {
             table.practiceManager._Undo();
         }
-        else if ((hitCtrlNow && hitY) || (hitCtrl && hitYNow))
+        else if ((hitCtrlNow && hitX) || (hitCtrl && hitXNow))
         {
             table.practiceManager._Redo();
         }
