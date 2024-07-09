@@ -17,7 +17,7 @@
       _MaskStrengthCloth("Mask Strength Cloth", Range(0, 1)) = 1
 		[Toggle(DETAIL_OTHER)]_UseDetailOther ("Use Non-Cloth Detail Texture", Range(0,1)) = 0
       _DetailOther ("Other Detail", 2D) = "white" {}
-      _DetailOtherBrightness("Other Detail Brightness", Range(0, 1)) = 1
+      _DetailOtherBrightness("Other Detail Brightness", Range(0, 2)) = 1
       _MaskStrengthOther("Mask Strength Other", Range(0, 1)) = 1
 
       _TimerPct("Timer Percentage", Range(0, 1)) = 1
