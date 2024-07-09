@@ -686,13 +686,13 @@ public class BilliardsModule : UdonSharpBehaviour
             foreach (int allowedPlayer in allowedPlayers)
             {
                 if (allowedPlayer == -1) continue;
-                if (has) playerStr += ", ";
+                if (has) playerStr += "\n";
                 has = true;
 
                 playerStr += graphicsManager._FormatName(VRCPlayerApi.GetPlayerById(allowedPlayer));
             }
 
-            infReset.text = "Only these players may reset:\n" + playerStr; ClearResetInfo();
+            infReset.text = "<size=60%>Only these players may reset:\n" + playerStr; ClearResetInfo();
         }
         lastResetTime = Time.time;
     }
