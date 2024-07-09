@@ -74,7 +74,7 @@ public class NetworkingManager : UdonSharpBehaviour
     [UdonSynced][NonSerialized] public bool noLockingSynced;
 
     // scores if game state is 2 or 3 (4ball)
-    [UdonSynced][NonSerialized] public int[] fourBallScoresSynced = new int[2];
+    [UdonSynced][NonSerialized] public byte[] fourBallScoresSynced = new byte[2];
 
     // the currently active four ball cue ball (0 is white, 1 is yellow) // also used in Snooker to track how many fouls/repeated shots have occurred in a row
     [UdonSynced][NonSerialized] public byte fourBallCueBallSynced;
@@ -228,7 +228,7 @@ public class NetworkingManager : UdonSharpBehaviour
         bufferMessages(true);
     }
 
-    public void _OnSimulationEnded(Vector3[] ballsP, uint ballsPocketed, int[] fbScores, bool colorTurnLocal)
+    public void _OnSimulationEnded(Vector3[] ballsP, uint ballsPocketed, byte[] fbScores, bool colorTurnLocal)
     {
         Array.Copy(ballsP, ballsPSynced, MAX_BALLS);
         Array.Copy(fbScores, fourBallScoresSynced, 2);
@@ -584,7 +584,7 @@ public class NetworkingManager : UdonSharpBehaviour
     public void _ForceLoadFromState
     (
         int stateIdLocal,
-        Vector3[] newBallsP, uint ballsPocketed, int[] newScores, uint gameMode, uint teamId, uint foulState, bool isTableOpen, uint teamColor, uint fourBallCueBall,
+        Vector3[] newBallsP, uint ballsPocketed, byte[] newScores, uint gameMode, uint teamId, uint foulState, bool isTableOpen, uint teamColor, uint fourBallCueBall,
         byte turnStateLocal, Vector3 cueBallV, Vector3 cueBallW, bool colorTurn
     )
     {
@@ -809,8 +809,8 @@ public class NetworkingManager : UdonSharpBehaviour
 
         if (gameModeSynced == 2)
         {
-            fourBallScoresSynced[0] = (int)(spec & 0x0fu);
-            fourBallScoresSynced[1] = (int)((spec & 0x0fu) >> 4);
+            fourBallScoresSynced[0] = (byte)(spec & 0x0fu);
+            fourBallScoresSynced[1] = (byte)((spec & 0x0fu) >> 4);
             if ((spec & 0x100u) == 0x100u) gameModeSynced = 3;
         }
         else
@@ -938,9 +938,9 @@ public class NetworkingManager : UdonSharpBehaviour
         encodePos += 1;
         gameState[encodePos] = (byte)(teamsSynced ? 1 : 0);
         encodePos += 1;
-        gameState[encodePos] = (byte)fourBallScoresSynced[0];
+        gameState[encodePos] = fourBallScoresSynced[0];
         encodePos += 1;
-        gameState[encodePos] = (byte)fourBallScoresSynced[1];
+        gameState[encodePos] = fourBallScoresSynced[1];
         encodePos += 1;
         gameState[encodePos] = fourBallCueBallSynced;
         encodePos += 1;

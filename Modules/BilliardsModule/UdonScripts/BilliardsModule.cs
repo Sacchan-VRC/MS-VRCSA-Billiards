@@ -222,7 +222,7 @@ public class BilliardsModule : UdonSharpBehaviour
     [NonSerialized] public int numPlayersCurrentOrange = 0;
     [NonSerialized] public int numPlayersCurrentBlue = 0;
     [NonSerialized] public int[] playerIDsLocal = { -1, -1, -1, -1 };
-    [NonSerialized] public int[] fbScoresLocal = new int[2];
+    [NonSerialized] public byte[] fbScoresLocal = new byte[2];
     [NonSerialized] public uint winningTeamLocal;
     [NonSerialized] public int activeCueSkin;
     [NonSerialized] public int tableSkinLocal;
@@ -1083,7 +1083,7 @@ public class BilliardsModule : UdonSharpBehaviour
         refreshBallPickups();
     }
 
-    private void onRemoteFourBallScoresUpdated(int[] fbScoresSynced)
+    private void onRemoteFourBallScoresUpdated(byte[] fbScoresSynced)
     {
         if (!gameLive) return;
 
@@ -1823,12 +1823,12 @@ public class BilliardsModule : UdonSharpBehaviour
                 if (foulCondition)//points given to other team if foul
                 {
                     int foulscore = Mathf.Max(highestPocketedBallScore, foulFirstHitScore);
-                    fbScoresLocal[1 - teamIdLocal] += Mathf.Max(foulscore, 4);
+                    fbScoresLocal[1 - teamIdLocal] = (byte)Mathf.Min(fbScoresLocal[1 - teamIdLocal] + Mathf.Max(foulscore, 4), byte.MaxValue);
                     _LogInfo("6RED: Team " + (1 - teamIdLocal) + " awarded for foul " + Mathf.Max(foulscore, 4) + " points");
                 }
                 else
                 {
-                    fbScoresLocal[teamIdLocal] += ballScore;
+                    fbScoresLocal[teamIdLocal] = (byte)Mathf.Min(fbScoresLocal[teamIdLocal] + ballScore, byte.MaxValue);
                     _LogInfo("6RED: Team " + (teamIdLocal) + " awarded " + ballScore + " points");
                 }
                 _LogInfo("6RED: TeamScore 0: " + fbScoresLocal[0]);
@@ -2321,8 +2321,8 @@ public class BilliardsModule : UdonSharpBehaviour
         fbMadePoint = true;
         aud_main.PlayOneShot(snd_PointMade, 1.0f);
 
-        fbScoresLocal[teamIdLocal]++;
-        if (fbScoresLocal[teamIdLocal] > 10) fbScoresLocal[teamIdLocal] = 10;
+        if (fbScoresLocal[teamIdLocal] < 10)
+            fbScoresLocal[teamIdLocal]++;
     }
 
     private void handle4BallHitBad(Vector3 p)
@@ -2330,8 +2330,8 @@ public class BilliardsModule : UdonSharpBehaviour
         if (fbMadeFoul) return;
         fbMadeFoul = true;
 
-        fbScoresLocal[teamIdLocal]--;
-        if (fbScoresLocal[teamIdLocal] < 0) fbScoresLocal[teamIdLocal] = 0;
+        if (fbScoresLocal[teamIdLocal] > 0)
+            fbScoresLocal[teamIdLocal]--;
     }
 
     private void onLocalTeamWin(uint winner)
@@ -3159,7 +3159,7 @@ public class BilliardsModule : UdonSharpBehaviour
     {
         Vector3[] positionClone = new Vector3[ballsP.Length];
         Array.Copy(ballsP, positionClone, ballsP.Length);
-        int[] scoresClone = new int[fbScoresLocal.Length];
+        byte[] scoresClone = new byte[fbScoresLocal.Length];
         Array.Copy(fbScoresLocal, scoresClone, fbScoresLocal.Length);
         return new object[13]
         {
@@ -3172,7 +3172,7 @@ public class BilliardsModule : UdonSharpBehaviour
     {
         networkingManager._ForceLoadFromState(
             stateIdLocal,
-            (Vector3[])state[0], (uint)state[1], (int[])state[2], (uint)state[3], (uint)state[4], (uint)state[5], (bool)state[6], (uint)state[7], (uint)state[8],
+            (Vector3[])state[0], (uint)state[1], (byte[])state[2], (uint)state[3], (uint)state[4], (uint)state[5], (bool)state[6], (uint)state[7], (uint)state[8],
             (byte)state[9], (Vector3)state[10], (Vector3)state[11], (bool)state[12]
         );
     }
@@ -3183,11 +3183,11 @@ public class BilliardsModule : UdonSharpBehaviour
         Vector3[] posB = (Vector3[])b[0];
         for (int i = 0; i < ballsP.Length; i++) if (posA[i] != posB[i]) return false;
 
-        int[] scoresA = (int[])a[2];
-        int[] scoresB = (int[])b[2];
-        for (int i = 0; i < fbScoresLocal.Length; i++) if (scoresA[i] != scoresB[i]) return false;
+        byte[] scoresA = (byte[])a[2];
+        byte[] scoresB = (byte[])b[2];
+        for (byte i = 0; i < fbScoresLocal.Length; i++) if (scoresA[i] != scoresB[i]) return false;
 
-        for (int i = 0; i < a.Length; i++) if (i != 0 && i != 2 && !a[i].Equals(b[i])) return false;
+        for (byte i = 0; i < a.Length; i++) if (i != 0 && i != 2 && !a[i].Equals(b[i])) return false;
 
         return true;
     }
