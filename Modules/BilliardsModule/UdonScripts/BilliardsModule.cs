@@ -94,7 +94,6 @@ public class BilliardsModule : UdonSharpBehaviour
     // constants
     private const float k_RANDOMIZE_F = 0.0001f;
     private float k_SPOT_POSITION_X = 0.5334f; // First X position of the racked balls
-    private const float k_SPOT_CAROM_X = 0.8001f; // Spot position for carom mode
     private readonly int[] sixredsnooker_ballpoints = { 0, 7, 2, 5, 1, 6, 1, 3, 4, 1, 1, 1, 1 };
     private readonly int[] break_order_sixredsnooker = { 4, 6, 9, 10, 11, 12, 2, 7, 8, 3, 5, 1 };
     private readonly int[] break_order_8ball = { 9, 2, 10, 11, 1, 3, 4, 12, 5, 13, 14, 6, 15, 7, 8 };
@@ -2101,10 +2100,10 @@ public class BilliardsModule : UdonSharpBehaviour
         {
             // 4 ball (jp)
             initialBallsPocketed[2] = 0x1FFEu;
-            initialPositions[2][0] = new Vector3(-k_SPOT_CAROM_X, 0.0f, 0.0f);
-            initialPositions[2][13] = new Vector3(k_SPOT_CAROM_X, 0.0f, 0.0f);
-            initialPositions[2][14] = new Vector3(k_SPOT_POSITION_X, 0.0f, 0.0f);
-            initialPositions[2][15] = new Vector3(-k_SPOT_POSITION_X, 0.0f, 0.0f);
+            initialPositions[2][0] = new Vector3(-quarterTable, 0.0f, k_TABLE_HEIGHT * 0.5f);
+            initialPositions[2][13] = new Vector3(-quarterTable, 0.0f, k_TABLE_HEIGHT * -0.5f);
+            initialPositions[2][14] = new Vector3(quarterTable, 0.0f, 0.0f);
+            initialPositions[2][15] = new Vector3(-quarterTable, 0.0f, 0.0f);
         }
 
         {
