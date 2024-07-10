@@ -164,6 +164,7 @@ public class BilliardsModule : UdonSharpBehaviour
     // GameObjects
     [SerializeField] public GameObject[] balls;
     [SerializeField] public GameObject guideline;
+    [SerializeField] public GameObject guideline2;
     [SerializeField] public GameObject devhit;
     [SerializeField] public GameObject markerObj;
     [SerializeField] public GameObject marker9ball;
@@ -353,7 +354,18 @@ public class BilliardsModule : UdonSharpBehaviour
         debugger = this.transform.Find("debugger").gameObject;
         debugger.SetActive(true);
 
-        this.transform.Find("intl.balls/guide/guide_display").GetComponent<MeshRenderer>().material.SetMatrix("_BaseTransform", this.transform.worldToLocalMatrix);
+        if (guideline)
+        {
+            Transform gdisplay = guideline.transform.GetChild(0);
+            if (gdisplay)
+                gdisplay.GetComponent<MeshRenderer>().material.SetMatrix("_BaseTransform", this.transform.worldToLocalMatrix);
+        }
+        if (guideline2)
+        {
+            Transform gdisplay = guideline2.transform.GetChild(0);
+            if (gdisplay)
+                gdisplay.GetComponent<MeshRenderer>().material.SetMatrix("_BaseTransform", this.transform.worldToLocalMatrix);
+        }
 
         if (LoDDistance > 0 && !checkingDistant)
         {
@@ -788,6 +800,7 @@ public class BilliardsModule : UdonSharpBehaviour
             currentPhysicsManager = PhysicsManagers[physicsSynced];
             currentPhysicsManager.SendCustomEvent("_InitConstants");
             menuManager._RefreshPhysics();
+            desktopManager._RefreshPhysics();
         }
         if (tableModelLocal != tableModelSynced)
         {
@@ -2212,6 +2225,10 @@ public class BilliardsModule : UdonSharpBehaviour
         newpos += Vector3.down * (k_BALL_RADIUS - 0.003f) / guideline.transform.localScale.y;// divide to convert back to worldspace distance
         guideDisplay.localPosition = newpos;
         guideDisplay.GetComponent<MeshRenderer>().material.SetVector("_Dims", new Vector4(k_vE.x, k_vE.z, 0, 0));
+        Transform guideDisplay2 = guideline2.gameObject.transform.Find("guide_display");
+        guideDisplay2.localPosition = newpos;
+        guideDisplay2.GetComponent<MeshRenderer>().material.SetVector("_Dims", new Vector4(k_vE.x, k_vE.z, 0, 0));
+        guideDisplay2.GetComponent<MeshRenderer>().material.SetVector("_Dims", new Vector4(k_vE.x, k_vE.z, 0, 0));
 
         //set height of 9ball marker
         newpos = marker9ball.transform.localPosition; newpos.y = 0;
@@ -2470,6 +2487,7 @@ public class BilliardsModule : UdonSharpBehaviour
         refreshBallPickups();
         devhit.SetActive(false);
         guideline.SetActive(false);
+        guideline2.SetActive(false);
         isGuidelineValid = false;
         isReposition = false;
         auto_colliderBaseVFX.SetActive(false);

@@ -12,7 +12,7 @@ public class DesktopManager : UdonSharpBehaviour
 
     private const float k_BALL_RADIUS = 0.03f;
     private const float CURSOR_SPEED = 0.035f;
-    private const float MAX_SPIN_MAGNITUDE = 0.90f;
+    private float MAX_SPIN_MAGNITUDE = 0.90f;
 
     [SerializeField] private GameObject root;
     [SerializeField] private GameObject cursorIndicator;
@@ -57,6 +57,8 @@ public class DesktopManager : UdonSharpBehaviour
         cursorClampZ = table.k_TABLE_HEIGHT + .3f;
         rootStartScale = root.transform.localScale;
         cameraStartScale = root.GetComponentInChildren<Camera>().orthographicSize;
+        _RefreshTable();
+        _RefreshPhysics();
     }
 
     public void _OnGameStarted()
@@ -74,6 +76,11 @@ public class DesktopManager : UdonSharpBehaviour
     {
         holdingCue = false;
         exitUI();
+    }
+
+    public void _RefreshPhysics()
+    {
+        MAX_SPIN_MAGNITUDE = (float)table.currentPhysicsManager.GetProgramVariable("CueMaxHitRadius");
     }
 
     public void _RefreshTable()
