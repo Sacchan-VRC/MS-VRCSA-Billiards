@@ -8052,7 +8052,7 @@ MonoBehaviour:
     PrefabModifications: []
     SerializationNodes: []
   _udonSharpBackingUdonBehaviour: {fileID: 3671293032783138245}
-  PHYSICSNAME: <color=#FFD700>Advanced V0.5K</color>
+  PHYSICSNAME: <color=#FFD700>Advanced V0.5L</color>
   hitSounds:
   - {fileID: 8300000, guid: c5c3277a589929d49be99bc2f100aae1, type: 3}
   - {fileID: 8300000, guid: e55c033e7d8b29e409baf5343b67bead, type: 3}
@@ -8061,6 +8061,7 @@ MonoBehaviour:
   - {fileID: 8300000, guid: 70b124838479ce44a952b1251f336e00, type: 3}
   cushionSounds: []
   balls: []
+  CueMaxHitRadius: 0.6
   isHandleCollison5_2: 0
   muFactor_for_5_2: 0.7
   RubberF:

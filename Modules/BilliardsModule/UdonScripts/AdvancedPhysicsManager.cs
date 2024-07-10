@@ -6,7 +6,7 @@ using UnityEngine;
 [UdonBehaviourSyncMode(BehaviourSyncMode.NoVariableSync)]
 public class AdvancedPhysicsManager : UdonSharpBehaviour
 {
-    public string PHYSICSNAME = "<color=#FFD700>Advanced V0.5K</color>";
+    public string PHYSICSNAME = "<color=#FFD700>Advanced V0.5L</color>";
     [SerializeField] AudioClip[] hitSounds;
     [SerializeField] AudioClip[] bounceSounds;
     [SerializeField] AudioClip[] cushionSounds;
@@ -30,6 +30,8 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
     private float k_BALL_RSQR = 0.0009f;                                    // ball radius squared
     //const float k_BALL_BALL_F = 0.03f;                                    // Friction coefficient between balls       (ball-ball) 0.03f  
     private float k_BALL_E = 0.98f;   // Coefficient of Restitution between balls (Data suggests 0.94 to 0.96, but it seems there is an issue during calculation, Happens rarely now after some fixes.)
+    [Tooltip("Clamp the cue-ball collision point to center + Radius*this (Limits max applyable spin, as miss-cue isn't possible)")]
+    public float CueMaxHitRadius = 0.6f;
     public bool isHandleCollison5_2 = false;
     [Tooltip("Friction between balls, altering it will adjust how much throw balls recieve in collisions. (Ball dirtiness)\nRecommended range 0.5 - 1.5")]
     public float muFactor_for_5_2 = 0.7f;
@@ -213,11 +215,10 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
                         table.guideline.SetActive(true);
                         table.devhit.SetActive(true);
                     }
-                    table.devhit.transform.localPosition = RaySphere_output;
                     if (table.markerObj.activeSelf) { table.markerObj.SetActive(false); }
 
                     Vector3 q = table_Surface.InverseTransformDirection(cuetip.transform.forward); // direction of cue in surface space
-                    Vector3 o = balls_P[0]; /* o.y = 0; */// location of ball in surface
+                    Vector3 o = balls_P[0]; // location of ball in surface
 
                     Vector3 j = -Vector3.ProjectOnPlane(q, table_Surface.up); // project cue direction onto table surface, gives us j
                     Vector3 k = table_Surface.up;
@@ -225,7 +226,16 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
 
                     Plane jkPlane = new Plane(i, o);
 
-                    Vector3 Q = RaySphere_output; // point of impact in surface space
+                    Vector3 Q = RaySphere_output;
+                    // Clamp the increase in spin from hitting the ball further from the center by moving the hit point towards the center
+                    Vector3 Qflat = Vector3.ProjectOnPlane(Q - o, q);
+                    float distFromCenter = Qflat.magnitude / k_BALL_RADIUS;
+                    if (distFromCenter > CueMaxHitRadius)
+                    {
+                        _phy_ray_sphere((o + Qflat.normalized * k_BALL_RADIUS * CueMaxHitRadius) - q * k_BALL_DIAMETRE, q, o, k_BALL_RADIUS_SQRPE);
+                        Q = RaySphere_output;
+                    }
+                    table.devhit.transform.localPosition = Q;
 
                     float a = jkPlane.GetDistanceToPoint(Q);
                     float b = Q.y - o.y;
@@ -3276,7 +3286,6 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
 #endif
         applyPhysics(inV0);
     }
-
     private void applyPhysics(float V0)
     {
         GameObject cuetip = table.activeCue._GetCuetip();
@@ -3290,7 +3299,16 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
 
         Plane jkPlane = new Plane(iVector, o);
 
-        Vector3 Q = RaySphere_output; // point of impact in surface space
+        Vector3 Q = RaySphere_output;
+
+        // Clamp the increase in spin from hitting the ball further from the center by moving the hit point towards the center
+        Vector3 Qflat = Vector3.ProjectOnPlane(Q - o, q);
+        float distFromCenter = Qflat.magnitude / k_BALL_RADIUS;
+        if (distFromCenter > CueMaxHitRadius)
+        {
+            _phy_ray_sphere((o + Qflat.normalized * k_BALL_RADIUS * CueMaxHitRadius) - q * k_BALL_DIAMETRE, q, o, k_BALL_RADIUS_SQRPE);
+            Q = RaySphere_output;
+        }
 
         float a = jkPlane.GetDistanceToPoint(Q);
         float b = Q.y - o.y;
