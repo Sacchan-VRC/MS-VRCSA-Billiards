@@ -272,7 +272,7 @@ public class StandardPhysicsManager : UdonSharpBehaviour
                     table.guideline.transform.localPosition = balls_P[0];
                     table.guideline.transform.localEulerAngles = new Vector3(0.0f, -cue_fdir * Mathf.Rad2Deg, 0.0f);
                     table.guideline2.transform.localPosition = balls_P[0];
-                    table.guideline2.transform.localEulerAngles = new Vector3(0.0f, cuetip.transform.eulerAngles.y, 0.0f);
+                    table.guideline2.transform.rotation = Quaternion.Euler(new Vector3(0.0f, cuetip.transform.eulerAngles.y - 90, 0.0f));
                 }
                 else
                 {
