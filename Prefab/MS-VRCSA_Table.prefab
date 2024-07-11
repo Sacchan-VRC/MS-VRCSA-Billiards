@@ -21951,6 +21951,7 @@ MonoBehaviour:
   - {fileID: 8300000, guid: c5c3277a589929d49be99bc2f100aae1, type: 3}
   - {fileID: 8300000, guid: e55c033e7d8b29e409baf5343b67bead, type: 3}
   - {fileID: 8300000, guid: feebba097cc8e2d4fb236753ecd5c137, type: 3}
+  CueMaxHitRadius: 0.9
   cue_vdir: {x: 0, y: 0, z: 0}
   dkTargetPos: {x: 0, y: 0, z: 0}
   k_pO: {x: 0, y: 0, z: 0}
@@ -24958,7 +24959,7 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: -0.815, y: 0, z: 0.467}
-  m_LocalScale: {x: 0.03, y: 0.03, z: 0.03}
+  m_LocalScale: {x: 0.03, y: 0.06, z: 0.03}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 8842190445137544631}

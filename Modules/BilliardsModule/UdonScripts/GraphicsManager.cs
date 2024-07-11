@@ -29,6 +29,7 @@ public class GraphicsManager : UdonSharpBehaviour
     [SerializeField] MeshRenderer[] cueSecondaryGripRenderers;
 
     [Header("Textures")]
+    [SerializeField] bool usColors = true;
     [SerializeField] Texture usColorTexture;
     [SerializeField] Color[] usColorArr;
 
@@ -61,7 +62,6 @@ public class GraphicsManager : UdonSharpBehaviour
     private GameObject scorecard_info;
     private Color[] scorecardColors = new Color[15];
 
-    private bool usColors;
     private bool shadowsDisabled;
 
     private GameObject[] balls;
