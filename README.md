@@ -5,7 +5,7 @@ A VRChat Billiards table by Neko Mabel and Sacchan
 This table is a fork of the Pool Parlor table by metaphira and Toasterly
 Originally coded by Harry-T
 
-The aim of this table is provide an updated and improved pool table that is as realistic* as possible for cue sports enthusiasts, while also providing quality of life enhancements and useful features that everyone can enjoy.
+The aim of this table is provide an updated and improved Pool table that is as realistic* as possible for cue sports enthusiasts, while also providing quality of life enhancements and useful features that everyone can enjoy.
 See it in action in the VRChat world 'Sacc's Snooker Club'
 
 ### Features
@@ -33,17 +33,21 @@ See it in action in the VRChat world 'Sacc's Snooker Club'
 	- Enhanced 3D physics:
 		- All balls are equal - All balls can jump and bounce. Hitting cushions too fast can cause jumping
 		- On rail physics - balls can roll around on top of the side rail, and fall in to pockets from it
+		- Place balls on top of the rail in practice mode by clicking while holding them to change placement mode
 - Snooker rule set:
-	- Complete rule set for 6-red snooker has been implemented using (WPBSA - rule set) https://wpbsa.com/wp-content/uploads/Rulebook-Website-Updated-May-2022-2.pdf [Page 34]
-	- A full size Snooker table model is included
-	- May not be perfect, message me if you find a bug
+	- Complete rule set for 6-red Snooker has been implemented using (WPBSA - rule set) https://wpbsa.com/wp-content/uploads/Rulebook-Website-Updated-May-2022-2.pdf [Page 34]
 - Greater table customization:
 	- Almost every vertex of the collision model is adjustable, and shown by the in-editor visualizer script for easy setup
+	- Each table has it's own physics settings
 - Misc:
 	- Local build and test works fine with two clients for testing (Now syncing player ID instead of player name)
 	- 3D pockets - balls actually have to fall down a bit before they count as pocketed
 	- Balls don't freeze the instant they're pocketed
-- 'Bar Box' 7ft table model
+	- LoD system to disable simulation and visuals when far away
+- 6 Tables included
+	- The original prefab table
+	- Accurate to real 7-8-9ft Pool tables
+	- Accurate to real 10 and 12ft Snooker tables
 
 ### Setup:
 Import the package
@@ -51,7 +55,7 @@ Click MS-VRCSA->Set Up Pool Table Layers
 	- this names layer 22 to 'BilliardsModule' and sets the collision matrix so that it only collides with itself
 Place one or more Prefab/MS-VRCA Table prefabs into your scene
 Because tables can be swapped out they can't easily be lightmapped. Use just one table if you wish to have light mapping
- - Remove the unused tables from the list in BilliardsModule and delete their objects
+	- Remove the unused tables from the list in BilliardsModule and delete their objects
 
 ### Table Creation
 Copy the hierarchy of the existing tables and you should be fine, objects whose name begin with a period are used in the code, so don't change their names.
@@ -59,7 +63,6 @@ The shader for the table's Metallic/Smoothness texture can be exported as a 2 ch
 
 ### Known issues
 - It's possible for a player to be unable to grab their cue when it's their turn, leaving and re-joining the match fixes this issue. (rare)
-- Saving/loading shots isn't perfect due to some values getting compressed - this may be fixable
 
 ### Future
 There's still a lot that can be done to improve things - I don't intend to do any more major work on this myself - Sacchan
@@ -67,19 +70,17 @@ There's still a lot that can be done to improve things - I don't intend to do an
 - A system to export shots from an entire match for preservation
 - Snooker with 15 red balls:
 	- Requires more synced data and simulation, might be best to implement as a fork
+		- see https://github.com/cheesestudio/VRChat-Pool-table-with-15-red-snooker-Pyramid-Chinese-8-ball-based-on-MS-VRCSA-Billiards
 - 9Ball Rules:
 	- 9Ball push out rule
-	- Break rules (4 balls must contact cushion on break)
 - Further improvements to physics
 - Misscues
 - New sound effects
 - Optimization - may not be necessary with udon2 coming soon
 - 10Ball mode
-- pocket selection for 8Ball
-- 9ft table
-- 10ft table
+- Other standards for 8/9ball (WPA ..)
 - I have completely neglected the Quest setup stuff, idk if it still works, never used it
-- I have completely neglected the referee stuff, idk if it still works, never used it
+- I have completely removed the referee stuff, there's probably a simpler way to handle it now, and 99% of people wont use it
 - Message me if you're a programmer and need help working something out
 
 ### Credits
@@ -89,3 +90,30 @@ Neko Mabel:
 
 Sacchan:
 - Everything else
+
+
+### Major Changes in version 1.1
+Implemented more rules from the APA standard
+	- Soft break is a foul (4 balls must touch cushion)
+	- Balls must touch cushion (or pocket) after colliding
+	- Golden breaks
+	- Scratch on break means ball in hand is limited to kitchen
+	- Never choose color set if both colors are pocketed (even if 2blue, 1orange)
+Internal table collision setup re-worked
+	- Table width/height settings now properly represents the exact play area
+	- This made me realize some initial ball spots were wrong - now all fixed
+Collision visualizer improved
+	- No longer has a weird delay when changing variables in the inspector
+	- Has cricles accurately representing the actual collision shape of the corners
+	- Fixed an issue where the cushion height was displayed slightly shorter than it should have been
+Desktop mode updates
+	- Fixed the functionality of the Q key - you can now click and drag balls around as intended
+	- change the redo button from ctrl-y to ctrl-x (Y opens the chat box in VRC, which you can't even see when in desktop view)
+Added a second faint guideline showing the cue direction, this should help beginners hit the ball straight
+Added 3 new tables Pool 8ft, 9ft, and Snooker 10ft
+Fixed some bugs with the LoD system that sometimes caused spectators to see the wrong game mode being played
+Fixed bug where if a player took a shot and then left the world before the balls settled, the table would need to be reset
+Added ability to place balls on top of the rail in practice mode, click while holding a ball to change placement mode (normal, on rail, in-air)
+Added Snooker tie rule, in the case of a tie, the black is replaced, and a random player gets to shoot
+Added Sliders to the table shader to allow HSV color change of the cloth
+Removed compression from save/load, shots are no longer slightly different after loading
