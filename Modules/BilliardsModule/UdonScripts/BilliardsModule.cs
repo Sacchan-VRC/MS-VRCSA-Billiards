@@ -354,18 +354,12 @@ public class BilliardsModule : UdonSharpBehaviour
         debugger = this.transform.Find("debugger").gameObject;
         debugger.SetActive(true);
 
-        if (guideline)
-        {
-            Transform gdisplay = guideline.transform.GetChild(0);
-            if (gdisplay)
-                gdisplay.GetComponent<MeshRenderer>().material.SetMatrix("_BaseTransform", this.transform.worldToLocalMatrix);
-        }
-        if (guideline2)
-        {
-            Transform gdisplay = guideline2.transform.GetChild(0);
-            if (gdisplay)
-                gdisplay.GetComponent<MeshRenderer>().material.SetMatrix("_BaseTransform", this.transform.worldToLocalMatrix);
-        }
+        Transform gdisplay = guideline.transform.GetChild(0);
+        if (gdisplay)
+            gdisplay.GetComponent<MeshRenderer>().material.SetMatrix("_BaseTransform", this.transform.worldToLocalMatrix);
+        Transform gdisplay2 = guideline2.transform.GetChild(0);
+        if (gdisplay2)
+            gdisplay2.GetComponent<MeshRenderer>().material.SetMatrix("_BaseTransform", this.transform.worldToLocalMatrix);
 
         if (LoDDistance > 0 && !checkingDistant)
         {
