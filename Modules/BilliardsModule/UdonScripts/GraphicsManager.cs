@@ -933,7 +933,7 @@ int uniform_cue_colour;
                 }
                 else
                 {
-                    scorecardColors[7] = Color.black;
+                    scorecardColors[7] = Color.white * 0.1f;
                 }
             }
             scorecard.SetInt("_LeftScore", counter0[0]);
