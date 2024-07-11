@@ -93,37 +93,6 @@ Transform:
   m_Children: []
   m_Father: {fileID: 1148742427798248904}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!1 &1190916929511334905
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 3404253622772051332}
-  m_Layer: 22
-  m_Name: .LOADMENU
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &3404253622772051332
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1190916929511334905}
-  serializedVersion: 2
-  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -0.333, y: 0.486, z: -0.634}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 1148742427798248904}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1243539627281638706
 GameObject:
   m_ObjectHideFlags: 0
@@ -792,7 +761,6 @@ Transform:
   - {fileID: 8237096186961417132}
   - {fileID: 99551414715784392}
   - {fileID: 8447858522024375074}
-  - {fileID: 3404253622772051332}
   - {fileID: 5598977440291639918}
   - {fileID: 2678221782868251500}
   - {fileID: 5859213509724682961}
@@ -900,9 +868,9 @@ MonoBehaviour:
   bs_BallDiameter: 52.5
   bs_BallMass: 0.16
   baulkLine: 0.5969
-  blackSpot: 0.2667
   semiCircleRadius: 0.2413
   pinkSpot: 0.7112
+  blackSpot: 0.2667
   CueOrange: {fileID: 8237096186961417132}
   CueBlue: {fileID: 99551414715784392}
   DesktopUIScaleFactor: 1.2

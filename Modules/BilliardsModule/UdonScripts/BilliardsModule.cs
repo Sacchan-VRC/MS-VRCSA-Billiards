@@ -2279,8 +2279,6 @@ public class BilliardsModule : UdonSharpBehaviour
         Transform menu = this.transform.Find("intl.menu/MenuAnchor");
         if (MENU_SPOT && menu)
             setTransform(MENU_SPOT, menu);
-
-        menuManager._PlaceLoadMenu();
     }
 
     private void ConfineBallTransformsToTable()

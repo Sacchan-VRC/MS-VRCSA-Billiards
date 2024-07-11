@@ -186,14 +186,6 @@ public class MenuManager : UdonSharpBehaviour
         _RefreshMenu();
     }
 
-    public void _PlaceLoadMenu()
-    {
-        Transform table_base = table._GetTableBase().transform;
-        Transform LOADMENU_SPOT = table_base.Find(".LOADMENU");
-        if (LOADMENU_SPOT && menuLoad)
-            table.setTransform(LOADMENU_SPOT, menuLoad.transform);
-    }
-
     public void _RefreshMenu()
     {
         if (table.localPlayerDistant)
