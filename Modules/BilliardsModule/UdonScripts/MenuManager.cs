@@ -8,7 +8,7 @@ using TMPro;
 [UdonBehaviourSyncMode(BehaviourSyncMode.None)]
 public class MenuManager : UdonSharpBehaviour
 {
-    private readonly byte[] TIMER_VALUES = new byte[] { 0, 60, 45, 30, 15 };
+    private readonly byte[] TIMER_VALUES = new byte[] { 0, 60, 45, 30, 15, 10 };
 
     [SerializeField] private GameObject menuStart;
     [SerializeField] private GameObject menuJoinLeave;
