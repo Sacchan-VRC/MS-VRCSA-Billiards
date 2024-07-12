@@ -342,13 +342,13 @@ public class MenuManager : UdonSharpBehaviour
         if (selectedTimer > 0)
             selectedTimer--;
         else
-            selectedTimer = 4;
+            selectedTimer = TIMER_VALUES.Length - 1;
 
         table._TriggerTimerChanged(TIMER_VALUES[selectedTimer]);
     }
     public void TimeLeft()
     {
-        if (selectedTimer < 4)
+        if (selectedTimer < TIMER_VALUES.Length - 1)
             selectedTimer++;
         else
             selectedTimer = 0;
@@ -481,7 +481,7 @@ public class MenuManager : UdonSharpBehaviour
             }
             else if (button.name == "TimeLeft")
             {
-                if (selectedTimer < 3)
+                if (selectedTimer < TIMER_VALUES.Length - 2)
                 {
                     selectedTimer++;
 
