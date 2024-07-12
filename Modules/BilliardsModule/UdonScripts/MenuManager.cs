@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using UdonSharp;
 using UnityEngine;
 using UnityEngine.UI;
@@ -8,7 +8,7 @@ using TMPro;
 [UdonBehaviourSyncMode(BehaviourSyncMode.None)]
 public class MenuManager : UdonSharpBehaviour
 {
-    private readonly byte[] TIMER_VALUES = new byte[] { 0, 60, 45, 30, 15 };
+    [SerializeField] private byte[] timerValues = new byte[] { 0, 60, 45, 30, 15, 10, 5 };
 
     [SerializeField] private GameObject menuStart;
     [SerializeField] private GameObject menuJoinLeave;
@@ -108,17 +108,17 @@ public class MenuManager : UdonSharpBehaviour
 
     public void _RefreshTimer()
     {
-        int index = Array.IndexOf(TIMER_VALUES, (byte)table.timerLocal);
+        int index = Array.IndexOf(timerValues, (byte)table.timerLocal);
         selectedTimer = index == -1 ? 0 : (uint)index;
         if (index > -1)
         {
-            if (TIMER_VALUES[index] == 0)
+            if (timerValues[index] == 0)
             {
                 timelimitDisplay.text = "No limit";
             }
             else
             {
-                timelimitDisplay.text = TIMER_VALUES[index].ToString("F0");
+                timelimitDisplay.text = timerValues[index].ToString("F0");
             }
         }
     }
@@ -342,18 +342,18 @@ public class MenuManager : UdonSharpBehaviour
         if (selectedTimer > 0)
             selectedTimer--;
         else
-            selectedTimer = 4;
+            selectedTimer = (uint)timerValues.Length - 1;
 
-        table._TriggerTimerChanged(TIMER_VALUES[selectedTimer]);
+        table._TriggerTimerChanged(timerValues[selectedTimer]);
     }
     public void TimeLeft()
     {
-        if (selectedTimer < 4)
+        if (selectedTimer < timerValues.Length - 1)
             selectedTimer++;
         else
             selectedTimer = 0;
 
-        table._TriggerTimerChanged(TIMER_VALUES[selectedTimer]);
+        table._TriggerTimerChanged(timerValues[selectedTimer]);
     }
     public void TableRight()
     {
@@ -476,16 +476,16 @@ public class MenuManager : UdonSharpBehaviour
                 {
                     selectedTimer--;
 
-                    table._TriggerTimerChanged(TIMER_VALUES[selectedTimer]);
+                    table._TriggerTimerChanged(timerValues[selectedTimer]);
                 }
             }
             else if (button.name == "TimeLeft")
             {
-                if (selectedTimer < 3)
+                if (selectedTimer < timerValues.Length - 1)
                 {
                     selectedTimer++;
 
-                    table._TriggerTimerChanged(TIMER_VALUES[selectedTimer]);
+                    table._TriggerTimerChanged(timerValues[selectedTimer]);
                 }
             }
             else if (button.name == "TableRight")
