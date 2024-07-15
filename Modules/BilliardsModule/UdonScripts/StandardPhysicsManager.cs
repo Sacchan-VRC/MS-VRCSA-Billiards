@@ -196,7 +196,10 @@ public class StandardPhysicsManager : UdonSharpBehaviour
                     {
                         table.guideline.SetActive(true);
                         table.devhit.SetActive(true);
-                        table.guideline2.SetActive(true);
+                        if (table.isPracticeMode)
+                            table.guideline2.SetActive(true);
+                        else
+                            table.guideline2.SetActive(false);
                     }
                     if (table.markerObj.activeSelf) { table.markerObj.SetActive(false); }
                     Vector3 q = transform_Surface.InverseTransformDirection(cuetip.transform.forward);  // direction of cue in surface space

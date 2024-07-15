@@ -214,7 +214,10 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
                     {
                         table.guideline.SetActive(true);
                         table.devhit.SetActive(true);
-                        table.guideline2.SetActive(true);
+                        if (table.isPracticeMode)
+                            table.guideline2.SetActive(true);
+                        else
+                            table.guideline2.SetActive(false);
                     }
                     if (table.markerObj.activeSelf) { table.markerObj.SetActive(false); }
 
