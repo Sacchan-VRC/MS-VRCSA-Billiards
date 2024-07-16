@@ -766,6 +766,7 @@ int uniform_cue_colour;
     public void _DisableObjects()
     {
         table.guideline.SetActive(false);
+        table.guideline2.SetActive(false);
         table.devhit.SetActive(false);
         winnerText.gameObject.SetActive(false);
         table.markerObj.SetActive(false);
