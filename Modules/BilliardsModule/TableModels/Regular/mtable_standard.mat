@@ -107,11 +107,11 @@ Material:
     m_Floats:
     - _BumpScale: 1
     - _ClothHue: 0
-    - _ClothSaturation: 1
+    - _ClothSaturation: 0.977
     - _Cutoff: 0.5
     - _DetailBrightness: 0.365
     - _DetailCloth: 0
-    - _DetailClothBrightness: 0.397
+    - _DetailClothBrightness: 0.273
     - _DetailCloth_b: 1
     - _DetailNormalMapScale: 1
     - _DetailOtherBrightness: 1
