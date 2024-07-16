@@ -159,7 +159,12 @@ public class LegacyPhysicsManager : UdonSharpBehaviour
                     {
                         table.guideline.SetActive(true);
                         table.devhit.SetActive(true);
+                        if (table.isPracticeMode)
+                            table.guideline2.SetActive(true);
+                        else
+                            table.guideline2.SetActive(false);
                     }
+                    if (table.markerObj.activeSelf) { table.markerObj.SetActive(false); }
                     table.devhit.transform.localPosition = RaySphere_output;
 
                     cue_shotdir = cue_vdir;
@@ -174,11 +179,15 @@ public class LegacyPhysicsManager : UdonSharpBehaviour
                     // Update the prediction line direction
                     table.guideline.transform.localPosition = balls_P[0];
                     table.guideline.transform.localEulerAngles = new Vector3(0.0f, -cue_fdir * Mathf.Rad2Deg, 0.0f);
+                    table.guideline2.transform.localPosition = balls_P[0];
+                    table.guideline2.transform.rotation = Quaternion.Euler(new Vector3(0.0f, cuetip.transform.eulerAngles.y - 90, 0.0f));
                 }
                 else
                 {
+                    if (!table.markerObj.activeSelf && table.isReposition) { table.markerObj.SetActive(true); }
                     table.devhit.SetActive(false);
                     table.guideline.SetActive(false);
+                    table.guideline2.SetActive(false);
                 }
             }
         }
