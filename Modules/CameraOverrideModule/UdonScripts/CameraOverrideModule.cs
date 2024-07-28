@@ -150,11 +150,11 @@ namespace Metaphira.Modules.CameraOverride
 
                 targetCamera.targetTexture = null;
                 targetCamera.stereoTargetEye = StereoTargetEyeMask.None;
-                targetCamera.depth = 102;
+                targetCamera.depth = 52;
                 targetCamera.enabled = true;
 
                 referenceCamera.stereoTargetEye = StereoTargetEyeMask.None;
-                referenceCamera.depth = 101;
+                referenceCamera.depth = 51;
                 referenceCamera.backgroundColor = clearColor;
                 referenceCamera.enabled = true;
 
