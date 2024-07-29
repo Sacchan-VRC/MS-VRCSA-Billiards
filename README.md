@@ -91,6 +91,10 @@ Neko Mabel:
 Sacchan:  
 - Everything else  
   
+### Changes in version 1.12  
+Fixed menu not showing in desktop view + associated crash  
+Fixed pickups remaining active after resetting  
+  
 ### Changes in version 1.11  
 Guideline2 no longer visible outside of practice mode  
 Add 5s and 10s timer options  
