@@ -1595,7 +1595,7 @@ public class BilliardsModule : UdonSharpBehaviour
                     moveBallInDirUntilNotTouching(1, Vector3.right * k_BALL_RADIUS * .051f);
                 }
 
-                foulCondition = isScratch || isWrongHit || fallOffFoul || (!isObjectiveSink && (!ballBounced || (colorTurnLocal && numBallsHitCushion < 4)));
+                foulCondition = isScratch || isWrongHit || fallOffFoul || ((!isObjectiveSink && !isOpponentSink) && (!ballBounced || (colorTurnLocal && numBallsHitCushion < 4)));
 
                 if (isScratch && colorTurnLocal)
                 {
