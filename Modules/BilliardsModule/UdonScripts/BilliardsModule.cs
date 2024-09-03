@@ -224,7 +224,7 @@ public class BilliardsModule : UdonSharpBehaviour
     [NonSerialized] public int[] playerIDsLocal = { -1, -1, -1, -1 };
     [NonSerialized] public byte[] fbScoresLocal = new byte[2];
     [NonSerialized] public uint winningTeamLocal;
-    [NonSerialized] public int activeCueSkin;
+    // [NonSerialized] public byte activeCueSkin;
     [NonSerialized] public int tableSkinLocal;
     [NonSerialized] public byte gameStateLocal;
     private byte turnStateLocal;
