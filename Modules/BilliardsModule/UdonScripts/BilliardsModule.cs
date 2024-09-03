@@ -3358,7 +3358,7 @@ public void _RedrawDebugger() { }
 
     public void _EndPerf(int id)
     {
-        perfTimings[id] = Time.realtimeSinceStartup - perfStart[id];
+        perfTimings[id] += Time.realtimeSinceStartup - perfStart[id];
         perfCounters[id]++;
     }
 
@@ -3408,7 +3408,8 @@ public void _RedrawDebugger() { }
         for (int i = 0; i < PERF_MAX; i++)
         {
             output += "<color=\"#95a2b8\">" + perfNames[i] + "(</color> " + (perfCounters[i] > 0 ? perfTimings[i] * 1e6 / perfCounters[i] : 0).ToString("F2") + "µs <color=\"#95a2b8\">)</color> ";
-            // to not average them (see real, current values)
+            // to not average them (see values from this frame)
+            // requires changing _EndPerf() to be = instead of +=
             // output += "<color=\"#95a2b8\">" + perfNames[i] + "(</color> " + (/*perfCounters[i] > 0 ? */ perfTimings[i] * 1e6 /* / perfCounters[i] : 0 */).ToString("F2") + "µs <color=\"#95a2b8\">)</color> ";
         }
 
