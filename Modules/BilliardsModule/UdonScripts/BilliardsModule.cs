@@ -1906,7 +1906,7 @@ public class BilliardsModule : UdonSharpBehaviour
                 // Snooker Draw
                 onLocalTurnTie();
             }
-            else if (isObjectiveSink && !isOpponentSink)
+            else if (isObjectiveSink && (!isOpponentSink || is8Ball))
             {
                 // Continue
                 onLocalTurnContinue();
