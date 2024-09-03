@@ -14,8 +14,8 @@ public class CueController : UdonSharpBehaviour
     [SerializeField] private GameObject body;
     [SerializeField] private GameObject cuetip;
 
-    [UdonSynced] private int syncedCueSkin;
-    private int activeCueSkin;
+    // [UdonSynced] private byte syncedCueSkin;
+    // private int activeCueSkin;
 
     private bool holderIsDesktop;
     [UdonSynced] private bool syncedHolderIsDesktop;
@@ -79,19 +79,18 @@ public class CueController : UdonSharpBehaviour
 
     public override void OnDeserialization()
     {
-        int owner = Networking.GetOwner(this.gameObject).playerId;
+        // int owner = Networking.GetOwner(this.gameObject).playerId;
+        // activeCueSkin = table._CanUseCueSkin(owner, syncedCueSkin) ? syncedCueSkin : 0;
+        // refreshCueSkin();
 
-        activeCueSkin = table._CanUseCueSkin(owner, syncedCueSkin) ? syncedCueSkin : 0;
-
-        refreshCueSkin();
         refreshCueScale();
     }
 
-    private void refreshCueSkin()
-    {
-        cueRenderer = this.transform.Find("body/render").GetComponent<Renderer>();
-        cueRenderer.materials[1].SetTexture("_MainTex", table.cueSkins[activeCueSkin]);
-    }
+    // private void refreshCueSkin()
+    // {
+    //     cueRenderer = this.transform.Find("body/render").GetComponent<Renderer>();
+    //     cueRenderer.materials[1].SetTexture("_MainTex", table.cueSkins[activeCueSkin]);
+    // }
 
     private void refreshCueScale()
     {
@@ -304,7 +303,7 @@ public class CueController : UdonSharpBehaviour
         syncedHolderIsDesktop = holderIsDesktop;
         primaryHolding = true;
         primaryLocked = false;
-        syncedCueSkin = table.activeCueSkin;
+        // syncedCueSkin = table.activeCueSkin;
         cueScale = cueScaleMine;
         RequestSerialization();
         OnDeserialization();
