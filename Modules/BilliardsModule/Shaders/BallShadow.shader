@@ -9,7 +9,7 @@
 
    SubShader
    {
-      Tags { "Queue" = "Transparent+6" "DisableBatching" = "true" }
+      Tags { "Queue" = "AlphaTest" "DisableBatching" = "true" }
 
       ZWrite Off
       Cull Off
