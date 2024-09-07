@@ -22,10 +22,10 @@ public class NetworkingManager : UdonSharpBehaviour
     [UdonSynced][NonSerialized] public Vector3 cueBallWSynced;
 
     // the current state id - this value should increment monotonically, with each id representing a distinct state that's worth snapshotting
-    [UdonSynced][NonSerialized] public int stateIdSynced;
+    [UdonSynced][NonSerialized] public ushort stateIdSynced;
 
     // bitmask of pocketed balls
-    [UdonSynced][NonSerialized] public uint ballsPocketedSynced;
+    [UdonSynced][NonSerialized] public ushort ballsPocketedSynced;
 
     // the current team which is playing
     [UdonSynced][NonSerialized] public byte teamIdSynced;
@@ -232,7 +232,7 @@ public class NetworkingManager : UdonSharpBehaviour
     {
         Array.Copy(ballsP, ballsPSynced, MAX_BALLS);
         Array.Copy(fbScores, fourBallScoresSynced, 2);
-        ballsPocketedSynced = ballsPocketed;
+        ballsPocketedSynced = (ushort)ballsPocketed;
         colorTurnSynced = colorTurnLocal;
 
         bufferMessages(false);
@@ -389,7 +389,7 @@ public class NetworkingManager : UdonSharpBehaviour
         stateIdSynced++;
 
         gameStateSynced = 2;
-        ballsPocketedSynced = defaultBallsPocketed;
+        ballsPocketedSynced = (ushort)defaultBallsPocketed;
         //reposition state
         if (table.isSnooker6Red)
         {
@@ -588,10 +588,10 @@ public class NetworkingManager : UdonSharpBehaviour
         byte turnStateLocal, Vector3 cueBallV, Vector3 cueBallW, bool colorTurn
     )
     {
-        stateIdSynced = stateIdLocal;
+        stateIdSynced = (ushort)stateIdLocal;
 
         Array.Copy(newBallsP, ballsPSynced, MAX_BALLS);
-        ballsPocketedSynced = ballsPocketed;
+        ballsPocketedSynced = (ushort)ballsPocketed;
         Array.Copy(newScores, fourBallScoresSynced, 2);
         gameModeSynced = (byte)gameMode;
         teamIdSynced = (byte)teamId;
@@ -815,7 +815,7 @@ public class NetworkingManager : UdonSharpBehaviour
         }
         else
         {
-            ballsPocketedSynced = spec;
+            ballsPocketedSynced = (ushort)spec;
         }
 
         bufferMessages(true);
