@@ -2108,8 +2108,8 @@ public class BilliardsModule : UdonSharpBehaviour
         {
             // 4 ball (jp)
             initialBallsPocketed[2] = 0x1FFEu;
-            initialPositions[2][0] = new Vector3(-quarterTable, 0.0f, k_TABLE_HEIGHT * 0.5f);
-            initialPositions[2][13] = new Vector3(-quarterTable, 0.0f, k_TABLE_HEIGHT * -0.5f);
+            initialPositions[2][0] = new Vector3(-quarterTable + (quarterTable * -0.5f), 0.0f, 0.0f);
+            initialPositions[2][13] = new Vector3(quarterTable + (quarterTable * 0.5f), 0.0f, 0.0f);
             initialPositions[2][14] = new Vector3(quarterTable, 0.0f, 0.0f);
             initialPositions[2][15] = new Vector3(-quarterTable, 0.0f, 0.0f);
         }
