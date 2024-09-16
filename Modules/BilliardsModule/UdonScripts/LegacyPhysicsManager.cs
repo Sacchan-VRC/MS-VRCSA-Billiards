@@ -569,15 +569,15 @@ public class LegacyPhysicsManager : UdonSharpBehaviour
         }
         else // 4
         {
-            if ((balls_P[0] - balls_P[9]).sqrMagnitude < k_BALL_DSQR)
+            if ((balls_P[0] - balls_P[13]).sqrMagnitude < k_BALL_DSQR)
             {
                 return true;
             }
-            if ((balls_P[0] - balls_P[2]).sqrMagnitude < k_BALL_DSQR)
+            if ((balls_P[0] - balls_P[14]).sqrMagnitude < k_BALL_DSQR)
             {
                 return true;
             }
-            if ((balls_P[0] - balls_P[3]).sqrMagnitude < k_BALL_DSQR)
+            if ((balls_P[0] - balls_P[15]).sqrMagnitude < k_BALL_DSQR)
             {
                 return true;
             }
