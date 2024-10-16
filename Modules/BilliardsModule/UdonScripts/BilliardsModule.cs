@@ -2314,6 +2314,8 @@ public class BilliardsModule : UdonSharpBehaviour
 
     private void handle4BallHit(Vector3 loc, bool good)
     {
+        if (fallOffFoul) return;
+        
         if (good)
         {
             handle4BallHitGood(loc);
