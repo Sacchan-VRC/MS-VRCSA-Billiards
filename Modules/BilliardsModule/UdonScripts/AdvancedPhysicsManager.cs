@@ -6,7 +6,7 @@ using UnityEngine;
 [UdonBehaviourSyncMode(BehaviourSyncMode.NoVariableSync)]
 public class AdvancedPhysicsManager : UdonSharpBehaviour
 {
-    public string PHYSICSNAME = "<color=#FFD700>Advanced V0.5L</color>";
+    public string PHYSICSNAME = "<color=#FFD700>Advanced V0.5M</color>";
     [SerializeField] AudioClip[] hitSounds;
     [SerializeField] AudioClip[] bounceSounds;
     [SerializeField] AudioClip[] cushionSounds;
@@ -1620,7 +1620,7 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
             V.y -= frameGravity; /// Apply Gravity * Time so the airbone balls gets pushed back to the table.
 
 
-        // From simple calculations and measures taken from other simulations we are clamping the Magnitude of each rotation axis by 300 Rad.
+        // From simple calculations and measures taken from other simulations we are clamping the Magnitude of each rotation axis by 250 Rad.
         // this comes from an observation that when a ball is hit with maximum side spin using a phenolic tip,
         // it would take around 40~ seconds for the same ball to come at rest while spining perpendicular to the table at a complete rest (meaning whitout linear Velocity)
 
@@ -1631,25 +1631,25 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
         // t is the time in seconds.
 
         // if a ball of 57.15mm Diameter were to receive a spin magnitude of 700 RAD perpendicular to the table at rest.
-        // it would take 140 seconds for the next player to wait for their next turn [assuming its decelaration rate is a constant of 5 rad/sec²], which is the common deceleration rate found when billiards cloth are in good condition among other factors)      
+        // it would take 140 seconds for the next player to take their turn [assuming its decelaration rate is a constant of 5 rad/sec²],      
         // thus solving for time becomes: 700/5 = 140 seconds.
 
-        // Our simulation currently does not handle calculations for miss-cue, and because of this, users can easily apply unrealistic amount of spin hitting way past 0.5D of the ball
-        // but none of them are willing to accept the consequences this will have on the numerical calculations later, and this is normal because most of players are there just to hit balls in the first place.
+        // Our simulation currently does not handle calculations for miss-cue, but now it constrains to the maximum allowed offset that it is just a little bit past 1/2 Diameter of the ball.
+        // Without this, Players are not willing to accept the consequences this will have on the numerical calculations, and this is normal because most of players are there just to hit balls in the first place. :)
         // so until then, we will clamp the perpendicular velocity based on what VISUALY and TIME MEASURED seems to be correct from factors presented above.
 
-        // we need to clamp the square magnitude lenght just at the right amount, for now we are using 520MAG which is 300² as it is providing *good pace*
-        // [Keep in mind this is a Heuristic Solution along actual numerical data values equations, so we often call this *Semi-Heuristic*,
+        // we need to clamp the square magnitude lenght just at the right amount. We are now using 430MAG which is 250² as it is providing *good pace*
+        // [Keep in mind this is a Heuristic Solution along actual numerical data values equations, so we may call this *Semi-Heuristic*,
         // if a player were to perform the same exact shot again, it would provide the same exact outcome, meaning its deterministic as well]
 
-        float Max = 300f; // (increase this value to 500 if Masse swerve shots starts showing undesirable behaviour).
+        float Max = 250f;
 
         float Wx_C = Mathf.Clamp(W.x, -Max, Max);
         float Wy_C = Mathf.Clamp(W.y, -Max, Max);
         float Wz_C = Mathf.Clamp(W.z, -Max, Max);
 
 
-        W = new Vector3(Wx_C, Wy_C, Wz_C); // (√300²x + 300²y + 300²z) this results in 520~ MAG as opposed to 1765~ MAG
+        W = new Vector3(Wx_C, Wy_C, Wz_C); // (√250²x + 250²y + 250²z) this results in 430~ MAG as opposed to 1765~ MAG
 
         balls_W[id] = W;
         balls_V[id] = V;
@@ -1938,7 +1938,7 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
         Following: World Pool Association(WPA), American Pool Association(APA), Billiards Congress of America(BCA), Japan Pool Association(JPA), Cue Sports International(CSI) and Many MORE!
 
         Their ball is 57.15mm and their cushion height must be of 36.29025mm which is 63.5 % from the Diameter.
-        However WPA allows an offset between 62.5 % to 64.5 % or else the table is not qualified to be played under their discretion.
+        However WPA allows an offset between 62.5 % to 64.5 % or else the table is not qualified to be played under their Jurisdiction.
         
         Therefore, when setting up your Table for any Modality of POOL BILLIARDS 
         - Make sure to set your ball Radius to 28.575mm  
@@ -2019,45 +2019,9 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
 
         // Now in Trignonometric Functions, the K_BALL_RADIUS [R] is our [Base(Adjacent)] and P is [opposite] to the angle THETA.
         // if we play around we can find the Tangent using Tan(opposite/Adjancent) and the Hypotenuse using our famous Pythagorean Theorem https://www.google.com/search?q=Pythagorean+theorem;
-        // since we need the angle THETA we can do it either within the Unit Circle of the ball using Arcsin or using the Arctangent. I will leave all six-forms here for Rich Debuging Purposes if needed.
+        // since we need the angle THETA we can do it either within the Unit Circle of the ball using Arcsin.
 
-
-        float A_ = (P * P);                                                                     // Pythagorean Theorem[A²] OPPOSITE
-        float B_ = (R * R);                                                                     // Pythagorean Theorem[B²] ADJACENT
-        float C_ = Mathf.Sqrt(A_ + B_);                                                         // Pythagorean Theorem[C ] HYPOTENUSE
-
-        // SOH - CAH - TOA
-        float SOH = Mathf.Asin(P / C_);                                                         // Sine    = Opposite / Hypotenuse
-        float CAH = Mathf.Acos(R / C_);                                                         // Cosine  = Adjacent / Hypotenuse
-        float TOA = Mathf.Atan(P / R);                                                          // Tangent = Opposite / Adjacent 
-
-        // SEC - CSC - COT
-        float SEC = Mathf.Acos(C_ / R);                                                         // Secant    = Flip Sine
-        float CSC = Mathf.Asin(C_ / P);                                                         // Cosecant  = Flip Cosine
-        float COT = Mathf.Atan(R / P);                                                          // Cotangent = Flip Tangent 
-
-        /// ^ if in trouble: This video may help :) https://youtu.be/PUB0TaZ7bhA?si=Qxg1FKFivdANpcIl&t=263
-        /// if the video above was difficult, then try this Visualization Diagram video instead https://youtu.be/dUkCgTOOpQ0?si=wuXXbukD--e1e2qv&t=7
-
-
-
-        // this provides the correct Jump from the cushion but based on visualization of other simulations, Angular Velocity should not invert its direction which occurs here. The reason for this is because  
-        // it makes Geometrically sense when we discuss and find out about *The Center of Percussion* of a ball, here: https://billiards.colostate.edu/technical_proofs/TP_4-2.pdf)
-        // one Heuristic Solution is to create an IF statement which tracks if the ball is above the slate by an X amount, meaning that if it hits the cushion it will jump from it, 
-        // and then isolate the Radius of the ball from the equation, or perhaprs not account the angular changes at all.
-
-        //θ = Mathf.Asin(P / R); // <-- therefore, this equation provides the correct cushion jump but must have its angular velocity unchanged.
-
-
-        // this same equation from before, but we put (R - 1f) or (R + 1), which ever you choose, will just invert the sign Thetha, but both of them will lead same results of a small sine angle.
-        // this method stops frozen balls at cushion from receiving an odd amount of spin at high speed velocities, which seems true in other simulations, but it will once and for all not provide any amount of the same spin at low speed velocities which seems false.
-        // it will also not provide the leading Edge cushion contact accurately.      
-
-
-        //θ = Mathf.Asin(P / (R + 1f)); // this is the Default as it is currently providing cosistent results for now and good playablity overall.
-
-
-        // Heuristic Solution
+        // Solution
         θ = Mathf.Asin(P / R);
 
         // 0.2733929 == hitting pocket on flat ground, a higher number is only possible while falling into pocket
@@ -2065,10 +2029,8 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
         // also prevents NaN even though unity documentation says it doesn't
         θ = Mathf.Min(θ, 0.4f);
 
-
-
         float cosθ = Mathf.Cos(θ);
-        float sinθ = Mathf.Sin(θ);
+        float sinθ = θ;
 
         float cosθ2 = (cosθ * cosθ);
         float sinθ2 = (sinθ * sinθ);
@@ -2086,7 +2048,7 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
         c = (V.x * cosθ) - (V.y * sinθ);
         if (isDynamicRestitution)
         {
-            e = Mathf.Clamp((0.39f + 0.257f * V.magnitude - 0.044f * V.magnitude), 0.6f, 0.95f);    // Dynamic [Works best at high refresh rates, UDON1 is currently too slow]
+            e = 0.72f -(0.02f * -Mathf.Abs(V.magnitude));    // Dynamic e= e_low - (Damp * -V)
         }
         else { e = k_E_C; } // Const [Default 0.85] - exert from https://essay.utwente.nl/59134/1/scriptie_J_van_Balen.pdf [Acceptable Range between 0.7 to 0.98] from https://billiards.colostate.edu/physics_articles/Mathavan_IMechE_2010.pdf 
 

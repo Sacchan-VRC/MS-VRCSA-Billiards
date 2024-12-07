@@ -101,10 +101,9 @@ public class ModelData : UdonSharpBehaviour
         [SerializeField, Range(0.5f, 0.98f)] public float bc_CoefRestitution = 0.85f; // k_E_C
 
 
-        [Tooltip("This option overrides all values above and uses a Dynamic Emperically determined Restitution provided by Han05 Paper) " +
+        [Tooltip("since Version 0.5M, This option overrides all values above and uses another Fixed Linear Dynamic Restitution) " +
                 "\n\n<b>[Default - OFF]</b>" +
-                "\n\n<i>(this resolution seems to works well, but results in shots may vary a lot, usually the 3rd or 2nd Bounce of the cushion may be offline by some margin)</i>" +
-                "\n\n<i>(although we dont recommend it, it may prove usefull later</i>")]
+                "\n\n<i>(this resolution seems to work well, but results in shots may vary a little)</i>")]
         [SerializeField] public bool bc_DynRestitution = false; // isDynamicRestitution
 
 
@@ -115,7 +114,7 @@ public class ModelData : UdonSharpBehaviour
         [Tooltip("This parameter seems to work best at Dynamic Ranges and by default it is emperically determined and HardCoded." +
                 "\n\n if you wish to use a constant, you can do it here by checking the above bool! " +
                 "\n\n<b>[Valid Ranges are 0.2 - 0.4]</b>")]
-        [SerializeField, Range(0.2f, 0.4f)] public float bc_ConstFriction = 0.2f; // k_Cushion_MU
+        [SerializeField, Range(0.1f, 0.4f)] public float bc_ConstFriction = 0.2f; // k_Cushion_MU
 
 
         /// End of Cushion Model Header ---
