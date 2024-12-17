@@ -1832,6 +1832,17 @@ public class BilliardsModule : UdonSharpBehaviour
                 if (foulCondition)//points given to other team if foul
                 {
                     int foulscore = Mathf.Max(highestPocketedBallScore, foulFirstHitScore);
+                    if (firstHit == 0)
+                    {
+                        int lowestScoringBall = 7;
+                        for (int i = 1; i < 16; i++)
+                        {
+                            if ((0x1U << i & ballsPocketedLocal) != 0U) { continue; }
+                            lowestScoringBall = Mathf.Min(lowestScoringBall, sixredsnooker_ballpoints[i]);
+                        }
+
+                        foulscore = lowestScoringBall;
+                    }
                     fbScoresLocal[1 - teamIdLocal] = (byte)Mathf.Min(fbScoresLocal[1 - teamIdLocal] + Mathf.Max(foulscore, 4), byte.MaxValue);
                     _LogInfo("6RED: Team " + (1 - teamIdLocal) + " awarded for foul " + Mathf.Max(foulscore, 4) + " points");
                 }
