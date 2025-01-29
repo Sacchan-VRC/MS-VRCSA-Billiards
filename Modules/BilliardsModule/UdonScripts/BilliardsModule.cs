@@ -1213,8 +1213,7 @@ public class BilliardsModule : UdonSharpBehaviour
                     repoMaxX = -(k_TABLE_WIDTH - k_CUSHION_RADIUS) / 2;
                     break;
                 case 2://anywhere
-                    Vector3 k_pR = (Vector3)currentPhysicsManager.GetProgramVariable("k_pR");
-                    repoMaxX = k_pR.x;
+                    repoMaxX = k_TABLE_WIDTH - k_BALL_RADIUS;
                     break;
                 case 3://snooker D
                     repoMaxX = K_BAULK_LINE;
