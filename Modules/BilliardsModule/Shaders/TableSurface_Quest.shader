@@ -53,7 +53,7 @@
          // add a small fudge factor so that the light connects
          float surf_angle_pct = (M_PI + atan2(IN.modelPos.x, IN.modelPos.z)) / (2 * M_PI) / 1.04 + (1 - 1 / 1.04);
          float angle_cl = clamp((surf_angle_pct - timer_pct) * 40.0, 0, 1.5);
-         o.Emission = sample_emission.r * _EmissionColor * angle_cl;
+         o.Emission = sample_emission * _EmissionColor * angle_cl;
       }
 
       ENDCG
