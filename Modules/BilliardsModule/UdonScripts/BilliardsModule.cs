@@ -1210,7 +1210,7 @@ public class BilliardsModule : UdonSharpBehaviour
             switch (foulStateLocal)
             {
                 case 1://kitchen
-                    repoMaxX = -(k_TABLE_WIDTH - k_CUSHION_RADIUS) / 2;
+                    repoMaxX = -k_TABLE_WIDTH / 2;
                     break;
                 case 2://anywhere
                     repoMaxX = k_TABLE_WIDTH - k_BALL_RADIUS;
@@ -2314,7 +2314,7 @@ public class BilliardsModule : UdonSharpBehaviour
     private void handle4BallHit(Vector3 loc, bool good)
     {
         if (fallOffFoul) return;
-        
+
         if (good)
         {
             handle4BallHitGood(loc);
