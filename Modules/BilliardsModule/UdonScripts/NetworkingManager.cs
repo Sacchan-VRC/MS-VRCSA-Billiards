@@ -701,15 +701,91 @@ public class NetworkingManager : UdonSharpBehaviour
 
     private void floatToBytes(byte[] data, int pos, float v)
     {
-        byte[] bytes = BitConverter.GetBytes(v);
-        Array.Copy(bytes, 0, data, pos, 4);
+        // Create an int representation of the float
+        int intValue = 0;
+        byte[] floatBytes = new byte[4];
+
+        // Get the sign, exponent, and mantissa
+        int sign = v < 0 ? 1 : 0;
+        v = Math.Abs(v);
+
+        if (v == 0)
+        {
+            // Handle zero case
+            intValue = 0;
+        }
+        else
+        {
+            int exponent = 0;
+
+            // Normalize the float and find the exponent
+            while (v >= 2.0f)
+            {
+                v /= 2.0f;
+                exponent++;
+            }
+            while (v < 1.0f)
+            {
+                v *= 2.0f;
+                exponent--;
+            }
+            
+            // Adjust for the bias (127 for single precision)
+            exponent += 127;
+
+            // Get the mantissa (23 bits)
+            int mantissa = (int)((v - 1.0f) * (1 << 23));
+
+            // Combine sign, exponent, and mantissa into an int
+            intValue = (sign << 31) | (exponent << 23) | (mantissa);
+        }
+
+        // Fill the byte array
+        floatBytes[0] = (byte)(intValue & 0xFF);
+        floatBytes[1] = (byte)((intValue >> 8) & 0xFF);
+        floatBytes[2] = (byte)((intValue >> 16) & 0xFF);
+        floatBytes[3] = (byte)((intValue >> 24) & 0xFF);
+
+        // Copy to the target array
+        Array.Copy(floatBytes, 0, data, pos, 4);
     }
 
     public float bytesToFloat(byte[] data, int pos)
     {
-        byte[] floatBytes = new byte[4];
-        Array.Copy(data, pos, floatBytes, 0, 4);
-        return BitConverter.ToSingle(floatBytes, 0);
+        // Create an integer to hold the combined bytes
+        int intValue = 0;
+
+        // Read the bytes from the array and combine them into an integer
+        intValue |= data[pos] & 0xFF;               // Byte 0
+        intValue |= (data[pos + 1] & 0xFF) << 8;   // Byte 1
+        intValue |= (data[pos + 2] & 0xFF) << 16;  // Byte 2
+        intValue |= (data[pos + 3] & 0xFF) << 24;  // Byte 3
+
+        // Extract the sign, exponent, and mantissa
+        int sign = (intValue >> 31) & 0x1;
+        int exponent = (intValue >> 23) & 0xFF;
+        int mantissa = intValue & 0x7FFFFF;
+
+        // Handle special cases
+        if (exponent == 255)
+        {
+            return mantissa == 0 ? (sign == 1 ? float.NegativeInfinity : float.PositiveInfinity) : float.NaN;
+        }
+
+        float result;
+        if (exponent == 0)
+        {
+            // Subnormal number
+            result = (float)(mantissa * Math.Pow(2, -126));
+        }
+        else
+        {
+            // Normalized number
+            result = (float)((mantissa + 0x800000) * Math.Pow(2, exponent - 127));
+        }
+
+        // Apply the sign
+        return sign == 1 ? -result : result;
     }
 
     private void Vec3ToBytes(byte[] data, int pos, Vector3 vec)
