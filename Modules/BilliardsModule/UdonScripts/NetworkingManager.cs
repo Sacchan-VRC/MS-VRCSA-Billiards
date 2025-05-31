@@ -410,6 +410,7 @@ public class NetworkingManager : UdonSharpBehaviour
         turnStateSynced = 0;
         isTableOpenSynced = true;
         teamIdSynced = 0;
+        teamColorSynced = 0;
         fourBallCueBallSynced = 0;
         cueBallVSynced = Vector3.zero;
         cueBallWSynced = Vector3.zero;
