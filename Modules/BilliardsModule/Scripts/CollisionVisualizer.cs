@@ -20,9 +20,13 @@ public class CollisionVisualizer : MonoBehaviour
     [SerializeField] public float cushionRadius;
     [SerializeField] public float pocketInnerRadiusCorner;
     [SerializeField] public float pocketInnerRadiusSide;
+    [SerializeField] public float pocketInnerRadiusCorner2;
+    [SerializeField] public float pocketInnerRadiusSide2;
 
     [SerializeField] public Vector3 cornerPocket; // k_vE
     [SerializeField] public Vector3 sidePocket; // k_vF
+    [SerializeField] public Vector3 cornerPocket2; // k_vE
+    [SerializeField] public Vector3 sidePocket2; // k_vF
     [SerializeField] public float facingAngleCorner;
     [SerializeField] public float facingAngleSide;
     [SerializeField] public float k_BALL_RADIUS;
@@ -221,6 +225,25 @@ public class CollisionVisualizer : MonoBehaviour
         return $"v {v.x} {v.y} {v.z}\n";
     }
 
+    void drawCylinder_pocket(Vector3 at, Vector3 other, float r, float r_other, Color colour, float wallHeight = 0.048f)
+    {
+        Vector3 last = Vector3.forward * r;
+        Vector3 cur = last;
+        float angle = 360f / 32;
+        Quaternion rotQuat = Quaternion.AngleAxis(angle, Vector3.up);
+
+        for (int i = 0; i < 32; i++)
+        {
+            cur = rotQuat * cur;
+            Color thisCol = colour;
+            if (Vector3.Distance(at + last, other) > r_other && Vector3.Distance(at + cur, other) > r_other)
+            {
+                thisCol *= .3f;
+            }
+            drawPlane(at + last, at + cur, thisCol, wallHeight, 16);
+            last = cur;
+        }
+    }
     void drawCylinder(Vector3 at, float r, Color colour, float wallHeight = 0.048f, uint density = 16, uint sides = 32)
     {
         Vector3 last = Vector3.forward * r;
@@ -303,13 +326,17 @@ public class CollisionVisualizer : MonoBehaviour
 
         if (_phy_ball_pockets() && previewCollision)
         {
-            drawCylinder(cornerPocket, pocketInnerRadiusCorner, Color.green, k_RAIL_HEIGHT_UPPER);
-            drawCylinder(sidePocket, pocketInnerRadiusSide, Color.green, k_RAIL_HEIGHT_UPPER);
+            drawCylinder_pocket(cornerPocket, cornerPocket2, pocketInnerRadiusCorner, pocketInnerRadiusCorner2, Color.green, k_RAIL_HEIGHT_UPPER);
+            drawCylinder_pocket(sidePocket, sidePocket2, pocketInnerRadiusSide, pocketInnerRadiusSide2, Color.green, k_RAIL_HEIGHT_UPPER);
+            drawCylinder_pocket(cornerPocket2, cornerPocket, pocketInnerRadiusCorner2, pocketInnerRadiusCorner, Color.green, k_RAIL_HEIGHT_UPPER);
+            drawCylinder_pocket(sidePocket2, sidePocket, pocketInnerRadiusSide2, pocketInnerRadiusSide, Color.green, k_RAIL_HEIGHT_UPPER);
         }
         else
         {
-            drawCylinder(cornerPocket, pocketInnerRadiusCorner, Color.red, k_RAIL_HEIGHT_UPPER);
-            drawCylinder(sidePocket, pocketInnerRadiusSide, Color.red, k_RAIL_HEIGHT_UPPER);
+            drawCylinder_pocket(cornerPocket, cornerPocket2, pocketInnerRadiusCorner, pocketInnerRadiusCorner2, Color.red, k_RAIL_HEIGHT_UPPER);
+            drawCylinder_pocket(sidePocket, sidePocket2, pocketInnerRadiusSide, pocketInnerRadiusSide2, Color.red, k_RAIL_HEIGHT_UPPER);
+            drawCylinder_pocket(cornerPocket2, cornerPocket, pocketInnerRadiusCorner2, pocketInnerRadiusCorner, Color.red, k_RAIL_HEIGHT_UPPER);
+            drawCylinder_pocket(sidePocket2, sidePocket, pocketInnerRadiusSide2, pocketInnerRadiusSide, Color.red, k_RAIL_HEIGHT_UPPER);
         }
         _drawline_applyparent(new Vector3(baulkLine, 0, -tableWidth * .5f), new Vector3(baulkLine, 0, tableWidth * .5f), Color.red);
         _drawline_applyparent(new Vector3(baulkLine, 0, -semiCircleRadius), new Vector3(baulkLine, .12f, -semiCircleRadius), Color.yellow);
@@ -589,8 +616,12 @@ public class CollisionVisualizer : MonoBehaviour
             cushionRadius = (float)table.GetProgramVariable("k_CUSHION_RADIUS");
             pocketInnerRadiusCorner = (float)table.GetProgramVariable("k_INNER_RADIUS_CORNER");
             pocketInnerRadiusSide = (float)table.GetProgramVariable("k_INNER_RADIUS_SIDE");
+            pocketInnerRadiusCorner2 = (float)table.GetProgramVariable("k_INNER_RADIUS_CORNER2");
+            pocketInnerRadiusSide2 = (float)table.GetProgramVariable("k_INNER_RADIUS_SIDE2");
             cornerPocket = (Vector3)table.GetProgramVariable("k_vE"); // k_vE
             sidePocket = (Vector3)table.GetProgramVariable("k_vF"); // k_vF
+            cornerPocket2 = (Vector3)table.GetProgramVariable("k_vE2"); // k_vE
+            sidePocket2 = (Vector3)table.GetProgramVariable("k_vF2"); // k_vF
             facingAngleCorner = (float)table.GetProgramVariable("k_FACING_ANGLE_CORNER");
             facingAngleSide = (float)table.GetProgramVariable("k_FACING_ANGLE_SIDE");
             baulkLine = (float)table.GetProgramVariable("K_BAULK_LINE");

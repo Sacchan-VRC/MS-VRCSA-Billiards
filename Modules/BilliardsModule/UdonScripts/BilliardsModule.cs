@@ -31,6 +31,8 @@ public class BilliardsModule : UdonSharpBehaviour
     [NonSerialized] public float k_POCKET_DEPTH_SIDE; // Depth of side pockets
     [NonSerialized] public float k_INNER_RADIUS_CORNER; // Pocket 'hitbox' cylinder
     [NonSerialized] public float k_INNER_RADIUS_SIDE; // Pocket 'hitbox' cylinder for corner pockets
+    [NonSerialized] public float k_INNER_RADIUS_CORNER2; // Pocket 'hitbox' cylinder
+    [NonSerialized] public float k_INNER_RADIUS_SIDE2; // Pocket 'hitbox' cylinder for corner pockets
     [NonSerialized] public float k_FACING_ANGLE_CORNER; // Angle of corner pocket inner walls
     [NonSerialized] public float k_FACING_ANGLE_SIDE; // Angle of side pocket inner walls
     [NonSerialized] public float K_BAULK_LINE; // Snooker baulk line distance from end of table
@@ -63,6 +65,8 @@ public class BilliardsModule : UdonSharpBehaviour
     [NonSerialized] public float k_BALL_DIAMETRE; // Diameter of balls
     [NonSerialized] public Vector3 k_vE; // corner pocket data
     [NonSerialized] public Vector3 k_vF; // side pocket data
+    [NonSerialized] public Vector3 k_vE2; // corner pocket data
+    [NonSerialized] public Vector3 k_vF2; // side pocket data
     [NonSerialized] public Vector3 k_rack_position = new Vector3();
     private Vector3 k_rack_direction = new Vector3();
     private GameObject auto_rackPosition;
@@ -2156,6 +2160,8 @@ public class BilliardsModule : UdonSharpBehaviour
         k_POCKET_DEPTH_SIDE = data.pocketDepthSide;
         k_INNER_RADIUS_CORNER = data.pocketInnerRadiusCorner;
         k_INNER_RADIUS_SIDE = data.pocketInnerRadiusSide;
+        k_INNER_RADIUS_CORNER2 = data.pocketInnerRadiusCorner2;
+        k_INNER_RADIUS_SIDE2 = data.pocketInnerRadiusSide2;
         k_FACING_ANGLE_CORNER = data.facingAngleCorner;
         k_FACING_ANGLE_SIDE = data.facingAngleSide;
         K_BAULK_LINE = -(k_TABLE_WIDTH - data.baulkLine);
@@ -2172,6 +2178,8 @@ public class BilliardsModule : UdonSharpBehaviour
         k_POCKET_RESTITUTION = data.bt_PocketRestitutionFactor;
         k_vE = data.cornerPocket;
         k_vF = data.sidePocket;
+        k_vE2 = data.cornerPocket2;
+        k_vF2 = data.sidePocket2;
 
         //advanced physics
         useRailLower = data.useRailHeightLower;

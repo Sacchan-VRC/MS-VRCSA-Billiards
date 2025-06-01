@@ -15,20 +15,23 @@ public class ModelData : UdonSharpBehaviour
         [SerializeField] public float cushionRadius = 0.043f;
         [SerializeField] public float pocketWidthCorner = 0.1f;
         [SerializeField] public float pocketHeightCorner = 0.1f;
-        [SerializeField] public float pocketInnerRadiusCorner = 0.072f;
-        [SerializeField] public float facingAngleCorner = 133f; // corner pocket facing angle
+        [SerializeField] public float facingAngleCorner = 133f;
         [SerializeField] public float pocketRadiusSide = 0.1f;
         [SerializeField] public float pocketDepthSide = 0.04f;
-        [SerializeField] public float facingAngleSide = 104.93142f; // corner pocket facing angle
-        [SerializeField] public float pocketInnerRadiusSide = 0.072f;
+        [SerializeField] public float facingAngleSide = 104.93142f;
         [SerializeField] public float railHeightUpper = 0.038002f;
         public bool useRailHeightLower = false;
         [SerializeField] public float railHeightLower = 0.028472f;
         [SerializeField] public float railDepthWidth = 0.12f;
         [SerializeField] public float railDepthHeight = 0.12f;
-
-        [SerializeField] public Vector3 cornerPocket = new Vector3(11.087f, 0, 10.63f);
-        [SerializeField] public Vector3 sidePocket = new Vector3(0, 0, 10.662f);
+        [SerializeField] public float pocketInnerRadiusCorner = 0.072f;
+        [SerializeField] public float pocketInnerRadiusCorner2 = 0.08f;
+        [SerializeField] public float pocketInnerRadiusSide = 0.072f;
+        [SerializeField] public float pocketInnerRadiusSide2 = 0.08f;
+        [SerializeField] public Vector3 cornerPocket = new Vector3(1.09f, 0, 0.633f);
+        [SerializeField] public Vector3 cornerPocket2 = new Vector3(1.12f, 0, 0.66f);
+        [SerializeField] public Vector3 sidePocket = new Vector3(0, 0, 0.665f);
+        [SerializeField] public Vector3 sidePocket2 = new Vector3(0, 0, 0.7f);
 
         [Header("Ball-Table Coefficients:")]
 
@@ -154,16 +157,18 @@ public class ModelData : UdonSharpBehaviour
         [SerializeField] public Transform CueBlue;
         [SerializeField] public float DesktopUIScaleFactor = 1.08f;
 
-        [System.NonSerialized] public Material tableMaterial;
+        [System.NonSerialized] public Material[] tableMaterial;
         public void _Init()
         {
-                // renderer
-                MeshRenderer tableMeshR = tableMesh.GetComponent<MeshRenderer>();
-                if (tableMeshR)
+                MeshRenderer[] tableMeshR = tableMesh.GetComponentsInChildren<MeshRenderer>();
+                for (int i = 0; i < tableMeshR.Length; i++)
                 {
-                        tableMaterial = tableMeshR.material; // create a new instance for this table
-                        tableMaterial.name = " for " + gameObject.name;
-                        tableMeshR.material = tableMaterial;
+                        tableMaterial = tableMeshR[i].materials; // create a new instance for this table
+                        for (int o = 0; o < tableMaterial.Length; o++)
+                        {
+                                tableMaterial[o].name = " for " + gameObject.name;
+                                tableMeshR[i].materials[o] = tableMaterial[o];
+                        }
                 }
         }
 }

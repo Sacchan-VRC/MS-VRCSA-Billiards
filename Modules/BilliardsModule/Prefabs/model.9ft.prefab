@@ -694,19 +694,23 @@ MonoBehaviour:
   cushionRadius: 0.012
   pocketWidthCorner: 0.0787
   pocketHeightCorner: 0.07705
-  pocketInnerRadiusCorner: 0.058
   facingAngleCorner: 144
   pocketRadiusSide: 0.0317
   pocketDepthSide: 0.0377
   facingAngleSide: 100
-  pocketInnerRadiusSide: 0.06
   railHeightUpper: 0.03911
   useRailHeightLower: 0
   railHeightLower: 0.032
   railDepthWidth: 0.158167
   railDepthHeight: 0.16526
-  cornerPocket: {x: 1.2857, y: 0, z: 0.6535}
-  sidePocket: {x: 0, y: 0, z: 0.7047}
+  pocketInnerRadiusCorner: 0.054
+  pocketInnerRadiusCorner2: 0.1
+  pocketInnerRadiusSide: 0.06
+  pocketInnerRadiusSide2: 0.081
+  cornerPocket: {x: 1.274, y: 0, z: 0.6405}
+  cornerPocket2: {x: 1.3155, y: 0, z: 0.683}
+  sidePocket: {x: 0, y: 0, z: 0.691}
+  sidePocket2: {x: 0, y: 0, z: 0.728}
   bt_CoefSlide: 0.2
   bt_CoefRoll: 0.008
   bt_CoefSpin: 0.022

@@ -81,9 +81,13 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
     private bool[] balls_transitioningBounds; // Tracks if the ball is in the special zone transitioning between the rails and the table
     private Vector3 railPoint; // Tracks the point at the top of the nearest rail, for the transition collision
     private float k_INNER_RADIUS_CORNER;
+    private float k_INNER_RADIUS_CORNER2;
     private float k_INNER_RADIUS_CORNER_SQ;
+    private float k_INNER_RADIUS_CORNER_SQ2;
     private float k_INNER_RADIUS_SIDE;
+    private float k_INNER_RADIUS_SIDE2;
     private float k_INNER_RADIUS_SIDE_SQ;
+    private float k_INNER_RADIUS_SIDE_SQ2;
     float k_FACING_ANGLE_CORNER;
     float k_FACING_ANGLE_SIDE;
 
@@ -103,6 +107,12 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
     float k_POCKET_RESTITUTION;
     private Vector3 k_vE;
     private Vector3 k_vF;
+    private Vector3 k_vE2;
+    private Vector3 k_vF2;
+    bool furthest_vE;
+    bool furthest_vF;
+    bool closest_vE;
+    bool closest_vF;
     float r_k_CUSHION_RADIUS;
     private float vertRadiusSQRPE;
 
@@ -600,13 +610,29 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
                 float pocketRad;
                 if (Vector3.SqrMagnitude(absPos - k_vE) < Vector3.SqrMagnitude(absPos - k_vF))
                 {
-                    pocketPos = k_vE;
-                    pocketRad = k_INNER_RADIUS_CORNER;
+                    if (closest_vE)
+                    {
+                        pocketPos = k_vE2;
+                        pocketRad = k_INNER_RADIUS_CORNER2;
+                    }
+                    else
+                    {
+                        pocketPos = k_vE;
+                        pocketRad = k_INNER_RADIUS_CORNER;
+                    }
                 }
                 else
                 {
-                    pocketPos = k_vF;
-                    pocketRad = k_INNER_RADIUS_SIDE;
+                    if (closest_vF)
+                    {
+                        pocketPos = k_vF2;
+                        pocketRad = k_INNER_RADIUS_SIDE2;
+                    }
+                    else
+                    {
+                        pocketPos = k_vF;
+                        pocketRad = k_INNER_RADIUS_SIDE;
+                    }
                 }
 
                 Vector3 edgeDir = absPos - pocketPos;
@@ -630,7 +656,7 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
             }
             else
             {
-                if (originalDelta.y < 0)// no chance of collision if moving upwards
+                if (originalDelta.y < 0 && balls_inBounds[id])// no chance of collision if moving upwards
                 {
                     if (_phy_ball_plane(pos, norm, Vector3.up * -(k_BALL_RADIUS + 0.001f), Vector3.up))
                     {
@@ -2048,7 +2074,7 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
         c = (V.x * cosθ) - (V.y * sinθ);
         if (isDynamicRestitution)
         {
-            e = 0.72f -(0.02f * -Mathf.Abs(V.magnitude));    // Dynamic e= e_low - (Damp * -V)
+            e = 0.72f - (0.02f * -Mathf.Abs(V.magnitude));    // Dynamic e= e_low - (Damp * -V)
         }
         else { e = k_E_C; } // Const [Default 0.85] - exert from https://essay.utwente.nl/59134/1/scriptie_J_van_Balen.pdf [Acceptable Range between 0.7 to 0.98] from https://billiards.colostate.edu/physics_articles/Mathavan_IMechE_2010.pdf 
 
@@ -2245,7 +2271,8 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
 
     float caromEdgeX, caromEdgeZ;
 
-    Vector2 tableEdge; // distances at which ball falls off table
+    Vector2 tableEdge; // outer edges of the table's rail
+    Vector2 tableBounds; // distances at which ball falls off table, bigger than tableEdge if the pocket sticks out from the table, otherwise the same
 
     public void _InitConstants()
     {
@@ -2259,6 +2286,10 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
         k_INNER_RADIUS_CORNER_SQ = k_INNER_RADIUS_CORNER * k_INNER_RADIUS_CORNER;
         k_INNER_RADIUS_SIDE = table.k_INNER_RADIUS_SIDE;
         k_INNER_RADIUS_SIDE_SQ = k_INNER_RADIUS_SIDE * k_INNER_RADIUS_SIDE;
+        k_INNER_RADIUS_CORNER2 = table.k_INNER_RADIUS_CORNER2;
+        k_INNER_RADIUS_CORNER_SQ2 = k_INNER_RADIUS_CORNER2 * k_INNER_RADIUS_CORNER2;
+        k_INNER_RADIUS_SIDE2 = table.k_INNER_RADIUS_SIDE2;
+        k_INNER_RADIUS_SIDE_SQ2 = k_INNER_RADIUS_SIDE2 * k_INNER_RADIUS_SIDE2;
         k_CUSHION_RADIUS = table.k_CUSHION_RADIUS;
         k_FACING_ANGLE_CORNER = table.k_FACING_ANGLE_CORNER;
         k_FACING_ANGLE_SIDE = table.k_FACING_ANGLE_SIDE;
@@ -2272,7 +2303,16 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
         k_BALL_RSQR = k_BALL_RADIUS * k_BALL_RADIUS;
         k_BALL_MASS = table.k_BALL_MASS;
         k_vE = table.k_vE; //cornerPocket
+        k_vE2 = table.k_vE2; //cornerPocket2
         k_vF = table.k_vF; //sidePocket
+        k_vF2 = table.k_vF2; //sidePocket2
+        k_vE.y = k_vF.y = k_vE2.y = k_vF2.y = 0;
+        //work out which pocket point's edge is most distant from center
+        furthest_vE = (k_vE.magnitude + k_INNER_RADIUS_CORNER) > (k_vE2.magnitude + k_INNER_RADIUS_CORNER2);
+        furthest_vF = (k_vF.magnitude + k_INNER_RADIUS_SIDE) > (k_vF2.magnitude + k_INNER_RADIUS_SIDE2);
+        //work out which pocket point's edge is closest to center
+        closest_vE = (k_vE.magnitude - k_INNER_RADIUS_CORNER) < (k_vE2.magnitude - k_INNER_RADIUS_CORNER2);
+        closest_vF = (k_vF.magnitude - k_INNER_RADIUS_SIDE) < (k_vF2.magnitude - k_INNER_RADIUS_SIDE2);
 
         // Advanced only
         k_RAIL_HEIGHT_UPPER = table.k_RAIL_HEIGHT_UPPER;
@@ -2377,6 +2417,16 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
 
         tableEdge.x = k_TABLE_WIDTH + k_RAIL_DEPTH_WIDTH + k_BALL_RADIUS;
         tableEdge.y = k_TABLE_HEIGHT + k_RAIL_DEPTH_HEIGHT + k_BALL_RADIUS;
+        tableBounds.x = Mathf.Max(
+            k_TABLE_WIDTH + k_RAIL_DEPTH_WIDTH + k_BALL_RADIUS,
+            furthest_vE ? (k_vE2.x + k_INNER_RADIUS_CORNER2) : (k_vE.x + k_INNER_RADIUS_CORNER),
+            furthest_vF ? (k_vF2.x + k_INNER_RADIUS_SIDE2) : (k_vF.x + k_INNER_RADIUS_SIDE)
+        );
+        tableBounds.y = Mathf.Max(
+            k_TABLE_HEIGHT + k_RAIL_DEPTH_HEIGHT + k_BALL_RADIUS,
+            furthest_vE ? (k_vE2.z + k_INNER_RADIUS_CORNER2) : (k_vE.z + k_INNER_RADIUS_CORNER),
+            furthest_vF ? (k_vF2.z + k_INNER_RADIUS_SIDE2) : (k_vF.z + k_INNER_RADIUS_SIDE)
+        );
 
         caromEdgeX = k_pR.x - k_BALL_RADIUS;
         caromEdgeZ = k_pO.z - k_BALL_RADIUS;
@@ -2446,10 +2496,10 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
         inPocketBounds = false;
         Vector3 A = balls_P[id];
         Vector3 absA = new Vector3(Mathf.Abs(A.x), 0, Mathf.Abs(A.z));
+
         if (!is4ball)
         {
-            absA.y = k_vE.y;
-            if ((absA - k_vE).sqrMagnitude < k_INNER_RADIUS_CORNER_SQ)
+            if ((absA - k_vE).sqrMagnitude < k_INNER_RADIUS_CORNER_SQ && (absA - k_vE2).sqrMagnitude < k_INNER_RADIUS_CORNER_SQ2)
             {
                 inPocketBounds = true;
                 if (A.y < -k_BALL_RADIUS)
@@ -2460,13 +2510,26 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
                 }
                 else if (A.y < 0.001f)
                 {
+                    // while falling down the pocket, check for collisions with the pocket entrance edge
                     _sign_pos.x = Mathf.Sign(A.x);
                     _sign_pos.z = Mathf.Sign(A.z);
-                    Vector3 railDir = absA - k_vE;
-                    railDir.y = 0;
-                    if (Vector3.Dot(absA, railDir) < 0) // only collide with pocket entrance
+                    Vector3 pocketPoint;
+                    float radius;
+                    if (closest_vE)
                     {
-                        railPoint = k_vE + railDir.normalized * k_INNER_RADIUS_CORNER;
+                        pocketPoint = k_vE2;
+                        radius = k_INNER_RADIUS_CORNER2;
+                    }
+                    else
+                    {
+                        pocketPoint = k_vE;
+                        radius = k_INNER_RADIUS_CORNER;
+                    }
+                    Vector3 railDir = absA - pocketPoint;
+                    railDir.y = 0;
+                    if (Vector3.Dot(absA, railDir) < 0)
+                    {
+                        railPoint = pocketPoint + railDir.normalized * radius;
                         railPoint = Vector3.Scale(railPoint, _sign_pos);
                         railPoint.y = Mathf.Min(-k_BALL_RADIUS, A.y);
                         transitionCollision(id, ref balls_V[id]);
@@ -2474,8 +2537,7 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
                 }
             }
 
-            absA.y = k_vF.y;
-            if ((absA - k_vF).sqrMagnitude < k_INNER_RADIUS_SIDE_SQ)
+            if ((absA - k_vF).sqrMagnitude < k_INNER_RADIUS_SIDE_SQ && (absA - k_vF2).sqrMagnitude < k_INNER_RADIUS_SIDE_SQ2)
             {
                 inPocketBounds = true;
                 if (A.y < -k_BALL_RADIUS)
@@ -2488,11 +2550,23 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
                 {
                     _sign_pos.x = Mathf.Sign(A.x);
                     _sign_pos.z = Mathf.Sign(A.z);
-                    Vector3 railDir = absA - k_vF;
+                    Vector3 pocketPoint;
+                    float radius;
+                    if (closest_vF)
+                    {
+                        pocketPoint = k_vF2;
+                        radius = k_INNER_RADIUS_SIDE2;
+                    }
+                    else
+                    {
+                        pocketPoint = k_vF;
+                        radius = k_INNER_RADIUS_SIDE;
+                    }
+                    Vector3 railDir = absA - pocketPoint;
                     railDir.y = 0;
                     if (Vector3.Dot(absA, railDir) < 0) // only collide with pocket entrance
                     {
-                        railPoint = k_vF + railDir.normalized * k_INNER_RADIUS_SIDE;
+                        railPoint = pocketPoint + railDir.normalized * radius;
                         railPoint = Vector3.Scale(railPoint, _sign_pos);
                         railPoint.y = Mathf.Min(-k_BALL_RADIUS, A.y);
                         transitionCollision(id, ref balls_V[id]);
@@ -2504,18 +2578,24 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
 
         if (absA.z > tableEdge.y)
         {
-            table._TriggerBallFallOffFoul();
-            table._TriggerPocketBall(id, true);
-            pocketedTime = Time.time;
-            return true;
+            if (absA.z > tableBounds.y || (A.y < 0 && !inPocketBounds))
+            {
+                table._TriggerBallFallOffFoul();
+                table._TriggerPocketBall(id, true);
+                pocketedTime = Time.time;
+                return true;
+            }
         }
 
         if (absA.x > tableEdge.x)
         {
-            table._TriggerBallFallOffFoul();
-            table._TriggerPocketBall(id, true);
-            pocketedTime = Time.time;
-            return true;
+            if (absA.x > tableBounds.x || (A.y < 0 && !inPocketBounds))
+            {
+                table._TriggerBallFallOffFoul();
+                table._TriggerPocketBall(id, true);
+                pocketedTime = Time.time;
+                return true;
+            }
         }
         return false;
     }
@@ -2766,20 +2846,35 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
                         }
                         //two collisions can take place here, I don't know a good way to divide it into regions.
                         {
-                            Vector3 toPocketEdge = newPos - k_vE;
-                            toPocketEdge.y = k_vE.y; // flatten the calculation
+                            Vector3 cornerpoint;
+                            float radiussq;
+                            float radius;
+                            if (furthest_vE)
+                            {
+                                cornerpoint = k_vE2;
+                                radiussq = k_INNER_RADIUS_CORNER_SQ2;
+                                radius = k_INNER_RADIUS_CORNER2;
+                            }
+                            else
+                            {
+                                cornerpoint = k_vE;
+                                radiussq = k_INNER_RADIUS_CORNER_SQ;
+                                radius = k_INNER_RADIUS_CORNER;
+                            }
+                            Vector3 toPocketEdge = newPos - cornerpoint;
+                            toPocketEdge.y = cornerpoint.y; // flatten the calculation
                             if (Vector3.Dot(toPocketEdge, upRight) > 0)
                             {
 #if HT8B_DRAW_REGIONS
                                 if (id == 0) Debug.Log("Region J (Over Corner Pocket)");
 #endif
-                                // actually above the corner pocket itself, collision for the back of it if you jump over it
-                                if (toPocketEdge.sqrMagnitude + k_BALL_DSQR > k_INNER_RADIUS_CORNER_SQ)
+                                // actually above the pocket itself, collision for the back of it if you jump over it
+                                if (toPocketEdge.sqrMagnitude + k_BALL_DSQR > radiussq)
                                 {
                                     Vector3 pocketNormal = toPocketEdge.normalized;
                                     // Static resolution
                                     float y = newPos.y;
-                                    newPos = k_vE + pocketNormal * (k_INNER_RADIUS_CORNER - k_BALL_RADIUS);
+                                    newPos = cornerpoint + pocketNormal * (radius - k_BALL_RADIUS);
                                     newPos.y = y;
                                     N = -pocketNormal;
 
@@ -2913,20 +3008,35 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
                         }
                         //two collisions can take place here, I don't know a good way to divide it into regions.
                         {
-                            Vector3 toPocketEdge = newPos - k_vE;
-                            toPocketEdge.y = k_vE.y; // flatten the calculation
+                            Vector3 cornerpoint;
+                            float radiussq;
+                            float radius;
+                            if (furthest_vE)
+                            {
+                                cornerpoint = k_vE2;
+                                radiussq = k_INNER_RADIUS_CORNER_SQ2;
+                                radius = k_INNER_RADIUS_CORNER2;
+                            }
+                            else
+                            {
+                                cornerpoint = k_vE;
+                                radiussq = k_INNER_RADIUS_CORNER_SQ;
+                                radius = k_INNER_RADIUS_CORNER;
+                            }
+                            Vector3 toPocketEdge = newPos - cornerpoint;
+                            toPocketEdge.y = cornerpoint.y; // flatten the calculation
                             if (Vector3.Dot(toPocketEdge, upRight) > 0)
                             {
 #if HT8B_DRAW_REGIONS
                                 if (id == 0) Debug.Log("Region G (Over Corner Pocket)");
 #endif
-                                // actually above the corner pocket itself, collision for the back of it if you jump over it
-                                if (toPocketEdge.sqrMagnitude + k_BALL_DSQR > k_INNER_RADIUS_CORNER_SQ)
+                                // actually above the pocket itself, collision for the back of it if you jump over it
+                                if (toPocketEdge.sqrMagnitude + k_BALL_DSQR > radiussq)
                                 {
                                     Vector3 pocketNormal = toPocketEdge.normalized;
                                     // Static resolution
                                     float y = newPos.y;
-                                    newPos = k_vE + pocketNormal * (k_INNER_RADIUS_CORNER - k_BALL_RADIUS);
+                                    newPos = cornerpoint + pocketNormal * (radius - k_BALL_RADIUS);
                                     newPos.y = y;
                                     N = -pocketNormal;
 
@@ -2977,20 +3087,35 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
                         }
                         //two collisions can take place here, I don't know a good way to divide it into regions.
                         {
-                            Vector3 toPocketEdge = newPos - k_vF;
-                            toPocketEdge.y = k_vF.y; // flatten the calculation
-                            if (Vector3.Dot(toPocketEdge, k_vF) > 0)
+                            Vector3 cornerpoint;
+                            float radiussq;
+                            float radius;
+                            if (furthest_vF)
+                            {
+                                cornerpoint = k_vF2;
+                                radiussq = k_INNER_RADIUS_SIDE_SQ2;
+                                radius = k_INNER_RADIUS_SIDE2;
+                            }
+                            else
+                            {
+                                cornerpoint = k_vF;
+                                radiussq = k_INNER_RADIUS_SIDE_SQ;
+                                radius = k_INNER_RADIUS_SIDE;
+                            }
+                            Vector3 toPocketEdge = newPos - cornerpoint;
+                            toPocketEdge.y = cornerpoint.y; // flatten the calculation
+                            if (Vector3.Dot(toPocketEdge, cornerpoint) > 0)
                             {
 #if HT8B_DRAW_REGIONS
                                 if (id == 0) Debug.Log("Region E (Over Side Pocket)");
 #endif
-                                // actually above the corner pocket itself, collision for the back of it if you jump over it
-                                if (toPocketEdge.sqrMagnitude + k_BALL_DSQR > k_INNER_RADIUS_SIDE_SQ)
+                                // actually above the pocket itself, collision for the back of it if you jump over it
+                                if (toPocketEdge.sqrMagnitude + k_BALL_DSQR > radiussq)
                                 {
                                     Vector3 pocketNormal = toPocketEdge.normalized;
                                     // Static resolution
                                     float y = newPos.y;
-                                    newPos = k_vF + pocketNormal * (k_INNER_RADIUS_SIDE - k_BALL_RADIUS);
+                                    newPos = cornerpoint + pocketNormal * (radius - k_BALL_RADIUS);
                                     newPos.y = y;
                                     N = -pocketNormal;
 

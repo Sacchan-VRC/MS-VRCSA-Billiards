@@ -51,9 +51,13 @@ public class StandardPhysicsManager : UdonSharpBehaviour
     private Vector3[] balls_V; // Velocity Vector
     private Vector3[] balls_W; // Angular Velocity Vector
     private float k_INNER_RADIUS_CORNER;
+    private float k_INNER_RADIUS_CORNER2;
     private float k_INNER_RADIUS_CORNER_SQ;
+    private float k_INNER_RADIUS_CORNER_SQ2;
     private float k_INNER_RADIUS_SIDE;
+    private float k_INNER_RADIUS_SIDE2;
     private float k_INNER_RADIUS_SIDE_SQ;
+    private float k_INNER_RADIUS_SIDE_SQ2;
 
     float k_TABLE_WIDTH;
     float k_TABLE_HEIGHT;
@@ -62,8 +66,16 @@ public class StandardPhysicsManager : UdonSharpBehaviour
     float k_POCKET_RADIUS_SIDE;
     float k_POCKET_DEPTH_SIDE;
     float k_CUSHION_RADIUS;
+    float k_RAIL_DEPTH_WIDTH;
+    float k_RAIL_DEPTH_HEIGHT;
     private Vector3 k_vE;
     private Vector3 k_vF;
+    private Vector3 k_vE2;
+    private Vector3 k_vF2;
+    bool furthest_vE;
+    bool furthest_vF;
+    bool closest_vE;
+    bool closest_vF;
     [Tooltip("Clamp the cue-ball collision point to center + Radius*this (Limits max applyable spin, as miss-cue isn't possible)")]
     public float CueMaxHitRadius = 0.9f;
 
@@ -910,6 +922,8 @@ public class StandardPhysicsManager : UdonSharpBehaviour
 
     Vector3 _sign_pos = new Vector3(0.0f, 1.0f, 0.0f);
     float caromEdgeX, caromEdgeZ;
+    Vector2 tableEdge; // outer edges of the table's rail
+    Vector2 tableBounds; // distances at which ball falls off table, bigger than tableEdge if the pocket sticks out from the table, otherwise the same
     float k_FACING_ANGLE_CORNER = 135f;
     float k_FACING_ANGLE_SIDE = 14.93142f;
 
@@ -925,6 +939,10 @@ public class StandardPhysicsManager : UdonSharpBehaviour
         k_INNER_RADIUS_CORNER_SQ = k_INNER_RADIUS_CORNER * k_INNER_RADIUS_CORNER;
         k_INNER_RADIUS_SIDE = table.k_INNER_RADIUS_SIDE;
         k_INNER_RADIUS_SIDE_SQ = k_INNER_RADIUS_SIDE * k_INNER_RADIUS_SIDE;
+        k_INNER_RADIUS_CORNER2 = table.k_INNER_RADIUS_CORNER2;
+        k_INNER_RADIUS_CORNER_SQ2 = k_INNER_RADIUS_CORNER2 * k_INNER_RADIUS_CORNER2;
+        k_INNER_RADIUS_SIDE2 = table.k_INNER_RADIUS_SIDE2;
+        k_INNER_RADIUS_SIDE_SQ2 = k_INNER_RADIUS_SIDE2 * k_INNER_RADIUS_SIDE2;
         k_CUSHION_RADIUS = table.k_CUSHION_RADIUS;
         k_FACING_ANGLE_CORNER = table.k_FACING_ANGLE_CORNER;
         k_FACING_ANGLE_SIDE = table.k_FACING_ANGLE_SIDE;
@@ -938,8 +956,17 @@ public class StandardPhysicsManager : UdonSharpBehaviour
         k_BALL_RSQR = k_BALL_RADIUS * k_BALL_RADIUS;
         k_BALL_MASS = table.k_BALL_MASS;
         k_CONTACT_POINT = new Vector3(0.0f, -k_BALL_RADIUS, 0.0f);
-        k_vE = table.k_vE;
-        k_vF = table.k_vF;
+        k_vE = table.k_vE; //cornerPocket
+        k_vF = table.k_vF; //sidePocket
+        k_vE2 = table.k_vE2; //cornerPocket2
+        k_vF2 = table.k_vF2; //sidePocket2
+        k_vE.y = k_vF.y = k_vE2.y = k_vF2.y = 0;
+        //work out which pocket point's edge is most distant from center
+        furthest_vE = (k_vE + k_vE.normalized * k_INNER_RADIUS_CORNER).magnitude > (k_vE2 + k_vE2.normalized * k_INNER_RADIUS_CORNER2).magnitude;
+        furthest_vF = (k_vF + k_vF.normalized * k_INNER_RADIUS_SIDE).magnitude > (k_vF2 + k_vF2.normalized * k_INNER_RADIUS_SIDE2).magnitude;
+        //work out which pocket point's edge is closest to center
+        closest_vE = (k_vE - k_vE.normalized * k_INNER_RADIUS_CORNER).magnitude < (k_vE2 - k_vE2.normalized * k_INNER_RADIUS_CORNER2).magnitude;
+        closest_vF = (k_vF - k_vF.normalized * k_INNER_RADIUS_SIDE).magnitude < (k_vF2 - k_vF2.normalized * k_INNER_RADIUS_SIDE2).magnitude;
 
         Collider[] collider = table.GetComponentsInChildren<Collider>();
         for (int i = 0; i < collider.Length; i++)
@@ -1014,6 +1041,22 @@ public class StandardPhysicsManager : UdonSharpBehaviour
         k_pR = k_vC;
         k_pR.x -= k_CUSHION_RADIUS; // only used in carom, but also used to draw point in HT8B_DRAW_REGIONS, carom requires it to be r_k_cushion_radius;
 
+        k_RAIL_DEPTH_WIDTH = table.k_RAIL_DEPTH_WIDTH;
+        k_RAIL_DEPTH_HEIGHT = table.k_RAIL_DEPTH_HEIGHT;
+
+        tableEdge.x = k_TABLE_WIDTH + k_RAIL_DEPTH_WIDTH + k_BALL_RADIUS;
+        tableEdge.y = k_TABLE_HEIGHT + k_RAIL_DEPTH_HEIGHT + k_BALL_RADIUS;
+        tableBounds.x = Mathf.Max(
+            k_TABLE_WIDTH + k_RAIL_DEPTH_WIDTH + k_BALL_RADIUS,
+            furthest_vE ? (k_vE2.x + k_INNER_RADIUS_CORNER2) : (k_vE.x + k_INNER_RADIUS_CORNER),
+            furthest_vF ? (k_vF2.x + k_INNER_RADIUS_SIDE2) : (k_vF.x + k_INNER_RADIUS_SIDE)
+        );
+        tableBounds.y = Mathf.Max(
+            k_TABLE_HEIGHT + k_RAIL_DEPTH_HEIGHT + k_BALL_RADIUS,
+            furthest_vE ? (k_vE2.z + k_INNER_RADIUS_CORNER2) : (k_vE.z + k_INNER_RADIUS_CORNER),
+            furthest_vF ? (k_vF2.z + k_INNER_RADIUS_SIDE2) : (k_vF.z + k_INNER_RADIUS_SIDE)
+        );
+
         caromEdgeX = k_pR.x - k_BALL_RADIUS;
         caromEdgeZ = k_pO.z - k_BALL_RADIUS;
 
@@ -1078,34 +1121,40 @@ public class StandardPhysicsManager : UdonSharpBehaviour
     void _phy_ball_pockets(int id, Vector3[] balls_P)
     {
         Vector3 A = balls_P[id];
-        Vector3 absA = new Vector3(Mathf.Abs(A.x), A.y, Mathf.Abs(A.z));
+        Vector3 absA = new Vector3(Mathf.Abs(A.x), 0, Mathf.Abs(A.z));
 
-        if ((absA - k_vE).sqrMagnitude < k_INNER_RADIUS_CORNER_SQ)
+        if ((absA - k_vE).sqrMagnitude < k_INNER_RADIUS_CORNER_SQ && (absA - k_vE2).sqrMagnitude < k_INNER_RADIUS_CORNER_SQ2)
         {
             table._TriggerPocketBall(id, false);
             pocketedTime = Time.time;
             return;
         }
 
-        if ((absA - k_vF).sqrMagnitude < k_INNER_RADIUS_SIDE_SQ)
+        if ((absA - k_vF).sqrMagnitude < k_INNER_RADIUS_SIDE_SQ && (absA - k_vF2).sqrMagnitude < k_INNER_RADIUS_SIDE_SQ2)
         {
             table._TriggerPocketBall(id, false);
             pocketedTime = Time.time;
             return;
         }
 
-        if (absA.z > k_vF.z)
+        if (absA.z > tableEdge.y)
         {
-            table._TriggerPocketBall(id, true);
-            pocketedTime = Time.time;
-            return;
+            if (absA.z > tableBounds.y || (A.y < 0))
+            {
+                table._TriggerPocketBall(id, true);
+                pocketedTime = Time.time;
+                return;
+            }
         }
 
-        if (absA.z > -absA.x + k_vE.x + k_vE.z)
+        if (absA.x > tableEdge.x)
         {
-            table._TriggerPocketBall(id, true);
-            pocketedTime = Time.time;
-            return;
+            if (absA.x > tableBounds.x || (A.y < 0))
+            {
+                table._TriggerPocketBall(id, true);
+                pocketedTime = Time.time;
+                return;
+            }
         }
     }
 

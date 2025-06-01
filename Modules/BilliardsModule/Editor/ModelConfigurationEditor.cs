@@ -134,8 +134,12 @@ public class ModelConfigurationEditor : Editor
         this.cdata_displayTarget.cushionRadius = data.cushionRadius;
         this.cdata_displayTarget.pocketInnerRadiusCorner = data.pocketInnerRadiusCorner;
         this.cdata_displayTarget.pocketInnerRadiusSide = data.pocketInnerRadiusSide;
+        this.cdata_displayTarget.pocketInnerRadiusCorner2 = data.pocketInnerRadiusCorner2;
+        this.cdata_displayTarget.pocketInnerRadiusSide2 = data.pocketInnerRadiusSide2;
         this.cdata_displayTarget.cornerPocket = data.cornerPocket;
+        this.cdata_displayTarget.cornerPocket2 = data.cornerPocket2;
         this.cdata_displayTarget.sidePocket = data.sidePocket;
+        this.cdata_displayTarget.sidePocket2 = data.sidePocket2;
         this.cdata_displayTarget.facingAngleCorner = data.facingAngleCorner;
         this.cdata_displayTarget.facingAngleSide = data.facingAngleSide;
         this.cdata_displayTarget.k_RAIL_HEIGHT_UPPER = data.railHeightUpper;

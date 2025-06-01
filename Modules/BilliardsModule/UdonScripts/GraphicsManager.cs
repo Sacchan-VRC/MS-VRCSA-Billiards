@@ -43,7 +43,7 @@ public class GraphicsManager : UdonSharpBehaviour
 
     private BilliardsModule table;
 
-    private Material tableMaterial;
+    private Material[] tableMaterial;
     private Material ballMaterial;
     private Material shadowMaterial;
 
@@ -114,9 +114,11 @@ public class GraphicsManager : UdonSharpBehaviour
         scorecard = scorecard_gameobject.GetComponent<MeshRenderer>().material;
         scorecard_info = table.transform.Find("intl.scorecardinfo").gameObject;
 
-        if (table.tableModels[table.tableModelLocal].tableMaterial)
+        for (int i = 0; i < table.tableModels[table.tableModelLocal].tableMaterial.Length; i++)
+        {
             tableMaterial = table.tableModels[table.tableModelLocal].tableMaterial;
-        else
+        }
+        if (table.tableModels[table.tableModelLocal].tableMaterial.Length == 0)
             Debug.LogWarning("Table material not found, make sure you set Table Mesh correctly on Model Data");
 
         _SetShadowsDisabled(false);
@@ -228,9 +230,9 @@ public class GraphicsManager : UdonSharpBehaviour
         const float multiplier = 3.0f;
 #endif
         tableCurrentColour = Color.Lerp(tableCurrentColour, tableSrcColour, Time.deltaTime * multiplier);
-        if (tableMaterial)
+        for (int i = 0; i < table.tableModels[table.tableModelLocal].tableMaterial.Length; i++)
         {
-            tableMaterial.SetColor("_EmissionColor", tableCurrentColour);
+            tableMaterial[i].SetColor("_EmissionColor", tableCurrentColour);
         }
     }
 
