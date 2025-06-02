@@ -148,7 +148,16 @@ public class DesktopManager : UdonSharpBehaviour
 
         if (Input.GetKeyDown(KeyCode.Q))
         {
-            repositionMode = !repositionMode;
+            if (!table.isLocalSimulationRunning)
+            {
+                if (isShooting)
+                {
+                    power = 0;
+                    renderCuePosition(initialShotDirection);
+                    stopShooting();
+                }
+                repositionMode = !repositionMode;
+            }
         }
 
         if (canShoot)
