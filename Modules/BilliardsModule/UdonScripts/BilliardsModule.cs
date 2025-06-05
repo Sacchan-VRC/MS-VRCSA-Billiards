@@ -3318,6 +3318,7 @@ public class BilliardsModule : UdonSharpBehaviour
         debugger.SetActive(!localPlayerDistant);
         menuManager._RefreshLobby();
         graphicsManager._UpdateLOD();
+        auto_pocketblockers.SetActive(is4Ball);
     }
 
     #region Debugger
