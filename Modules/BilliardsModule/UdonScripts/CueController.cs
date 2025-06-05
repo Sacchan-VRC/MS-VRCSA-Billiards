@@ -53,7 +53,6 @@ public class CueController : UdonSharpBehaviour
     private int[] authorizedOwners;
 
     [NonSerialized] public bool TeamBlue;
-
     public void _Init()
     {
         cueRenderer = this.transform.Find("body/render").GetComponent<Renderer>();
@@ -73,8 +72,7 @@ public class CueController : UdonSharpBehaviour
         lagSecondaryPosition = origSecondaryPosition;
 
         resetSecondaryOffset();
-
-        _DisableRenderer();
+        _RefreshRenderer();
     }
 
     public override void OnDeserialization()
@@ -160,60 +158,64 @@ public class CueController : UdonSharpBehaviour
     }
     private void FixedUpdate()
     {
-        if (primaryHolding)
+        if (Networking.LocalPlayer.IsOwner(gameObject))
         {
-            // must not be shooting, since that takes control of the cue object
-            if (!table.desktopManager._IsInUI() || !table.desktopManager._IsShooting())
+            if (primaryHolding)
             {
-                if (!primaryLocked || table.noLockingLocal)
+                // must not be shooting, since that takes control of the cue object
+                if (!table.desktopManager._IsInUI() || !table.desktopManager._IsShooting())
                 {
-                    // base of cue goes to primary
-                    body.transform.position = lagPrimaryPosition;
+                    if (!primaryLocked || table.noLockingLocal)
+                    {
+                        // base of cue goes to primary
+                        body.transform.position = lagPrimaryPosition;
 
-                    // holding in primary hand
-                    if (!secondaryHolding)
-                    {
-                        // nothing in secondary hand. have the second grip track the cue
-                        secondary.transform.position = primary.transform.TransformPoint(secondaryOffset);
-                        body.transform.LookAt(lagSecondaryPosition);
-                    }
-                    else if (!secondaryLocked)
-                    {
-                        // holding secondary hand. have cue track the second grip
-                        body.transform.LookAt(lagSecondaryPosition);
+                        // holding in primary hand
+                        if (!secondaryHolding)
+                        {
+                            // nothing in secondary hand. have the second grip track the cue
+                            secondary.transform.position = primary.transform.TransformPoint(secondaryOffset);
+                            body.transform.LookAt(lagSecondaryPosition);
+                        }
+                        else if (!secondaryLocked)
+                        {
+                            // holding secondary hand. have cue track the second grip
+                            body.transform.LookAt(lagSecondaryPosition);
+                        }
+                        else
+                        {
+                            // locking secondary hand. lock rotation on point
+                            body.transform.LookAt(secondaryLockPos);
+                        }
+
+                        // copy z rotation of primary
+                        float rotation = primary.transform.localEulerAngles.z;
+                        Vector3 bodyRotation = body.transform.localEulerAngles;
+                        bodyRotation.z = rotation;
+                        body.transform.localEulerAngles = bodyRotation;
                     }
                     else
                     {
-                        // locking secondary hand. lock rotation on point
-                        body.transform.LookAt(secondaryLockPos);
+                        // locking primary hand. fix cue in line and ignore secondary hand
+                        Vector3 delta = lagPrimaryPosition - primaryLockPos;
+                        float distance = Vector3.Dot(delta, primaryLockDir);
+                        body.transform.position = primaryLockPos + primaryLockDir * distance;
                     }
 
-                    // copy z rotation of primary
-                    float rotation = primary.transform.localEulerAngles.z;
-                    Vector3 bodyRotation = body.transform.localEulerAngles;
-                    bodyRotation.z = rotation;
-                    body.transform.localEulerAngles = bodyRotation;
+                    UpdateDesktopPosition();
                 }
                 else
                 {
-                    // locking primary hand. fix cue in line and ignore secondary hand
-                    Vector3 delta = lagPrimaryPosition - primaryLockPos;
-                    float distance = Vector3.Dot(delta, primaryLockDir);
-                    body.transform.position = primaryLockPos + primaryLockDir * distance;
+                    body.transform.position = desktop.transform.position;
+                    body.transform.rotation = desktop.transform.rotation;
                 }
 
-                UpdateDesktopPosition();
+                // clamp controllers
+                clampControllers();
             }
-            else
-            {
-                body.transform.position = desktop.transform.position;
-                body.transform.rotation = desktop.transform.rotation;
-            }
-
-            // clamp controllers
-            clampControllers();
+            updateLagPosition();
         }
-        else
+        else if (!table.localPlayerDistant && table.gameLive)
         {
             // other player has cue
             if (!syncedHolderIsDesktop)
@@ -250,8 +252,11 @@ public class CueController : UdonSharpBehaviour
                 body.transform.position = desktop.transform.position;
                 body.transform.rotation = desktop.transform.rotation;
             }
+            updateLagPosition();
         }
-
+    }
+    void updateLagPosition()
+    {
         // todo: ugly ugly hack from legacy 8ball. intentionally smooth/lag the position a bit
         // we can't remove this because this directly affects physics
         // must occur at the end after we've finished updating the transform's position
@@ -411,9 +416,9 @@ public class CueController : UdonSharpBehaviour
         // enable if live, in LoD range,
         // disable second cue if in practice mode
         if (table.gameLive && !table.localPlayerDistant && (!table.isPracticeMode || this == table.cueControllers[0]))
-            cueRenderer.enabled = true;
+            _EnableRenderer();
         else
-            cueRenderer.enabled = false;
+            _DisableRenderer();
     }
 
     public void _EnableRenderer()
