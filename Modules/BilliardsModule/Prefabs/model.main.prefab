@@ -727,8 +727,8 @@ MonoBehaviour:
   railHeightUpper: 0.0352
   useRailHeightLower: 0
   railHeightLower: 0.032
-  railDepthWidth: 0.0695
-  railDepthHeight: 0.0695
+  railDepthWidth: 0.15025
+  railDepthHeight: 0.159
   pocketInnerRadiusCorner: 0.082
   pocketInnerRadiusCorner2: 0.1
   pocketInnerRadiusSide: 0.07
