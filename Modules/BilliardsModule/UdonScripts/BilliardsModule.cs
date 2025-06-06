@@ -80,7 +80,7 @@ public class BilliardsModule : UdonSharpBehaviour
 
     // textures
     [SerializeField] public Texture[] textureSets;
-    [SerializeField] public ModelData[] tableModels;
+    [NonSerialized] public ModelData[] tableModels;
     [SerializeField] public Texture2D[] tableSkins;
     [SerializeField] public Texture2D[] cueSkins;
 
@@ -309,6 +309,14 @@ public class BilliardsModule : UdonSharpBehaviour
     {
         _LogInfo("initializing billiards module");
 
+        Transform tablesParent = transform.Find("intl.table");
+        tableModels = GetComponentsInChildren<ModelData>(true);
+        for (int i = 0; i < tableModels.Length; i++)
+        {
+            tableModels[i].gameObject.SetActive(false);
+            tableModels[i]._Init();
+        }
+
         cameraOverrideModule = (CameraOverrideModule)_GetModule(nameof(CameraOverrideModule));
 
         resetCachedData();
@@ -336,11 +344,6 @@ public class BilliardsModule : UdonSharpBehaviour
         graphicsManager._Init(this);
         cameraOverrideModule._Init();
         menuManager._Init(this);
-        for (int i = 0; i < tableModels.Length; i++)
-        {
-            tableModels[i].gameObject.SetActive(false);
-            tableModels[i]._Init();
-        }
 
         tableSurface = transform.Find("intl.balls");
         for (int i = 0; i < PhysicsManagers.Length; i++)
