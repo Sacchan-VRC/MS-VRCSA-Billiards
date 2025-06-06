@@ -23,7 +23,7 @@
       _TimerPct("Timer Percentage", Range(0, 1)) = 1
 
       [Header(VRC Light Volumes)]
-      [Toggle(INTEGRATE_VRCLV)]_IntegrateVRCLV("Integrate VRC Light Volumes", Int) = 0
+      [Toggle(INTEGRATE_VRCLV)]_IntegrateVRCLV("Integrate VRC Light Volumes", Int) = 1
    }
    SubShader
    {
