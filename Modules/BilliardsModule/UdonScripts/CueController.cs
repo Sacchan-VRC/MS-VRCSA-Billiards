@@ -92,7 +92,8 @@ public class CueController : UdonSharpBehaviour
 
     private void refreshCueScale()
     {
-        body.transform.localScale = new Vector3(1, 1, cueScale);
+        float factor = Mathf.Clamp(cueScale, 0.5f, 1.5f) - 0.5f;
+        body.transform.localScale = new Vector3(Mathf.Lerp(0.7f, 1.3f, factor), Mathf.Lerp(0.7f, 1.3f, factor), cueScale);
     }
 
     private void refreshCueSmoothing()
