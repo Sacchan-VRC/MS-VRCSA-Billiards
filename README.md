@@ -44,25 +44,28 @@ See it in action in the VRChat world 'Sacc's Snooker Club'
 	- 3D pockets - balls actually have to fall down a bit before they count as pocketed  
 	- Balls don't freeze the instant they're pocketed  
 	- LoD system to disable simulation and visuals when far away  
-- 6 Tables included  
+- 9 Tables included  
 	- The original prefab table  
 	- Accurate to real 7-8-9ft Pool tables  
 	- Accurate to real 10 and 12ft Snooker tables  
+	- 3 Tables from the VRC Billiards Community Edition package are included  
   
 ### Setup:  
 Import the package  
 Click MS-VRCSA->Set Up Pool Table Layers  
 	- this names layer 22 to 'BilliardsModule' and sets the collision matrix so that it only collides with itself  
 Place one or more Prefab/MS-VRCA Table prefabs into your scene  
+You can freely add/remove tables from the tables list under the hierarchy at BilliardsModule/intl.table/  
+	- The table prefabs are in the folder Modules/BilliardsModule/Prefabs  
 Because tables can be swapped out they can't easily be lightmapped. Use just one table if you wish to have light mapping  
-	- Remove the unused tables from the list in BilliardsModule and delete their objects  
+	- Remove the unused tables from the hierarchy under BilliardsModule/intl.table/  
+Alternatively if using VRC Light Volumes by RED_SIM, make sure to change the table surface shader to the _VRCLV Variant.  
   
 ### Table Creation  
+Duplicate an existing table prefab and replace the mesh ('table' object) with your own.  
+Place the table prefab on its own in to the scene and select and enable gizmos it to display its physical setup, adjust ModelData settings to match your model.  
 Copy the hierarchy of the existing tables and you should be fine, objects whose name begin with a period are used in the code, so don't change their names.  
 The shader for the table's Metallic/Smoothness texture can be exported as a 2 channel png with photoshop's Export As and ticking the '[x]Smaller Filer (8-bit)' option  
-  
-### Known issues  
-- It's possible for a player to be unable to grab their cue when it's their turn, leaving and re-joining the match fixes this issue. (rare)  
   
 ### Future  
 There's still a lot that can be done to improve things - I don't intend to do any more major work on this myself - Sacchan  
@@ -76,7 +79,7 @@ There's still a lot that can be done to improve things - I don't intend to do an
 - Further improvements to physics  
 - Misscues  
 - New sound effects  
-- Optimization - may not be necessary with udon2 coming soon  
+- Optimization  
 - 10Ball mode  
 - Other standards for 8/9ball (WPA ..)  
 - I have completely neglected the Quest setup stuff, idk if it still works, never used it  
@@ -90,6 +93,23 @@ Neko Mabel:
   
 Sacchan:  
 - Everything else  
+  
+### Changes in version 1.14  
+Added a VRC Light Volumes version of the custom table shader. Change if yourself if using.  
+Added 3 tables from the VRCBCE package (metal, scifi, main)  
+Added two variant prefabs, (All tables, VRCBCE tables only)  
+Pocket shape is now defined by the intersection of two circles, allowing for more accurate pocket shapes  
+Fix LoD issue with pocket blockers state not changing if match start was not witnessed  
+Fix a bug where teams could be inverted when switching to snooker after playing 4Ball  
+Optimize cue's FixedUpdate() a bit, running correct code for owner/non-owner, this may fix a rare bug where cue becomes un-grabbable  
+  
+### Changes in version 1.13  
+Fix ball shadow render queue  
+Reduce size of some networked variables  
+Improved 8ball rules (pocketing opponents color is NOT ball-in-hand)  
+Fixed rare case causing ball in hand erroneously (Thx eijis-pan)  
+Removed sync of cue skin (commented it, add it back yourself if you use it)  
+Fixed size of Snooker D on 7ft and classic table  
   
 ### Changes in version 1.12  
 Fixed menu not showing in desktop view + associated crash  
