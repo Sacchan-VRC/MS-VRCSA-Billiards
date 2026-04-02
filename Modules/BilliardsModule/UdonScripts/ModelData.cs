@@ -93,7 +93,7 @@ public class ModelData : UdonSharpBehaviour
                 "\n\nworks abroad every component of the ball [Displacement, Velocity, Angular Velocity and their Inertia tensors " +
                 "\n\n<b>[Default = ON]</b>" +
                 "\n\n<i>When Disabling this, the table will use its Default Derived Model (Previous Version 1.0.3), this may be useful if you prefer Default Model.</i>")]
-        [SerializeField] public bool bc_UseHan05 = true; // isHanModel
+        [SerializeField] public bool bc_UseMat10 = true; // isMatModel
 
 
         [Tooltip("How bouncy your cushions are! Another interpretation is how much speed the cushion will absorb from the ball." +

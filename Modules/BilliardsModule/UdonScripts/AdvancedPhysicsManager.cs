@@ -6,7 +6,7 @@ using UnityEngine;
 [UdonBehaviourSyncMode(BehaviourSyncMode.NoVariableSync)]
 public class AdvancedPhysicsManager : UdonSharpBehaviour
 {
-    public string PHYSICSNAME = "<color=#FFD700>Advanced V0.5M</color>";
+    public string PHYSICSNAME = "<color=#FFD700>Advanced V0.6X</color>";
     [SerializeField] AudioClip[] hitSounds;
     [SerializeField] AudioClip[] bounceSounds;
     [SerializeField] AudioClip[] cushionSounds;
@@ -41,22 +41,68 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
     [NonSerializedAttribute] public float k_F_ROLL = 0.008f;                                                        // Friction coefficient of rolling          (Ball-table)    [Update Velocity]
     [NonSerializedAttribute] public float k_F_SPIN = 0.022f;                                                        // Friction coefficient of Spin             (Ball-table)    [Update Velocity]
     [NonSerializedAttribute] public float k_F_SPIN_RATE = 5.0122876f;                                               // Desired constant deceleration rate       (ball-table)    [Update Velocity]  https://billiards.colostate.edu/faq/physics/physical-properties/ [desired between 0.5 - 15]
+    [NonSerializedAttribute] public float K_F_CUSHION = 0.2f;
     [NonSerializedAttribute][Range(0.5f, 0.7f)] public float K_BOUNCE_FACTOR = 0.5f;                                // COR Ball-Slate.                          (ball-table)    [Update Velocity]
     [NonSerializedAttribute] public bool isDRate = true;
     public AnimationCurve RubberF;                                                                                  // Set this animation curve to 1 in both keys in case if you dont know what you are doing.
 
     // Ball <-> Cushion Variables
-    [NonSerializedAttribute] public bool isHanModel = true;                                                         // Enables HAN5 3D Friction Cushion Model   (Ball-Cushion)  [Phys Cushion]
+    [NonSerializedAttribute] public bool isMatModel = true;                                                         // Enables HAN5 3D Friction Cushion Model   (Ball-Cushion)  [Phys Cushion]
     [NonSerializedAttribute] public bool isDynamicRestitution = false;
     [NonSerializedAttribute][Range(0.5f, 0.98f)] public float k_E_C = 0.85f;                                        // COR ball-Cushion                         (Ball-Cushion)  [Phys Cushion]      [default 0.85] - Acceptable Range [0.7 - 0.98] 
     [NonSerializedAttribute][Range(0.2f, 0.4f)] public float k_Cushion_MU = 0.2f;
     [NonSerializedAttribute] public bool isCushionFrictionConstant = false;
-    public bool ballRichDebug = false; // for Debug Check
-    public bool isCushionRichDebug = false; // for Debug Check
+    //public bool ballRichDebug = false; // for Debug Check
+    //public bool isCushionRichDebug = false; // for Debug Check
 
     //[Range(0f, 1f)] public float k_F_SLIDE_TERM1 = 0.471f;                                                        // COF slide of the Cushion                 (Ball-Cushion)  [Phys Cushion]
     //[Range(0f, 1f)] public float k_F_SLIDE_TERM2 = 0.241f;
     //[SerializeField][Range(0.6f, 0.7f)] private float cushionHeightPercent = 0.635f;
+
+    [Header("cushion Dev")]             // for debug only
+    [NonSerializedAttribute] public float cushionCOS;
+    [NonSerializedAttribute] public float cushionSIN;
+    [NonSerializedAttribute] public float GeometryClamp = 1f;
+    [NonSerializedAttribute] public Vector3 rotations_LeftLongRail;
+    [NonSerializedAttribute] public Vector3 rotations_RightLongRail;
+    [NonSerializedAttribute] public Vector3 rotations_LeftShortRail;
+    [NonSerializedAttribute] public Vector3 rotations_RightShortRail;
+    [NonSerializedAttribute] public Quaternion toCushionFrame;
+    [NonSerializedAttribute] public float Ydamp = 0.14f;
+    [NonSerializedAttribute] public float DeltaPtune = 0.01f;
+    [NonSerializedAttribute] public int maxStepsTune = 1000;
+    [NonSerializedAttribute] public float heightRatio = 0.635f;  // for debuging
+    [NonSerializedAttribute] public float cushionHeight;         // ReadOnly
+
+    [Header("Dev Incident Angle & Slip Velocities at I and C")] // for debug only
+    [NonSerialized] private float SlipAtC;
+    [NonSerialized] private float SlipAtI;
+
+    [NonSerialized] public bool isCushionFriction = false;
+
+    [Header("Kinectic energy CUE BALL / ReadOnly")]
+    public float KE_linear;         // Kinectic Energy Linear
+    public float KE_rotational;     // Kinectic Energy Rotational
+    public float KE_total;          // Kinectic Energy Total
+    public Vector3 VelocityAxis;    // Velocity of the ball per Axis
+    public float VelocityMs;        // Linear Velocity m/s
+    public float smoothedVelocity;
+    public float smoothedVelocityVXZ;
+    public float smoothingFactor = 0.1f;   // Between 0 (very smooth) and 1 (raw)
+
+    [Header("Debug, ThrowAngle")]
+    [SerializeField] public float muFactor = 1f;
+    [SerializeField] public float mu;
+    [SerializeField] public float ThrowAngleDeg;
+    [SerializeField] public float cutAngleDeg;
+    [SerializeField] public float W_roll;
+
+    [Header("Debug Options")]
+    public bool ballRichDebug = false;      // for Debug Check
+    public bool cushionRichDebug = false;   // for Debug Check
+    public bool useCorrectAngle = false;
+    public bool miscueRichDebug = false;
+    public bool qTipOffsetRichDebug = false;
 
     private Color markerColorYes = new Color(0.0f, 1.0f, 0.0f, 1.0f);
     private Color markerColorNo = new Color(1.0f, 0.0f, 0.0f, 1.0f);
@@ -901,7 +947,7 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
                 else
                 {
                     /// Provides the best readability and response with a solution using Dr.Dave and Hecker equations.
-                    HandleCollision6(checkBall, id, normal);
+                    HandleCollision7(checkBall, id, normal);
                 }
 
 #if UNITY_EDITOR
@@ -951,7 +997,7 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
     }
 
 
-    private float muFactor = 1f; // Default should be 1 but results fail to reach and match some of the plot data, as such a value of 1.9942 has been emperically set after multiple tests.  
+    //private float muFactor = 1f; // Default should be 1 but results fail to reach and match some of the plot data, as such a value of 1.9942 has been emperically set after multiple tests.  
 
     /// W.I.P -
     void HandleCollision5_2(int i, int id, Vector3 normal)
@@ -1290,7 +1336,7 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
     }
 
 
-    public void HandleCollision6(int i, int id, Vector3 normal)
+    public void HandleCollision7(int i, int id, Vector3 normal)
     {
         // Resources used
         // https://billiards.colostate.edu/technical-proof/ - by David G. Alciatore, PhD, PE ("Dr. Dave") https://billiards.colostate.edu/technical_proofs/new/TP_A-5.pdf , https://billiards.colostate.edu/technical_proofs/new/TP_A-6.pdf and https://billiards.colostate.edu/technical_proofs/new/TP_A-14.pdf
@@ -1299,55 +1345,109 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
         float e = k_BALL_E;
         float R = k_BALL_RADIUS;
         float M = k_BALL_MASS;
-        float I = ((2f / 5f) * M * (R * R));
+        float I = (2f / 5f) * M * (R * R);
 
         // Relative Linear Velocity
         Vector3 v_rel = balls_V[id] - balls_V[i];
 
         // Calculate the relative velocity at the contact point [TP.A14 PAGE 2, Eq 8, 9] / Dr.Dave
-        Vector3 v_rel_contact = v_rel + Vector3.Cross(balls_W[id], R * -normal) - Vector3.Cross(balls_W[i], R * normal);
-
-        // Calculate friction coefficient [TP.A14 Page 4]
-        float mu = CalculateFrictionCoefficient(v_rel_contact);
-        mu = muFactor * mu;
+        Vector3 v_rel_contact = v_rel
+            + Vector3.Cross(balls_W[id], -normal * R)
+            - Vector3.Cross(balls_W[i], normal * R);
 
         // Calculate the normal component of the relative velocity [J] - Numertor of  Equation 6 / Chris Hecker Physics, Part 3: Collision Response - Feb/Mar 97 - Page 4
         float v_rel_normal = Vector3.Dot(v_rel_contact, normal);
 
         // Calculate the tangential component of the relative velocity
         Vector3 v_rel_tangential = v_rel_contact - v_rel_normal * normal;
+        float v_rel_tangential_mag = v_rel_tangential.magnitude;
+
+        // Calculate friction coefficient [TP.A14 Page 4]
+        mu = CalculateFrictionCoefficient(v_rel_contact) * muFactor;
 
         // Calculate the normal impulse J - PAGE 9 FIGURE 4. in Physics Articles, Physics Part 4 The Third Dimension - June 97
-        float J_normal = -(1 + e) * v_rel_normal / (1 / M + 1 / M + (R * R * Vector3.Dot(normal, Vector3.Cross(Vector3.Cross(normal, balls_W[id]), normal)) / I) + (R * R * Vector3.Dot(normal, Vector3.Cross(Vector3.Cross(normal, balls_W[i]), normal)) / I));
-
-        // Calculate the tangential impulse [TP.A6 PAGE 1, Eq 6] and [TP.A14 PAGE2 Eq 7] / Dr.Dave
-        float J_tangential = -mu * Mathf.Abs(J_normal);
+        float denomNormal =
+            (1f / M) + (1f / M) +
+            (R * R * Vector3.Dot(normal, Vector3.Cross(Vector3.Cross(normal, balls_W[id]), normal)) / I) +
+            (R * R * Vector3.Dot(normal, Vector3.Cross(Vector3.Cross(normal, balls_W[i]), normal)) / I);
+        if (Mathf.Abs(denomNormal) < 1e-8f) denomNormal = 1e-8f;
+        float J_normal = -(1f + e) * v_rel_normal / denomNormal;
 
         // Apply the normal impulse to linear velocities
-        balls_V[id] += J_normal * normal / M;
-        balls_V[i] -= J_normal * normal / M;
+        balls_V[id] += (J_normal / M) * normal;
+        balls_V[i] -= (J_normal / M) * normal;
 
-        // Apply the tangential impulse to linear velocities
-        balls_V[id] += J_tangential * v_rel_tangential.normalized / M;
-        balls_V[i] -= J_tangential * v_rel_tangential.normalized / M;
+        // Calculate the tangential impulse [TP.A6 PAGE 1, Eq 6] and [TP.A14 PAGE2 Eq 7] / Dr.Dave
+        // Tangential impulse with exact denominator
+        if (v_rel_tangential_mag > 1e-6f)
+        {
+            Vector3 t_hat = v_rel_tangential / v_rel_tangential_mag;
 
-        // Apply the tangential impulse to angular velocities
-        balls_W[id] += R * Vector3.Cross(normal, J_tangential * v_rel_tangential.normalized) / I; //(R * R);
-        balls_W[i] -= R * Vector3.Cross(normal, J_tangential * v_rel_tangential.normalized) / I; //(R * R);
+            float denomT =
+                (1f / M) + (1f / M) +
+                (R * R * Vector3.Cross(normal, t_hat).sqrMagnitude / I) +
+                (R * R * Vector3.Cross(normal, t_hat).sqrMagnitude / I);
+            if (Mathf.Abs(denomT) < 1e-8f) denomT = 1e-8f;
 
+            float jt_needed = -Vector3.Dot(v_rel_tangential, t_hat) / denomT;
+            float jt_max = mu * Mathf.Abs(J_normal);
+
+            float jt_scalar = (Mathf.Abs(jt_needed) <= jt_max) ? jt_needed :
+                -Mathf.Sign(Vector3.Dot(v_rel_tangential, t_hat)) * jt_max;
+
+            Vector3 jt_vec = jt_scalar * t_hat;
+
+            // Apply the tangential impulses to linear and angular velocities
+            balls_V[id] += jt_vec / M;
+            balls_V[i] -= jt_vec / M;
+
+            // Apply angular impulses from tangential and angular velocities
+            balls_W[id] += (R * Vector3.Cross(normal, jt_vec)) / I;
+            balls_W[i] -= (R * Vector3.Cross(normal, jt_vec)) / I;
+
+            if (ballRichDebug)
+            {
+                Debug.DrawLine(balls[id].transform.position,
+                               balls[id].transform.position + new Vector3(jt_vec.x, 0, jt_vec.z).normalized * 0.5f, Color.yellow, 2f);
+                Debug.Log($"jt_needed={jt_needed:F5} jt_used={jt_scalar:F5} regime={(Mathf.Abs(jt_needed) <= jt_max ? "static" : "kinetic")}");
+            }
+
+            /*
+            float impactSpeed = VelocityMs;
+            if (runtimeData != null)
+            {
+                runtimeData.SetSample(cutAngleDeg, ThrowAngleDeg, impactSpeed, mu, W_roll);
+            }
+            */
+        }
+
+        // Throw angle for diagnostics
+        Vector3 v_obj = balls_V[i];
+        float v_obj_normal = Vector3.Dot(v_obj, normal);
+        Vector3 v_obj_tangential = v_obj - v_obj_normal * normal;
+        ThrowAngleDeg = (v_obj_normal != 0f) ?
+            Mathf.Atan2(v_obj_tangential.magnitude, Mathf.Abs(v_obj_normal)) * Mathf.Rad2Deg : 0f;
+
+        Vector3 centersLine = (balls_V[i] - balls_V[id]).normalized;
+        Vector3 Direction = new Vector3(balls_V[0].x, 0, balls_V[0].z).normalized;
+        cutAngleDeg = Vector3.Angle(centersLine, Direction) - 90f;
+
+        //CutAngleDEV = Mathf.Asin(R / v_rel_normal) * Mathf.Rad2Deg;
 
 
         ///////////////// Simple Numerical Debugs for Plot Data
         if (ballRichDebug)
         {
+#if UNITY_EDITOR
             // Pushing Impulses above into a single Vector Variable, you may now use this for further Debug testing.
             Vector3 Fn = J_normal * normal; // Alson known as V'n [need the scalar? use J_normal]
-            Vector3 Ft = J_tangential * v_rel_tangential.normalized; // Also known as V't [need the scalar use J_tangential]
+            Vector3 Ft = v_rel_tangential.normalized; // Also known as V't [need the scalar use J_tangential]
 
+            Debug.DrawLine(balls[id].transform.position, balls[id].transform.position + new Vector3(Ft.x, 0, Ft.z), Color.green, 5f); // returns the natural initial tangent direction line post impact.
+            Debug.DrawLine(balls[0].transform.position, balls[i].transform.position + -Fn.normalized, Color.red, 5f);
 
-            Vector3 centersLine = (balls_V[i] - balls_V[id]).normalized; // Line connecting centers
-            float cutAngle = Vector3.Angle(centersLine, balls_V[id]);
-            Debug.Log("Cut Angle: " + (cutAngle - 90f));
+            //Vector3 centersLine = (balls_V[i] - balls_V[id]).normalized; // Line connecting centers
+            Debug.Log("Cut Angle: " + (cutAngleDeg));
 
             // --- Throw Angle based on Tangential Impulse ---
             Debug.Log("<size=12><b><i>Throw Angle ATAN_MU/DEG:</i></b></size> " +
@@ -1358,8 +1458,9 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
             float DELTA_W = R * Ft.magnitude / I;
             Debug.Log("<size=16><b><i><color=white>Spin Transfer Rate</color></i></b></size>: " + DELTA_W.ToString("<size=16><i><color=white>00.00</color></i></size>" + "<color=white><i>STP</i></color>"));
 
-            Debug.DrawLine(balls[0].transform.position, balls[0].transform.position +
-                new Vector3(v_rel_contact.x, 0, v_rel_contact.z), Color.yellow, 2f);
+            Debug.DrawLine(table_Surface.TransformPoint(balls_P[0]), table_Surface.TransformPoint(balls_P[0]) +
+                new Vector3(v_rel_contact.x, 0, v_rel_contact.z).normalized, Color.yellow, 5f);
+
 
 
             /* // Waiting for UDON 2
@@ -1384,7 +1485,7 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
                 Destroy(balls[0].gameObject.GetComponent<TrailRenderer>());
             }
             */
-
+#endif
         }
 
     }
@@ -1682,6 +1783,7 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
 
         ball.transform.Rotate(this.transform.TransformDirection(W.normalized), W.magnitude * t * -Mathf.Rad2Deg, Space.World);
 
+        ComputeTotalKE(ref V, m, R);
         return ballMoving;
     }
 
@@ -1802,9 +1904,10 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
     // Apply cushion bounce
     void _phy_bounce_cushion(ref Vector3 vel, ref Vector3 angvel, int id, Vector3 N, bool isPocketBounce = false)
     {
-        if (isHanModel)
+        if (isMatModel)
         {
-            _HANCushionModel(ref vel, ref angvel, id, N, isPocketBounce);
+            //_HANCushionModel(ref vel, ref angvel, id, N, isPocketBounce);
+            _MathavanCushionModel(ref vel, ref angvel, id, N, isPocketBounce);
         }
         else
         {
@@ -2154,7 +2257,7 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
         angvel = rb * W1;
 
 
-        if (isCushionRichDebug) // Choose to display some information about the cushion and Draw some lines (bool default = FALSE) [May cause stall in Unity Editor if there are Multiple collisions happening at once]
+        if (cushionRichDebug) // Choose to display some information about the cushion and Draw some lines (bool default = FALSE) [May cause stall in Unity Editor if there are Multiple collisions happening at once]
         {
 
             Debug.DrawRay(balls[0].transform.parent.TransformPoint(balls_P[id]) - N * R, new Vector3(0, V1.y, 0), Color.green, 3f);   // Height of the cushion
@@ -2226,7 +2329,535 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
 
     }
 
+    // _MATHAVAN_CUSHION_MODEL_ S E C T I O N // --------------------------------
+    //  /// for Cushion Model from 2010 by S.Mathavan, M R JackSon, and R M Parkin 
+    // https://billiards.colostate.edu/physics_articles/Mathavan_IMechE_2010.pdf
 
+    void CompressionPhase(ref Vector3 V, ref Vector3 W, Vector3 N, float M, float R, float sinθ, float cosθ, float MUw, float MUs, float deltaP, int maxSteps, out float totalWork, float θ)
+    {
+        /// purpose
+        /// The CompressionPhase numerically simulates the compression part of the ball-cushion collision.
+        /// This is where the ball pushes into the cushion, and forces gradually slow down the ball's velocity into the cushion until it stops or reverses.
+        /// The method accumulates work done during this phase, which is later used in the RestitutionPhase to determine how much the ball should bounce back.
+        Debug.Log("N Does Exist here" + N);
+
+        totalWork = 0f; // Initialize total work: Represents cumulative energy dissipation as the ball compresses into the cushion.
+        int steps = 0;
+
+        deltaP = Mathf.Max((M * Mathf.Abs(V.z)) / maxSteps, deltaP);    // Adaptive impulse size: Ensures that impulse step is appropriate for current velocity and avoids numerical instability.
+                                                                        //Debug.Log($"[CompressionPhase] START: Initial V.z = {V.z:F4}");
+        while (V.z > 0f && steps < maxSteps)    // Iterative compression loop - Runs until either: The velocity into the cushion (V.z) is zero or negative (ball stops or reverses). Or we hit the maximum allowed steps (safety cap).
+        {
+            UpdateSlipAngles(V, W, N, R, sinθ, cosθ, out float slip_angle, out float slip_angle_prime, θ);    // Update slip angles - Computes the direction and magnitude of sliding at: The cushion contact point (I). The table contact point (C). These are essential for computing frictional forces.
+
+            // Predict next velocity after impulse: Simulates what the ball's velocity and spin will be after applying a small impulse of size deltaP.
+            Vector3 V_next = UpdateVelocity(V, N, M, MUw, MUs, sinθ, cosθ, slip_angle, slip_angle_prime, deltaP, θ);
+            Vector3 W_next = UpdateAngularVelocity(W, N, M, R, MUw, MUs, sinθ, cosθ, slip_angle, slip_angle_prime, deltaP);
+
+            float nextDeltaWork = deltaP * Mathf.Abs(V.z) * cosθ;
+
+            //Debug.Log($"[CompressionPhase] Step {steps} - V.z = {V.z:F4}, slip_angle = {slip_angle:F4}");
+            //Debug.Log($"  - next V.z = {V_next.z:F4}, nextDeltaWork = {nextDeltaWork:F6}");
+
+            // Check for zero crossing with binary refinement:
+            if (V.z > 0f && V_next.z <= 0f)     // If the ball's velocity into the cushion will cross zero, we perform binary refinement to accurately find the precise moment this happens. (Prevents overshooting and improves numerical precision.)
+            {
+                Debug.LogWarning("Binary search refinement + true");
+                // Binary search refinement
+                Vector3 V_refine = V;
+                Vector3 W_refine = W;
+                float WzI_refine = totalWork;
+
+                float refine_deltaP = deltaP;
+
+                // Binary refinement loop:
+                for (int i = 0; i < 8; i++) // Repeatedly halves the refined impulse size to get very close to the zero-crossing point. Ensures accurate final velocity and work at the moment the ball stops compressing into the cushion.
+                {
+                    refine_deltaP /= 2f;
+
+                    UpdateSlipAngles(V_refine, W_refine, N, R, sinθ, cosθ, out float slip_angle_refine, out float slip_angle_prime_refine, θ);
+
+                    Vector3 V_test = UpdateVelocity(V_refine, N, M, MUw, MUs, sinθ, cosθ, slip_angle_refine, slip_angle_prime_refine, refine_deltaP, θ);
+                    Vector3 W_test = UpdateAngularVelocity(W_refine, N, M, R, MUw, MUs, sinθ, cosθ, slip_angle_refine, slip_angle_prime_refine, refine_deltaP);
+
+                    if (V_test.z <= 0f)
+                    {
+                        continue; // Step too big, skip
+                    }
+
+                    // Acceptable, update refine state
+                    V_refine = V_test;
+                    W_refine = W_test;
+
+                    WzI_refine += refine_deltaP * Mathf.Abs(V_refine.z) * cosθ;
+                }
+                // Apply refined results and exit:
+
+                V = V_refine;
+                W = W_refine;
+                totalWork = WzI_refine;
+
+                //Debug.Log($"  > Refined end of compression. totalWork = {totalWork:F6}, final V.z = {V.z:F4}");
+
+                // Once refined, update ball's velocity, spin, and total work done. Then exit compression phase — ball has stopped moving into cushion.
+                return;  // Exit compression phase after refinement
+            }
+            // If no zero-crossing, apply standard update:
+            // Normal step
+            V = V_next;
+            W = W_next;
+            // And accumulate work done during this impulse step:
+            //totalWork += deltaP * Mathf.Abs(V.z) * cosθ; // Represents the energy absorbed by cushion.
+            totalWork += nextDeltaWork;
+
+            //Debug.Log($"[CompressionPhase] END: totalWork = {totalWork:F6}, steps = {steps}, final V.z = {V.z:F4}");
+
+            steps++; // Repeat loop until termination condition.
+        }
+    }
+
+    void RestitutionPhase(ref Vector3 V, ref Vector3 W, Vector3 N, float M, float R, float sinθ, float cosθ, float MUw, float MUs, float deltaP, int maxSteps, float targetWork, float θ)
+    {
+
+        /// Purpose:
+        /// The RestitutionPhase simulates the rebound (restitution) of the ball after compression against the cushion.
+        /// It applies impulses until the accumulated rebound work matches the target energy, which is proportional to the energy absorbed during compression.
+        /// This phase simulates how the cushion restores energy to the ball based on the coefficient of restitution `e`
+
+        // Initialize total rebound work:
+        float totalWork = 0f; // This accumulates the energy restored to the ball during rebound.
+        int steps = 0;
+
+        // Adaptive impulse step: Ensures a safe and effective impulse step based on required rebound energy.
+        deltaP = Mathf.Max(targetWork / maxSteps, deltaP);
+
+        //Debug.Log($"[RestitutionPhase] START: targetWork = {targetWork:F6}, initial V.z = {V.z}");
+
+        // Iterative rebound loop - Runs until either: Rebound work matches or exceeds target. Or max steps are reached.
+        while (totalWork < targetWork && steps < maxSteps)
+        {
+            // Compute slip angles:
+            UpdateSlipAngles(V, W, N, R, sinθ, cosθ, out float slip_angle, out float slip_angle_prime, θ); // Computes friction directions — needed to determine how rebound impulses affect velocity and spin.
+
+            // Estimate rebound energy for the next impulse:
+            float nextDeltaWork = deltaP * Mathf.Abs(V.z) * cosθ; // Estimate how much energy will be restored by applying this impulse.
+
+            //Debug.Log($"[RestitutionPhase] Step {steps} - V.z = {V.z:F4}, W = {W}, slipAngle = {slip_angle:F4}, slipAngle' = {slip_angle_prime:F4}");
+            //Debug.Log($"  - totalWork = {totalWork:F6}, nextDeltaWork = {nextDeltaWork:F6}, combined = {totalWork + nextDeltaWork:F6}");
+
+            // Check if applying this impulse would overshoot:
+            if (totalWork + nextDeltaWork > targetWork) // If true, compute a refined impulse that brings us exactly to the target work, avoiding overshoot.
+            {
+                // Overshoot -> refine
+                float refine_deltaP = (targetWork - totalWork) / (Mathf.Abs(V.z) * cosθ); // Adjust impulse size to just reach the remaining work needed.
+                                                                                          //Debug.LogWarning($"  > Refinement needed! refine_deltaP = {refine_deltaP:F6}");
+
+                // Then update:
+                UpdateSlipAngles(V, W, N, R, sinθ, cosθ, out float slip_angle_refine, out float slip_angle_prime_refine, θ);
+
+                V = UpdateVelocity(V, N, M, MUw, MUs, sinθ, cosθ, slip_angle_refine, slip_angle_prime_refine, refine_deltaP, θ);
+                W = UpdateAngularVelocity(W, N, M, R, MUw, MUs, sinθ, cosθ, slip_angle_refine, slip_angle_prime_refine, refine_deltaP);
+
+                totalWork = targetWork;
+                //Debug.LogWarning($"  > Refined impulse applied. Exiting with totalWork = {totalWork:F6}");
+                return; // No further loop is needed — we’ve reached the target energy.
+            }
+
+            // Normal step (If not overshooting, apply normal impulse step:)
+            V = UpdateVelocity(V, N, M, MUw, MUs, sinθ, cosθ, slip_angle, slip_angle_prime, deltaP, θ);
+            W = UpdateAngularVelocity(W, N, M, R, MUw, MUs, sinθ, cosθ, slip_angle, slip_angle_prime, deltaP);
+
+            totalWork += nextDeltaWork;
+
+            //Debug.Log($"  > Applied deltaP = {deltaP:F6}, updated totalWork = {totalWork:F6}");
+
+            steps++; // Step forward and accumulate work restored.
+                     // Repeat until rebound energy is restored.
+
+            //Debug.Log($"[RestitutionPhase] END: totalWork = {totalWork:F6}, steps = {steps}, final V.z = {V.z:F4}");
+
+            /// This phase models a physically realistic rebound:
+            /// More energetic rebounds for higher e.
+            /// Low or no rebound for low e or minimal compression.
+            /// Restitution is not a hard bounce — it depends on how much energy was absorbed during compression.
+            /// 
+        }
+    }
+
+    void UpdateSlipAngles(Vector3 V, Vector3 W, Vector3 N, float R, float sinθ, float cosθ, out float slip_angle, out float slip_angle_prime, float θ)
+    {
+        //Debug.Log($"[Slip] V = {V}, W = {W}");
+
+        /// Purpose:
+        /// This method calculates the slip angles at two critical contact points:
+        /// 1. Point I (cushion contact point)
+        /// 2. Point C (table contact point)
+        /// Slip angles describe the relative direction and magnitude of sliding at these points due to the combination of the ball’s linear velocity and angular velocity.
+        /// - These are used to compute the friction forces acting at both contact points during compression and restitution phases.
+
+        // Velocities at the cushion (I):
+
+        float v_xI = V.x + W.z * R * sinθ - W.y * R * cosθ;    // EQUATION 12a
+        float v_zI = -V.z * sinθ + W.x * R;                    // EQUATION 12b                     
+
+        // Velocities at the table (C)
+        float v_xC = V.x - W.z * R;                            // EQUATION 13a
+        float v_zC = V.z + W.x * R;                            // EQUATION 13b
+
+        // Directly check for invalid values before Atan2
+        bool invalid = false;
+        if (float.IsNaN(v_xI) || float.IsInfinity(v_xI)) { Debug.LogError("[Slip] v_xI is invalid: " + v_xI); invalid = true; }
+        if (float.IsNaN(v_zI) || float.IsInfinity(v_zI)) { Debug.LogError("[Slip] v_zI is invalid: " + v_zI); invalid = true; }
+        if (float.IsNaN(v_xC) || float.IsInfinity(v_xC)) { Debug.LogError("[Slip] v_xC is invalid: " + v_xC); invalid = true; }
+        if (float.IsNaN(v_zC) || float.IsInfinity(v_zC)) { Debug.LogError("[Slip] v_zC is invalid: " + v_zC); invalid = true; }
+
+        if (invalid)
+        {
+            Debug.LogWarning($@"[Slip] NaN issue detected:
+            Inputs:
+                V = {V}
+                W = {W}
+                R = {R}
+                θ = {θ} rad ({θ * Mathf.Rad2Deg:F1}°)
+                sinθ = {sinθ}
+                cosθ = {cosθ}
+
+            Calculated:
+                v_xI = {v_xI}
+                v_zI = {v_zI}
+                v_xC = {v_xC}
+                v_zC = {v_zC}
+            ");
+
+            slip_angle = 0f;
+            slip_angle_prime = 0f;
+            return;
+        }
+
+        // from SETS (12) and (13)
+        slip_angle = Mathf.Atan2(v_zI, v_xI);
+        if (slip_angle < 0f) slip_angle += 2f * Mathf.PI;      // Ensures that angle is always positive, simplifying later cosine/sine use.?
+
+        slip_angle_prime = Mathf.Atan2(v_zC, v_xC);            // This gives the angle of friction at the base of the ball.
+        if (slip_angle_prime < 0f) slip_angle_prime += 2f * Mathf.PI;
+
+        Vector3 ballPosition = table_Surface.TransformPoint(balls_P[0]);
+
+        /*
+        //Debug.DrawRay(ballPosition, new Vector3(v_xI, 0, v_zI), Color.red, 2f);           // Velocities at the cushion (I):
+        //Debug.DrawRay(ballPosition, new Vector3(v_xC, 0, v_zC), Color.green, 2f);         // Velocities at the table (C)
+
+        Debug.DrawRay(ballPosition, new Vector3(0, 0, v_zI).normalized * 0.2f, Color.yellow, 2f);           // Velocities at the cushion (I):
+        Debug.DrawRay(ballPosition, new Vector3(v_xI, 0, 0).normalized * 0.2f, Color.magenta, 2f);          // Velocities at the cushion (I):
+        Debug.DrawRay(ballPosition + Vector3.down * R, new Vector3(0, 0, v_zC).normalized * 0.2f, Color.blue, 2f);             // Velocities at the table (C)
+        Debug.DrawRay(ballPosition + Vector3.down * R, new Vector3(v_xC, 0, 0).normalized * 0.2f, Color.cyan, 2f);             // Velocities at the table (C)
+        Debug.Log($"[Slip] Slip Angle (deg): {slip_angle * Mathf.Rad2Deg:F2}, Slip Angle' (deg): {slip_angle_prime * Mathf.Rad2Deg:F2}");
+        */
+
+        SlipAtI = slip_angle;
+        SlipAtC = slip_angle_prime;
+    }
+
+    Vector3 UpdateAngularVelocity(Vector3 W, Vector3 N, float M, float R, float MUw, float MUs, float sinθ, float cosθ, float slip_angle, float slip_angle_prime, float deltaP)
+    {
+        /// Purpose:
+        /// This method updates the ball’s angular velocity (W) by applying the effects of impulses due to friction at both:
+        /// - The cushion contact point (I).
+        /// - The table contact point (C).
+        /// Friction at these contact points exerts torques on the ball, altering its spin.
+
+        Vector3 W1 = W;
+        // Precompute factor for impulse effect
+        // This factor scales how much the applied friction impulse affects angular acceleration.  
+        float factor = 5f / (2f * M * R); // Derived from the moment of inertia for a solid sphere: I = (2/5) * M * R² → hence factor = 1/I * R multiplied through the equations.                                   
+
+        // EQUATION 14d
+        W1.x += -factor * (MUw * Mathf.Sin(slip_angle) +
+                    MUs * Mathf.Sin(slip_angle_prime) * (sinθ + MUw * Mathf.Sin(slip_angle) * cosθ)) * deltaP;
+
+
+        // EQUATION 14e
+        W1.z += -factor * (MUw * Mathf.Cos(slip_angle) * sinθ -
+                    MUs * Mathf.Cos(slip_angle_prime) * (sinθ + MUw * Mathf.Sin(slip_angle) * cosθ)) * deltaP;
+
+
+        // EQUATION 14f
+        W1.y += factor * MUw * Mathf.Cos(slip_angle) * cosθ * deltaP;
+
+        //Debug.Log($"[Bounce] Post-bounce W.y = {W.y:F4}");
+        // Debug.Log($"Updated W: {W}"); // If you want to see how angular velocity is changing after each impulse step.
+
+        return W1;
+
+        /// The physical idea:
+        /// - As the ball slides against cushion and table, friction applies torques that cause the ball to spin differently.
+        /// - These torques are modeled as instantaneous changes in angular velocity due to a small impulse (deltaP).
+        /// By applying small impulse steps (deltaP), we avoid large unrealistic changes in angular velocity. (naturally it would be a parameter to tune until you achieve the desired effect)
+    }
+
+    Vector3 UpdateVelocity(Vector3 V, Vector3 N, float M, float MUw, float MUs, float sinθ, float cosθ, float slip_angle, float slip_angle_prime, float deltaP, float θ)
+    {
+        /// Purpose:
+        /// This method updates the ball's linear velocity (V) based on the impulses applied during the compression or restitution phase.
+        /// - Specifically models how frictional impulses at the cushion and table contact points influence the ball's translational motion.
+        Vector3 V1 = V;
+        // EQUATION 14a
+
+        V1.x -= (1f / M) *
+                (MUw * Mathf.Cos(slip_angle) +
+                 MUs * Mathf.Cos(slip_angle_prime) * (sinθ + MUw * Mathf.Sin(slip_angle) * cosθ)) * deltaP;
+
+        // EQUATION 14b
+        V1.z -= (1f / M) *
+            (cosθ - MUw * sinθ * Mathf.Sin(slip_angle) +
+             MUs * Mathf.Sin(slip_angle_prime) * (sinθ + MUw * Mathf.Sin(slip_angle) * cosθ)) * deltaP;
+
+        return V1;
+    }
+
+    void _MathavanCushionModel(ref Vector3 vel, ref Vector3 angvel, int id, Vector3 N, bool isPocketBounce = false)
+    {
+        // Hold down the Alt key and type the numbers in sequence, using the numeric keypad to get Greek Symbols
+        // Φ = Phi:    232
+        // Θ = Theta:  233
+        // µ = mu:     230
+        // √ = Sqrt:   251
+
+        float θ, sinθ, cosθ, slope = 0f, staticSlope = 0f, Φ, h, e, M, R, D, MUw, MUs;
+        D = k_BALL_DIAMETRE;
+        R = k_BALL_RADIUS;
+        M = k_BALL_MASS;
+        e = k_E_C;
+        if (isCushionFriction) { MUw = k_Cushion_MU; } else { MUw = K_F_CUSHION; }
+        MUs = k_F_SLIDE;
+        h = k_RAIL_HEIGHT_LOWER;
+
+        Vector3 V0 = vel;
+        Vector3 W0 = angvel;
+
+        float ballCenter = balls_P[id].y + R;
+        if (ballCenter > k_RAIL_HEIGHT_LOWER)
+        {
+            // the height the ball has to be below to touch k_RAIL_HEIGHT_UPPER 
+            float ballUpperContactHeight = k_RAIL_HEIGHT_UPPER + R;
+            // the balls position between k_RAIL_HEIGHT_LOWER and ballUpperContactHeight, normalized
+            float lerpT = (ballCenter - k_RAIL_HEIGHT_LOWER) / (ballUpperContactHeight - k_RAIL_HEIGHT_LOWER);
+            h = Mathf.Lerp(k_RAIL_HEIGHT_LOWER, k_RAIL_HEIGHT_UPPER, lerpT);
+        }
+
+        //float h2 = (D * heightRatio);                   // according to WPA, the height of the cushion is 63.5% +-5 the Diameter of the ball
+        float P = (h - (balls_P[id].y + R));           // P measures the relative distance between the ball center of mass to the contact point the nose of the cushion has on the surface of the ball, thus returning a Slope angle
+        cushionHeight = P;                             // i often change assignemnt of this variable between `h2` and `P` when debugging (default is P)   
+        heightRatio = h / (R * 2f);
+
+        // --- STEP 1: Rotate into cushion frame ---
+        // Step 1: Check if ball is approaching cushion
+        // Determine dominant direction of the cushion normal
+
+        staticSlope = Mathf.Asin((h - R) / R);
+        slope = P / R;
+        θ = Mathf.Asin(slope);
+        θ = Mathf.Min(θ, 0.4f);
+        sinθ = Mathf.Sin(θ);
+        cosθ = Mathf.Cos(θ);
+
+        if (balls_P[id].y <= P)
+        {
+            cushionCOS = 1f;
+            cushionSIN = 0f;
+        }
+        else
+        {
+            cushionCOS = cosθ;
+            cushionSIN = sinθ;
+        }
+
+        //v3:tAQaPwAAAADWJp++ELVvP88xID0MNEg/KRwhPs8xID1+ZzI/fgfEPs8xID2OgTs/CB5EP88xID3h8jo/dfGJPs8xID3SPC0//XQvP88xID3WRDw/OxwOP88xID0HVkQ/pJFdP88xID2JnTs/ikj4Ps8xID0yWDQ/AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAHfHuvwAAAAC1aQhAAAAAAGU07ToAAAAAAPwAAQEAAQEAAAAAAAE=
+
+        //v3:axIjPwAAAADM96O+juY7PwAAAAAAAAAAjuY7PwAAAAAfFmo9JpJIPwAAAAAfFuq8JpJIPwAAAAAfFuo8vz1VPwAAAAAfFmo9vz1VPwAAAAAfFmq99TovPwAAAAAfFuq8vz1VPwAAAAAfFuq9vz1VPwAAAAAAAAAAXI8iPwAAAAAAAAAAJpJIPwAAAACXkK+9JpJIPwAAAACXkK899TovPwAAAAAfFuo8vz1VPwAAAAAfFuo9juY7PwAAAAAfFmq9JiG8vwAAAABxX84/AAAAAAAAAAAAAAAAAAAAAQEAAQAAAAAAAAE=
+
+        // N should already be normalized
+
+        N = new Vector3(N.x, 0, -N.z);
+        Vector3 tangent = Vector3.Cross(Vector3.up, N).normalized;
+
+        toCushionFrame = Quaternion.LookRotation(N, Vector3.up);
+
+        if (tangent == Vector3.forward || tangent == Vector3.back)
+        {
+            toCushionFrame *= Quaternion.AngleAxis(-(sinθ * Mathf.Rad2Deg) + 15f, tangent);
+            //Debug.Log($"tangent: {tangent}");
+        }
+        else if (tangent == Vector3.right || tangent == Vector3.left)
+        {
+            toCushionFrame *= Quaternion.AngleAxis(-(sinθ * Mathf.Rad2Deg) + 15f, -tangent);
+            //Debug.Log($"tangent: {tangent}");
+        }
+
+
+        Quaternion fromCushionFrame = Quaternion.Inverse(toCushionFrame);
+        Vector3 transformedNormal = toCushionFrame * N;
+
+        Vector3 V = toCushionFrame * V0;
+        Vector3 W = toCushionFrame * W0;
+
+        /*
+        Debug.Log($@"[Mathavan Debug] N = {N},
+        [Quartenion.LookRotation] {(toCushionFrame)}, transformed {transformedNormal}
+        ToCushion Vi = {V}, Wi = {W}
+        [toCushionFrame] N = {toCushionFrame}
+        ");
+        */
+        Vector3 contactPoint3 = table_Surface.TransformPoint(balls_P[0] + -N * R);
+        Debug.DrawRay(contactPoint3, (V.x * Vector3.right).normalized * 0.1f, Color.red, 5f);    // X
+        Debug.DrawRay(contactPoint3, (V.y * Vector3.up).normalized * 0.1f, Color.green, 5f);     // Y
+        Debug.DrawRay(contactPoint3, (V.z * Vector3.forward) * 0.1f, Color.blue, 5f); // Z
+
+
+        // --- STEP 2: Compute contact angle ---
+
+        float deltaP = DeltaPtune; //0.01f;
+        int maxSteps = maxStepsTune; //1000;
+
+        // --- STEP 3: Compression Phase ---
+        float WzI = 0f; // stores Work Done
+        CompressionPhase(ref V, ref W, N, M, R, sinθ, cosθ, MUw, MUs, deltaP, maxSteps, out WzI, θ);
+
+        // --- STEP 4: Restitution Phase ---
+        // inside of pockets are less elastic
+        if (isPocketBounce)
+        {
+            e *= k_POCKET_RESTITUTION;
+        }
+        float targetWork = e * e * WzI;
+        RestitutionPhase(ref V, ref W, N, M, R, sinθ, cosθ, MUw, MUs, deltaP, maxSteps, targetWork, θ);
+
+        // --- STEP 5: Rotate back ---
+        Vector3 Vf = fromCushionFrame * V;
+        Vector3 Wf = fromCushionFrame * W;
+
+        vel = Vf;
+        angvel = Wf;
+
+        /*
+        Debug.Log($@"
+        [Mathavan Debug] N = {N},
+        [Quaternion.Inverse] = {Quaternion.Inverse(toCushionFrame)} 
+        FromCushion Vf = {Vf}, Wf = {Wf}
+        [fromCushionFrame] = fromCushionFrame
+                ");
+        */
+
+        Vector3 contactPoint2 = table_Surface.TransformPoint(balls_P[0] + Vector3.up * R);
+        float axisLength2 = 0.2f;
+
+        Debug.DrawRay(contactPoint2, toCushionFrame * Vector3.right * axisLength2, Color.red, 5f);    // X
+        Debug.DrawRay(contactPoint2, toCushionFrame * Vector3.up * axisLength2, Color.green, 5f);     // Y
+        Debug.DrawRay(contactPoint2, toCushionFrame * Vector3.forward * axisLength2, Color.blue, 5f); // Z
+        Debug.DrawRay(contactPoint2, N * 0.1f, Color.cyan, 5f);
+
+        if (cushionRichDebug) // Choose to display some information about the cushion and Draw some lines (bool default = FALSE) [May cause stall in Unity Editor if there are Multiple collisions happening at once]
+        {
+            // Decomposing between Normal and Tangent
+            Vector3 _Vn = Vector3.Dot(V0, N) * N;                                   // 𝙉𝙊𝙍𝙈𝘼𝙇 𝐕0 • Sin(α) ✔ ♦ 90° DEG ⊥ [Fig. 2 and 7 shows the incident angle Alpha, parallel with the table]
+            Vector3 _Vt = V0 - _Vn;                                                 // 𝙏𝘼𝙉𝙂𝙀𝙉𝙏
+
+            float α = Vector3.Angle(V0, _Vt);                                       // Return angle in Degrees
+            if (α == 0) { α = 90; }                                                 // prevents return 0° at 90°
+            float sinα = Mathf.Sin(α * Mathf.Deg2Rad);                              // sin(α) ✔ ♦ 1 = 90° DEG ⊥
+            float cosα = Mathf.Cos(α * Mathf.Deg2Rad);                              // cos(α) ✔ ♦ 1 = 00° DEG ∥ (why does the Uniode U+2225 for parallel symbol is in italic here? ♫)
+
+            Vector3 reflectedDirection = Vector3.Reflect(V0, N);
+            float angleOfIncidence = Vector3.Angle(V0, N);
+            Φ = angleOfIncidence * Mathf.Deg2Rad;
+
+            Debug.DrawRay(balls[0].transform.parent.TransformPoint(balls_P[0]), new Vector3(0, 1, 0) * P, Color.green, 3f);
+            //Debug.DrawRay(balls[0].transform.parent.TransformPoint(balls_P[0]), _Vn.normalized * R, Color.red, 3f);
+            //Debug.DrawRay(balls[0].transform.parent.TransformPoint(balls_P[0]), _Vt.normalized * R, Color.cyan, 3f);
+
+            Debug.DrawRay(table_Surface.TransformPoint(balls_P[0] + new Vector3(0, P, 0)) - N * R, -_Vn.normalized * D, Color.red, 3f);
+            Debug.DrawRay(table_Surface.TransformPoint(balls_P[0] + new Vector3(0, P, 0)), _Vt.normalized * D, Color.cyan, 3f);
+
+            /// For PHI angle
+            //Debug.Log("Reflected direction_Vectors: " + reflectedDirection);
+            Debug.DrawRay(balls[id].transform.position, reflectedDirection, Color.yellow, 6f);
+            //Debug.Log("<size=14><b><i><color=orange>Angle Of Incident Φ</color></i></b></size>: " + α.ToString("<size=16><color=orange><i>00.0° Degrees</i></color></size>"));
+
+            /// For THETA angle
+            Debug.Log(" <color=white><size=14><b><i>Slope Angle RISE/RUN θ</i></b></size></color>: " + sinθ.ToString("<color=magenta><size=16><i>00.0</i></size></color>") + " Rad <size=16>/</size>" + (θ * Mathf.Rad2Deg).ToString("<color=cyan><size=16><i>00.0</i></size></color>") + "Deg");
+            //Debug.DrawLine(balls[0].transform.parent.TransformPoint(balls_P[0] + new Vector3(0,-P,0)) + N * R, table_Surface.TransformPoint(N.x * R, -θ, N.z * R), Color.magenta, 3f);          
+            Debug.DrawRay(table_Surface.TransformPoint(balls_P[0] + new Vector3(0, P, 0)) - N * R, (N + new Vector3(0, -sinθ, 0)) * D, Color.magenta, 3f);
+
+            /// For HEIGHT `h` and EPSILON `ε`
+            Debug.Log("<size=16><color=#ffe4e1><b><i>Ch: </i></b></color></size> " + (k_RAIL_HEIGHT_UPPER * 1000f).ToString("<size=16><color=#ffe4e1><b><i>00.00mm</i></b></color></size>"));
+            if (k_RAIL_HEIGHT_UPPER * 1000f < 35.71875f || k_RAIL_HEIGHT_UPPER * 1000f > 40.00000f)
+            {
+                Debug.LogWarning("<size=14><color=yellow><b><i>! Warning !</i></b></color></size>");
+                Debug.LogWarning("<size=14><color=yellow><b><i>Cushion Height (Ch) must be within 35.71875mm and 40.0000mm according with official rules</i></b></color></size>");
+                Debug.LogWarning("<size=14><color=yellow><b><i>balls should still behave physically accurate but, outside of its Real-Life Dynamic Range expected for most common billiards tables</i></b></color></size>");
+                Debug.LogWarning("<size=14><color=yellow><b><i>if you are concerned about balls clipping through the mesh on top of the table frame then: enable `Use Rail Height Lower` while keeping your Rail Height Upper aligned with your 3D mesh! :)</i></b></color></size>");
+            }
+
+            // Debug.Log($"After Compression: V = {V}, After Restitution: V = {V1}");
+            //Debug.Log($"Ball {id}: P = {P:F6}, P/R = {P / R:F6}, dynamicSinθ = {sinθ:F6}, dynamicCosθ = {cosθ:F6}");
+            //Debug.Log($"<color=white><size=14><b>ΔWzI</b></size></color>: {WzI.ToString("<color=white><size=16><i>0.0000</i></size></color>")}, targetWork = {targetWork}");
+
+            if (float.IsNaN(sinθ) || float.IsNaN(cosθ) || float.IsNaN(θ) || float.IsNaN(slope))
+            {
+                // if a NaN occurs we will be able to tracedown the culpirit from this list.
+                Debug.LogWarning($@"
+                [θ Calculation Warning]
+                Inputs:
+                 BallY = {balls_P[id].y:F4}
+                     R = {R:F4}
+   h2 (Cushion Height) = {h:F4}
+                     P = {P:F4}
+                 Slope = {slope:F4}
+
+                Results:
+                     θ = {θ:F4} rad ({θ * Mathf.Rad2Deg:F1}°)
+                  sinθ = {sinθ:F4}
+                  cosθ = {cosθ:F4}
+                ");
+            }
+            else
+            {
+                Debug.Log($@"
+                [θ Info]
+                Inputs:
+                    BallY = {balls_P[id].y:F4}                              [< 0: while on slate, > 0: while in air (BY THIS AMOUNT)
+                        R = {R:F4}                                              [RADIUS of the ball]
+                       h2 = {h:F4}                                                 [Vertical cushion HEIGHT (set on `modelData` for your table)]
+                        P = {P:F4}                                                      [Cushion contact POINT on ball surface above D/2 (the magenta line that crosses the ball)]
+                    Slope = {slope:F4}                                                      [The RISE over RUN of θ `theta` (POINT/RADIUS)]
+
+                Results:
+                       θ = {θ:F4} rad ({θ * Mathf.Rad2Deg:F1}° degrees)     [theta ANGLE of the SLOPE at contact POINT]
+                    sinθ = {sinθ:F4}                                        
+                    cosθ = {cosθ:F4}
+                    angle of impact = {α:F4}   [angle of incident, perpendicular = 90, Parallel = 0]
+                    slip angle at I = {SlipAtI:F4}
+                    slip angle at C = {SlipAtC:F4}
+                    Cushion Friction = {MUw:F4}
+                ");
+            }
+        }
+    }
+
+    float ComputeTotalKE(ref Vector3 vel, float M, float R)
+    {
+        ///  Kinetic Energy (KE) 
+        ///  detect if your simulation is introducing non-physical energy gains
+        KE_linear = 0.5f * M * balls_V[0].sqrMagnitude;
+        float I = (2f / 5f) * M * R * R;
+        KE_rotational = 0.5f * I * balls_W[0].sqrMagnitude;
+        KE_total = KE_linear + KE_linear + KE_rotational; // Read only
+        VelocityAxis = vel;
+
+        VelocityMs = balls_V[0].magnitude;
+        smoothedVelocity = Mathf.Lerp(smoothedVelocity, VelocityMs, smoothingFactor);
+        return KE_linear + KE_rotational;
+    }
 
     private float k_MINOR_REGION_CONST;
 
@@ -2326,7 +2957,7 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
         k_F_SPIN_RATE = table.k_F_SPIN_RATE;
         isDRate = table.isDRate;
         K_BOUNCE_FACTOR = table.K_BOUNCE_FACTOR;
-        isHanModel = table.isHanModel;
+        isMatModel = table.isMatModel;
         k_E_C = table.k_E_C;
         isDynamicRestitution = table.isDynamicRestitution;
         isCushionFrictionConstant = table.isCushionFrictionConstant;

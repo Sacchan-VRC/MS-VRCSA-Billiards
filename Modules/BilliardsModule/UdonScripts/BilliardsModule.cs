@@ -52,7 +52,7 @@ public class BilliardsModule : UdonSharpBehaviour
     [NonSerialized] public float K_BOUNCE_FACTOR; // BounceFactor
     [NonSerialized] public float k_POCKET_RESTITUTION; // Reduces bounce inside of pockets
     [Header("Cushion Model:")]
-    [NonSerialized] public bool isHanModel; // bc_UseHan05
+    [NonSerialized] public bool isMatModel; // bc_UseHan05
     [NonSerialized] public float k_E_C; // bc_CoefRestitution
     [NonSerialized] public bool isDynamicRestitution; // bc_DynRestitution
     [NonSerialized] public bool isCushionFrictionConstant; // bc_UseConstFriction
@@ -2192,7 +2192,7 @@ public class BilliardsModule : UdonSharpBehaviour
         k_F_SPIN_RATE = data.bt_CoefSpinRate;
         isDRate = data.bt_ConstDecelRate;
         K_BOUNCE_FACTOR = data.bt_BounceFactor;
-        isHanModel = data.bc_UseHan05;
+        isMatModel = data.bc_UseMat10;
         k_E_C = data.bc_CoefRestitution;
         isDynamicRestitution = data.bc_DynRestitution;
         isCushionFrictionConstant = data.bc_UseConstFriction;
