@@ -65,6 +65,8 @@ public class DesktopManager : UdonSharpBehaviour
     {
         // maybe vrchat lets people switch between pc and vr in the future idk
         isDesktopUser = !Networking.LocalPlayer.IsUserInVR();
+        repositionMode = false;
+        isRepositioning = false;
     }
 
     public void _OnPickupCue()
@@ -157,6 +159,7 @@ public class DesktopManager : UdonSharpBehaviour
                     stopShooting();
                 }
                 repositionMode = !repositionMode;
+                if (isRepositioning) stopRepositioning();
             }
         }
 
@@ -204,7 +207,6 @@ public class DesktopManager : UdonSharpBehaviour
 
                 if (!Input.GetKey(KeyCode.Mouse0))
                 {
-                    isRepositioning = false;
                     stopRepositioning();
                 }
             }
