@@ -1588,6 +1588,7 @@ RectTransform:
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 41614965805754449}
+  - {fileID: 1758626635796569631}
   - {fileID: 747712626605075726}
   - {fileID: 1759660241930826777}
   m_Father: {fileID: 9104901677256325789}
@@ -2125,9 +2126,11 @@ MonoBehaviour:
   DropEventName: 
   ThrowVelocityBoostMinSpeed: 0
   ThrowVelocityBoostScale: 0
+  OutlineRenderers: []
   currentlyHeldBy: {fileID: 0}
   pickupable: 1
   proximity: 2
+  version: 0
 --- !u!114 &8610489855653554089
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2558,9 +2561,11 @@ MonoBehaviour:
   DropEventName: 
   ThrowVelocityBoostMinSpeed: 0
   ThrowVelocityBoostScale: 0
+  OutlineRenderers: []
   currentlyHeldBy: {fileID: 0}
   pickupable: 1
   proximity: 2
+  version: 0
 --- !u!114 &2964188040601636001
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2997,9 +3002,11 @@ MonoBehaviour:
   DropEventName: 
   ThrowVelocityBoostMinSpeed: 0
   ThrowVelocityBoostScale: 0
+  OutlineRenderers: []
   currentlyHeldBy: {fileID: 0}
   pickupable: 1
   proximity: 2
+  version: 0
 --- !u!114 &8611947028390742269
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -3169,9 +3176,11 @@ MonoBehaviour:
   DropEventName: 
   ThrowVelocityBoostMinSpeed: 0
   ThrowVelocityBoostScale: 0
+  OutlineRenderers: []
   currentlyHeldBy: {fileID: 0}
   pickupable: 1
   proximity: 2
+  version: 0
 --- !u!114 &554600951990795516
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -4605,9 +4614,11 @@ MonoBehaviour:
   DropEventName: 
   ThrowVelocityBoostMinSpeed: 0
   ThrowVelocityBoostScale: 0
+  OutlineRenderers: []
   currentlyHeldBy: {fileID: 0}
   pickupable: 1
   proximity: 2
+  version: 0
 --- !u!114 &6614054164497523139
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -5173,9 +5184,11 @@ MonoBehaviour:
   DropEventName: 
   ThrowVelocityBoostMinSpeed: 0
   ThrowVelocityBoostScale: 0
+  OutlineRenderers: []
   currentlyHeldBy: {fileID: 0}
   pickupable: 1
   proximity: 2
+  version: 0
 --- !u!114 &4752801195953636652
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -5381,6 +5394,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   AllowCollisionOwnershipTransfer: 0
+  ForceKinematicOnRemote: 0
 --- !u!1 &2842256633183674662
 GameObject:
   m_ObjectHideFlags: 0
@@ -5724,9 +5738,11 @@ MonoBehaviour:
   DropEventName: 
   ThrowVelocityBoostMinSpeed: 0
   ThrowVelocityBoostScale: 0
+  OutlineRenderers: []
   currentlyHeldBy: {fileID: 0}
   pickupable: 1
   proximity: 2
+  version: 0
 --- !u!114 &7290944754937255076
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -6579,9 +6595,11 @@ MonoBehaviour:
   DropEventName: 
   ThrowVelocityBoostMinSpeed: 0
   ThrowVelocityBoostScale: 0
+  OutlineRenderers: []
   currentlyHeldBy: {fileID: 0}
   pickupable: 1
   proximity: 2
+  version: 0
 --- !u!114 &8907278741719808527
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -6871,9 +6889,11 @@ MonoBehaviour:
   DropEventName: 
   ThrowVelocityBoostMinSpeed: 1
   ThrowVelocityBoostScale: 1
+  OutlineRenderers: []
   currentlyHeldBy: {fileID: 0}
   pickupable: 0
   proximity: 2
+  version: 0
 --- !u!114 &3408923281565144872
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -6887,6 +6907,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   AllowCollisionOwnershipTransfer: 0
+  ForceKinematicOnRemote: 0
 --- !u!114 &6584396154955782145
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -7101,9 +7122,11 @@ MonoBehaviour:
   DropEventName: 
   ThrowVelocityBoostMinSpeed: 1
   ThrowVelocityBoostScale: 1
+  OutlineRenderers: []
   currentlyHeldBy: {fileID: 0}
   pickupable: 0
   proximity: 2
+  version: 0
 --- !u!114 &2948694613320407311
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -7165,6 +7188,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   AllowCollisionOwnershipTransfer: 0
+  ForceKinematicOnRemote: 0
 --- !u!1 &3247918946330016694
 GameObject:
   m_ObjectHideFlags: 0
@@ -7949,9 +7973,11 @@ MonoBehaviour:
   DropEventName: 
   ThrowVelocityBoostMinSpeed: 0
   ThrowVelocityBoostScale: 0
+  OutlineRenderers: []
   currentlyHeldBy: {fileID: 0}
   pickupable: 1
   proximity: 2
+  version: 0
 --- !u!114 &5727548590239520560
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -8054,7 +8080,7 @@ MonoBehaviour:
     PrefabModifications: []
     SerializationNodes: []
   _udonSharpBackingUdonBehaviour: {fileID: 3671293032783138245}
-  PHYSICSNAME: <color=#FFD700>Advanced V0.5M</color>
+  PHYSICSNAME: <color=#FFD700>Advanced V0.6Y</color>
   hitSounds:
   - {fileID: 8300000, guid: c5c3277a589929d49be99bc2f100aae1, type: 3}
   - {fileID: 8300000, guid: e55c033e7d8b29e409baf5343b67bead, type: 3}
@@ -8099,8 +8125,24 @@ MonoBehaviour:
     m_PreInfinity: 2
     m_PostInfinity: 2
     m_RotationOrder: 4
+  KE_linear: 0
+  KE_rotational: 0
+  KE_total: 0
+  VelocityAxis: {x: 0, y: 0, z: 0}
+  VelocityMs: 0
+  smoothedVelocity: 0
+  smoothedVelocityVXZ: 0
+  smoothingFactor: 0.1
+  muFactor: 1
+  mu: 0
+  ThrowAngleDeg: 0
+  cutAngleDeg: 0
+  W_roll: 0
   ballRichDebug: 0
-  isCushionRichDebug: 0
+  cushionRichDebug: 0
+  useCorrectAngle: 0
+  miscueRichDebug: 0
+  qTipOffsetRichDebug: 0
   Test_Mode: 0
   Test_MoveSpeed: 3
   Test_RotSpeed: 50
@@ -8606,9 +8648,11 @@ MonoBehaviour:
   DropEventName: 
   ThrowVelocityBoostMinSpeed: 0
   ThrowVelocityBoostScale: 0
+  OutlineRenderers: []
   currentlyHeldBy: {fileID: 0}
   pickupable: 1
   proximity: 2
+  version: 0
 --- !u!114 &5691993829058577495
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -9444,9 +9488,11 @@ MonoBehaviour:
   DropEventName: 
   ThrowVelocityBoostMinSpeed: 1
   ThrowVelocityBoostScale: 1
+  OutlineRenderers: []
   currentlyHeldBy: {fileID: 0}
   pickupable: 0
   proximity: 2
+  version: 0
 --- !u!114 &5416600095135363924
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -9482,6 +9528,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   AllowCollisionOwnershipTransfer: 0
+  ForceKinematicOnRemote: 0
 --- !u!114 &2852399683648963271
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -9705,9 +9752,11 @@ MonoBehaviour:
   DropEventName: 
   ThrowVelocityBoostMinSpeed: 1
   ThrowVelocityBoostScale: 1
+  OutlineRenderers: []
   currentlyHeldBy: {fileID: 0}
   pickupable: 0
   proximity: 2
+  version: 0
 --- !u!114 &5145704577852981667
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -9769,6 +9818,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   AllowCollisionOwnershipTransfer: 0
+  ForceKinematicOnRemote: 0
 --- !u!1 &4824947245244297056
 GameObject:
   m_ObjectHideFlags: 0
@@ -10985,6 +11035,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   AllowCollisionOwnershipTransfer: 0
+  ForceKinematicOnRemote: 0
 --- !u!1 &5343032500274269543
 GameObject:
   m_ObjectHideFlags: 0
@@ -11620,9 +11671,11 @@ MonoBehaviour:
   DropEventName: 
   ThrowVelocityBoostMinSpeed: 0
   ThrowVelocityBoostScale: 0
+  OutlineRenderers: []
   currentlyHeldBy: {fileID: 0}
   pickupable: 1
   proximity: 2
+  version: 0
 --- !u!114 &1522757003649291162
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -19015,17 +19068,17 @@ RectTransform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 5952989828189068404}
-  m_LocalRotation: {x: 0.00000062584854, y: 0.0000003576278, z: 0.000000032004746,
+  m_LocalRotation: {x: 0.00000065565087, y: 0.00000032782552, z: 0.00000003200474,
     w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: -0.026643045}
-  m_LocalScale: {x: 3.624698, y: 3.6246927, z: 2.501046}
+  m_LocalPosition: {x: 0, y: 0, z: -0.40006524}
+  m_LocalScale: {x: 0.39390355, y: 0.3939028, z: 0.0039390414}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 747712626605075726}
+  m_Father: {fileID: 1877039106950581679}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 0.000431662, y: 153.68695}
+  m_AnchoredPosition: {x: 0.000056483346, y: 55.40148}
   m_SizeDelta: {x: 180, y: 50}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &3977131060193360782
@@ -20502,9 +20555,11 @@ MonoBehaviour:
   DropEventName: 
   ThrowVelocityBoostMinSpeed: 0
   ThrowVelocityBoostScale: 0
+  OutlineRenderers: []
   currentlyHeldBy: {fileID: 0}
   pickupable: 1
   proximity: 2
+  version: 0
 --- !u!114 &2296422251598292300
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -22443,9 +22498,11 @@ MonoBehaviour:
   DropEventName: 
   ThrowVelocityBoostMinSpeed: 0
   ThrowVelocityBoostScale: 0
+  OutlineRenderers: []
   currentlyHeldBy: {fileID: 0}
   pickupable: 1
   proximity: 2
+  version: 0
 --- !u!114 &9076140770058837992
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -22872,9 +22929,11 @@ MonoBehaviour:
   DropEventName: 
   ThrowVelocityBoostMinSpeed: 0
   ThrowVelocityBoostScale: 0
+  OutlineRenderers: []
   currentlyHeldBy: {fileID: 0}
   pickupable: 1
   proximity: 2
+  version: 0
 --- !u!114 &776836692186236629
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -23397,9 +23456,11 @@ MonoBehaviour:
   DropEventName: 
   ThrowVelocityBoostMinSpeed: 0
   ThrowVelocityBoostScale: 0
+  OutlineRenderers: []
   currentlyHeldBy: {fileID: 0}
   pickupable: 1
   proximity: 2
+  version: 0
 --- !u!114 &3019040090504584953
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -23681,7 +23742,6 @@ RectTransform:
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 4256439889820562158}
-  - {fileID: 1758626635796569631}
   m_Father: {fileID: 1877039106950581679}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
@@ -25849,9 +25909,11 @@ MonoBehaviour:
   DropEventName: 
   ThrowVelocityBoostMinSpeed: 0
   ThrowVelocityBoostScale: 0
+  OutlineRenderers: []
   currentlyHeldBy: {fileID: 0}
   pickupable: 1
   proximity: 2
+  version: 0
 --- !u!114 &3626756219218941692
 MonoBehaviour:
   m_ObjectHideFlags: 0
