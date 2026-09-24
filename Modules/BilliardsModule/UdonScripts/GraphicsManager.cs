@@ -67,10 +67,12 @@ public class GraphicsManager : UdonSharpBehaviour
     private GameObject[] balls;
     private Transform[] ballTransforms;
     private Vector3[] ballPositions;
+    MaterialPropertyBlock TableMPB;
 
     public void _Init(BilliardsModule table_)
     {
         table = table_;
+        TableMPB = new MaterialPropertyBlock();
 
         // copy some temporaries
         balls = table.balls;
@@ -230,9 +232,13 @@ public class GraphicsManager : UdonSharpBehaviour
         const float multiplier = 3.0f;
 #endif
         tableCurrentColour = Color.Lerp(tableCurrentColour, tableSrcColour, Time.deltaTime * multiplier);
+        TableMPB.SetColor("_EmissionColor", tableCurrentColour);
         for (int i = 0; i < table.tableModels[table.tableModelLocal].tableMaterial.Length; i++)
         {
-            tableMaterial[i].SetColor("_EmissionColor", tableCurrentColour);
+            for (int j = 0; j < table.tableModels[table.tableModelLocal].tableMeshR.Length; j++)
+            {
+                table.tableModels[table.tableModelLocal].tableMeshR[j].SetPropertyBlock(TableMPB);
+            }
         }
     }
 
