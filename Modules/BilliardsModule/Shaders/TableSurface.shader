@@ -157,8 +157,8 @@ Shader "MS-VRCSA/TableSurface"
       #endif
 
          o.albedo     = final;
-         o.metallic   = sample_metalic.r * _Metallic;
-         o.smoothness = sample_metalic.a * _Smoothness;
+         o.metallic   = sample_metalic.r * UNITY_ACCESS_INSTANCED_PROP( Props, _Metallic );
+         o.smoothness = sample_metalic.a * UNITY_ACCESS_INSTANCED_PROP( Props, _Smoothness );
 
          float4 _TimerPct_var = UNITY_ACCESS_INSTANCED_PROP( Props, _TimerPct );
          float timer_pct = clamp(_TimerPct_var, 0, 1);
