@@ -1,4 +1,4 @@
-﻿Shader "metaphira/PhysicsDummy"
+﻿Shader "MS-VRCSA/PhysicsDummy"
 {
     Properties
     {

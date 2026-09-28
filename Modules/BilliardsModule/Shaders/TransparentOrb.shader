@@ -1,4 +1,4 @@
-﻿Shader "metaphira/Transparent Orb"
+﻿Shader "MS-VRCSA/Transparent Orb"
 {
     Properties
     {

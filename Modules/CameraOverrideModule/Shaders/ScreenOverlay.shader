@@ -1,4 +1,4 @@
-﻿Shader "metaphira/ScreenOverlay"
+﻿Shader "MS-VRCSA/ScreenOverlay"
 {
     Properties
     {

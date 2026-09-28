@@ -1,4 +1,4 @@
-﻿Shader "metaphira/Timer (Quest)"
+﻿Shader "MS-VRCSA/Timer (Quest)"
 {
     Properties
     {

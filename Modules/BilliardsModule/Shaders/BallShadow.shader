@@ -1,4 +1,4 @@
-﻿Shader "metaphira/Ball Shadow"
+﻿Shader "MS-VRCSA/Ball Shadow"
 {
    Properties
    {

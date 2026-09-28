@@ -1,4 +1,4 @@
-﻿Shader "metaphira/TableSurface (Quest)"
+﻿Shader "MS-VRCSA/TableSurface (Quest)"
 {
    Properties
    {

@@ -1,5 +1,5 @@
 ﻿// converted from old surf shader by AI (Opus 5.5)
-Shader "metaphira/TableSurface"
+Shader "MS-VRCSA/TableSurface"
 {
    Properties
    {

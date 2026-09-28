@@ -1,4 +1,4 @@
-﻿Shader "metaphira/Timer"
+﻿Shader "MS-VRCSA/Timer"
 {
     Properties
     {

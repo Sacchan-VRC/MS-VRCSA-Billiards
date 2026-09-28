@@ -1,4 +1,4 @@
-﻿Shader "metaphira/CueCenter (Quest)"
+﻿Shader "MS-VRCSA/CueCenter (Quest)"
 {
     Properties
     {

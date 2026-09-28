@@ -1,4 +1,4 @@
-﻿Shader "metaphira/Scorecard"
+﻿Shader "MS-VRCSA/Scorecard"
 {
    Properties
    {

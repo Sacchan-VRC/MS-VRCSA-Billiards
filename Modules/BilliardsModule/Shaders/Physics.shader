@@ -1,4 +1,4 @@
-﻿Shader "metaphira/Physics"
+﻿Shader "MS-VRCSA/Physics"
 {
     Properties
     {

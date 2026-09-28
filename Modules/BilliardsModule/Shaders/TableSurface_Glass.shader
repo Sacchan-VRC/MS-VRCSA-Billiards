@@ -1,4 +1,4 @@
-﻿Shader "metaphira/TableSurface (Glass)"
+﻿Shader "MS-VRCSA/TableSurface (Glass)"
 {
     Properties
     {

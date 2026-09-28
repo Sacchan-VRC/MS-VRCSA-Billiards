@@ -1,4 +1,4 @@
-﻿Shader "metaphira/GameUI"
+﻿Shader "MS-VRCSA/GameUI"
 {
 	Properties
 	{
