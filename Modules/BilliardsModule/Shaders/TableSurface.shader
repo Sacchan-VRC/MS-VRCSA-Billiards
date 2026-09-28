@@ -9,6 +9,8 @@ Shader "metaphira/TableSurface"
       _MainTex ("Albedo (RGB), TintMap(A)", 2D) = "white" {}
       _EmissionMap ("Emission Mask", 2D) = "black" {}
       _Metalic ("Metallic(R)/Smoothness(A)", 2D) = "white" {}
+      _Smoothness ("Smoothness", Range(0, 1)) = 1
+      _Metallic ("Metallic", Range(0, 1)) = 1
       [Toggle(DETAIL_CLOTH)]_UseDetailCloth ("Use Cloth Detail Texture", Range(0,1)) = 0
       _DetailCloth ("Cloth Detail", 2D) = "white" {}
       _ClothHue ("Cloth Hue", Range(0, 1)) = 0
@@ -24,7 +26,7 @@ Shader "metaphira/TableSurface"
       _TimerPct ("Timer Percentage", Range(0, 1)) = 1
 
       [Header(VRC Light Volumes)]
-      [Toggle(INTEGRATE_VRCLV)]_IntegrateVRCLV ("Integrate VRC Light Volumes", Int) = 1
+      [Toggle(INTEGRATE_VRCLV)]_IntegrateVRCLV ("Integrate VRC Light Volumes", Int) = 0
    }
    SubShader
    {
@@ -49,6 +51,8 @@ Shader "metaphira/TableSurface"
       UNITY_INSTANCING_BUFFER_START( Props )
           UNITY_DEFINE_INSTANCED_PROP( half4, _EmissionColor)
           UNITY_DEFINE_INSTANCED_PROP( half4, _Color)
+          UNITY_DEFINE_INSTANCED_PROP( float, _Smoothness)
+          UNITY_DEFINE_INSTANCED_PROP( float, _Metallic)
           UNITY_DEFINE_INSTANCED_PROP( float, _ClothHue)
           UNITY_DEFINE_INSTANCED_PROP( float, _ClothSaturation)
           UNITY_DEFINE_INSTANCED_PROP( float, _MaskStrengthCloth)
@@ -153,8 +157,8 @@ Shader "metaphira/TableSurface"
       #endif
 
          o.albedo     = final;
-         o.metallic   = sample_metalic.r;
-         o.smoothness = sample_metalic.a;
+         o.metallic   = sample_metalic.r * _Metallic;
+         o.smoothness = sample_metalic.a * _Smoothness;
 
          float4 _TimerPct_var = UNITY_ACCESS_INSTANCED_PROP( Props, _TimerPct );
          float timer_pct = clamp(_TimerPct_var, 0, 1);
@@ -183,7 +187,6 @@ Shader "metaphira/TableSurface"
          #pragma shader_feature_local INTEGRATE_VRCLV
          #pragma multi_compile_instancing
 
-         #define UNITY_PASS_FORWARDBASE
          #include "UnityPBSLighting.cginc"
          #include "AutoLight.cginc"
 
@@ -313,19 +316,27 @@ Shader "metaphira/TableSurface"
 
             float3 lvSpecular = 0;
             #if defined(INTEGRATE_VRCLV)
-               float3 worldPosOffset    = 0;
-               float  pointLightShading = 3;
-               float3 L0, L1r, L1g, L1b;
+               #if VRCLV_VERSION > 2
+                  float3 worldPosOffset    = 0;
+                  float  pointLightShading = 3;
+                  float3 L0, L1r, L1g, L1b;
 
-               #if defined(LIGHTMAP_ON) || defined(DYNAMICLIGHTMAP_ON)
-                  LightVolumeAdditiveSHSpecular(worldPos, L0, L1r, L1g, L1b, lvSpecular,
-                     s.albedo, s.smoothness, s.metallic, normalWS, viewDir, worldPosOffset, pointLightShading);
-                  gi.indirect.diffuse = max(gi.indirect.diffuse + LightVolumeEvaluate(normalWS, L0, L1r, L1g, L1b), 0);
+                  #if defined(LIGHTMAP_ON) || defined(DYNAMICLIGHTMAP_ON)
+                     LightVolumeAdditiveSHSpecular(worldPos, L0, L1r, L1g, L1b, lvSpecular,
+                        s.albedo, s.smoothness, s.metallic, normalWS, viewDir, worldPosOffset, pointLightShading);
+                     gi.indirect.diffuse = max(gi.indirect.diffuse + LightVolumeEvaluate(normalWS, L0, L1r, L1g, L1b), 0);
+                  #else
+                     LightVolumeSHSpecular(worldPos, L0, L1r, L1g, L1b, lvSpecular,
+                        s.albedo, s.smoothness, s.metallic, normalWS, viewDir, worldPosOffset, pointLightShading);
+                     gi.indirect.diffuse = max(LightVolumeEvaluate(normalWS, L0, L1r, L1g, L1b), 0)
+                                         + i.ambientOrLightmapUV.rgb;
+                  #endif
                #else
-                  LightVolumeSHSpecular(worldPos, L0, L1r, L1g, L1b, lvSpecular,
-                     s.albedo, s.smoothness, s.metallic, normalWS, viewDir, worldPosOffset, pointLightShading);
-                  gi.indirect.diffuse = max(LightVolumeEvaluate(normalWS, L0, L1r, L1g, L1b), 0)
-                                      + i.ambientOrLightmapUV.rgb;
+                  float3 L0, L1r, L1g, L1b;
+                  LightVolumeSH(i.worldPos, L0, L1r, L1g, L1b);
+                  float3 LVLight = LightVolumeEvaluate(normalize(normalWS), L0, L1r, L1g, L1b);
+                  s.emission += (LVLight * s.albedo);
+                  lvSpecular = LightVolumeSpecularDominant(s.albedo, s.smoothness, 0, normalWS, viewDir, L0, L1r, L1g, L1b);
                #endif
             #endif
 
@@ -358,7 +369,6 @@ Shader "metaphira/TableSurface"
          #pragma shader_feature_local DETAIL_OTHER
          #pragma multi_compile_instancing
 
-         #define UNITY_PASS_FORWARDADD
          #include "UnityPBSLighting.cginc"
          #include "AutoLight.cginc"
 
@@ -458,8 +468,6 @@ Shader "metaphira/TableSurface"
          #pragma multi_compile_shadowcaster
          #pragma multi_compile_instancing
 
-         #define UNITY_PASS_SHADOWCASTER
-
          struct appdata_custom
          {
             float4 vertex : POSITION;
@@ -504,7 +512,6 @@ Shader "metaphira/TableSurface"
          #pragma shader_feature_local DETAIL_OTHER
          #pragma multi_compile_instancing
 
-         #define UNITY_PASS_META
          #include "UnityMetaPass.cginc"
 
          struct appdata_custom

@@ -13,6 +13,7 @@ Material:
   m_ModifiedSerializedProperties: 0
   m_ValidKeywords:
   - DETAIL_CLOTH
+  - INTEGRATE_VRCLV
   m_InvalidKeywords:
   - DETAILCLOTH
   - _EMISSION
@@ -120,12 +121,14 @@ Material:
     - _GlossMapScale: 1
     - _Glossiness: 0
     - _GlossyReflections: 1
+    - _IntegrateVRCLV: 1
     - _MaskStrengthCloth: 1
     - _MaskStrengthOther: 1
-    - _Metallic: 0
+    - _Metallic: 1
     - _Mode: 0
     - _OcclusionStrength: 1
     - _Parallax: 0.02
+    - _Smoothness: 1
     - _SmoothnessTextureChannel: 0
     - _SpecularHighlights: 1
     - _SrcBlend: 1
