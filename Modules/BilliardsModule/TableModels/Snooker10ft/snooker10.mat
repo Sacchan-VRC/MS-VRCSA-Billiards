@@ -99,7 +99,7 @@ Material:
     - _Cutoff: 0.5
     - _DetailBrightness: 1
     - _DetailCloth: 0
-    - _DetailClothBrightness: 0.489
+    - _DetailClothBrightness: 1
     - _DetailCloth_b: 0
     - _DetailNormalMapScale: 1
     - _DetailOtherBrightness: 1

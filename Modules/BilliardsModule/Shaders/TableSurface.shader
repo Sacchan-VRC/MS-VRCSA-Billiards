@@ -6,7 +6,7 @@ Shader "MS-VRCSA/TableSurface"
       _EmissionColor ("Emission Color", Color) = (1,1,1,1)
       _Color ("Tint Color", Color) = (1,1,1,1)
 
-      _MainTex ("Albedo (RGB), TintMap(A)", 2D) = "white" {}
+      _MainTex ("Albedo (RGB), AlphaClip(A)", 2D) = "white" {}
       _EmissionMap ("Emission Mask", 2D) = "black" {}
       _Metalic ("Metallic(R)/Smoothness(A)", 2D) = "white" {}
       _Smoothness ("Smoothness", Range(0, 1)) = 1
@@ -129,11 +129,12 @@ Shader "MS-VRCSA/TableSurface"
          TableSurface o;
 
          half4 sample_diffuse  = tex2D(_MainTex, uv);
+         clip(sample_diffuse.a-.5);
          half4 sample_emission = tex2D(_EmissionMap, uv);
          half4 sample_metalic  = tex2D(_Metalic, uv);
 
          float4 _Color_var = UNITY_ACCESS_INSTANCED_PROP( Props, _Color );
-         float3 final = lerp(sample_diffuse.rgb, _Color_var.rgb * sample_diffuse.rgb * 2.0, pow(sample_diffuse.a, 0.1));
+         float3 final = _Color_var.rgb * sample_diffuse.rgb;
 
       #if defined(DETAIL_CLOTH)
          float4 _DetailClothBrightness_var = UNITY_ACCESS_INSTANCED_PROP( Props, _DetailClothBrightness );
@@ -472,11 +473,13 @@ Shader "MS-VRCSA/TableSurface"
          {
             float4 vertex : POSITION;
             float3 normal : NORMAL;
+            float2 texcoord : TEXCOORD0;
             UNITY_VERTEX_INPUT_INSTANCE_ID
          };
 
          struct v2f_shadow
          {
+            float2 uv       : TEXCOORD0;
             UNITY_VERTEX_INPUT_INSTANCE_ID
             V2F_SHADOW_CASTER;
             UNITY_VERTEX_OUTPUT_STEREO
@@ -485,6 +488,7 @@ Shader "MS-VRCSA/TableSurface"
          v2f_shadow vertShadow(appdata_custom v)
          {
             v2f_shadow o;
+            o.uv          = TRANSFORM_TEX(v.texcoord, _MainTex);
             UNITY_SETUP_INSTANCE_ID(v);
             UNITY_INITIALIZE_OUTPUT(v2f_shadow, o);
             UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO(o);
@@ -493,7 +497,9 @@ Shader "MS-VRCSA/TableSurface"
          }
 
          float4 fragShadow(v2f_shadow i) : SV_Target
-         {
+         {  
+            half4 sample_diffuse  = tex2D(_MainTex, i.uv);
+            clip(sample_diffuse.a-.5);
             SHADOW_CASTER_FRAGMENT(i)
          }
          ENDCG
