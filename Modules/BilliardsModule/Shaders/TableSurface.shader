@@ -10,7 +10,7 @@ Shader "MS-VRCSA/TableSurface"
       _EmissionMap ("Emission Mask", 2D) = "black" {}
       _Metalic ("Metallic(R)/Smoothness(A)", 2D) = "white" {}
       _Smoothness ("Smoothness", Range(0, 1)) = 1
-      _Metallic ("Metallic", Range(0, 1)) = 1
+      _Metallicness ("Metallic", Range(0, 1)) = 1
       [Toggle(DETAIL_CLOTH)]_UseDetailCloth ("Use Cloth Detail Texture", Range(0,1)) = 0
       _DetailCloth ("Cloth Detail", 2D) = "white" {}
       _ClothHue ("Cloth Hue", Range(0, 1)) = 0
@@ -52,7 +52,7 @@ Shader "MS-VRCSA/TableSurface"
           UNITY_DEFINE_INSTANCED_PROP( half4, _EmissionColor)
           UNITY_DEFINE_INSTANCED_PROP( half4, _Color)
           UNITY_DEFINE_INSTANCED_PROP( float, _Smoothness)
-          UNITY_DEFINE_INSTANCED_PROP( float, _Metallic)
+          UNITY_DEFINE_INSTANCED_PROP( float, _Metallicness)
           UNITY_DEFINE_INSTANCED_PROP( float, _ClothHue)
           UNITY_DEFINE_INSTANCED_PROP( float, _ClothSaturation)
           UNITY_DEFINE_INSTANCED_PROP( float, _MaskStrengthCloth)
@@ -158,7 +158,7 @@ Shader "MS-VRCSA/TableSurface"
       #endif
 
          o.albedo     = final;
-         o.metallic   = sample_metalic.r * UNITY_ACCESS_INSTANCED_PROP( Props, _Metallic );
+         o.metallic   = sample_metalic.r * UNITY_ACCESS_INSTANCED_PROP( Props, _Metallicness );
          o.smoothness = sample_metalic.a * UNITY_ACCESS_INSTANCED_PROP( Props, _Smoothness );
 
          float4 _TimerPct_var = UNITY_ACCESS_INSTANCED_PROP( Props, _TimerPct );
