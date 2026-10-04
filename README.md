@@ -51,7 +51,8 @@ See it in action in the VRChat world 'Sacc's Snooker Club'
 	- 3 Tables from the VRC Billiards Community Edition package are included  
   
 ### Setup:  
-Import the package  
+Remove any other pool table packages (Some files may have the same IDs, causing conflicts)  
+Import this package  
 Click MS-VRCSA->Set Up Pool Table Layers  
 	- this names layer 22 to 'BilliardsModule' and sets the collision matrix so that it only collides with itself  
 Place one or more Prefab/MS-VRCA Table prefabs into your scene  
@@ -59,13 +60,12 @@ You can freely add/remove tables from the tables list under the hierarchy at Bil
 	- The table prefabs are in the folder Modules/BilliardsModule/Prefabs  
 Because tables can be swapped out they can't easily be lightmapped. Use just one table if you wish to have light mapping  
 	- Remove the unused tables from the hierarchy under BilliardsModule/intl.table/  
-Alternatively if using VRC Light Volumes by RED_SIM, make sure to change the table surface shader to the _VRCLV Variant.  
   
 ### Table Creation  
 Duplicate an existing table prefab and replace the mesh ('table' object) with your own.  
-Place the table prefab on its own in to the scene and select and enable gizmos it to display its physical setup, adjust ModelData settings to match your model.  
+Place the table prefab on its own in to the scene and select and enable gizmos it to display its physical setup, adjust ModelData settings to match your new mesh.  
 Copy the hierarchy of the existing tables and you should be fine, objects whose name begin with a period are used in the code, so don't change their names.  
-The shader for the table's Metallic/Smoothness texture can be exported as a 2 channel png with photoshop's Export As and ticking the '[x]Smaller Filer (8-bit)' option  
+The TableSurface shader's Metallic/Smoothness texture can be exported as a 2 channel png with photoshop's 'Export As' and ticking the '[x]Smaller File (8-bit)' option (not required)  
   
 ### Future  
 There's still a lot that can be done to improve things - I don't intend to do any more major work on this myself - Sacchan  
@@ -82,7 +82,7 @@ There's still a lot that can be done to improve things - I don't intend to do an
 - Optimization  
 - 10Ball mode  
 - Other standards for 8/9ball (WPA ..)  
-- I have completely neglected the Quest setup stuff, idk if it still works, never used it  
+- Quest works but there are no quest specific optimizations.  
 - I have completely removed the referee stuff, there's probably a simpler way to handle it now, and 99% of people wont use it  
 - Message me if you're a programmer and need help working something out  
   
@@ -94,7 +94,15 @@ Neko Mabel:
 Sacchan:  
 - Everything else  
   
-### Changes in version 1.14  
+### Major changes in version 1.15  
+New version of the physics script:  
+	- new cushion model (MAT10 replacing HAN05)  
+	- See commits by NMabel for more info: 2dcabab, 2a325d2  
+Added null checks on the debugger, so you can simply delete it if you don't want it visible.  
+TableSurface shader rewritten by Claude as a vert/frag shader to support light volumes properly and only require one shader.  
+	known issue: If light volumes is not installed, ticking 'Integrate VRC Light Volumes' may make it disappear from the selectable shaders list. Untick it and reimport the shader file to fix.  
+
+### Major changes in version 1.14  
 Added a VRC Light Volumes version of the custom table shader. Change if yourself if using.  
 Added 3 tables from the VRCBCE package (metal, scifi, main)  
 Added two variant prefabs, (All tables, VRCBCE tables only)  
@@ -103,46 +111,3 @@ Fix LoD issue with pocket blockers state not changing if match start was not wit
 Fix a bug where teams could be inverted when switching to snooker after playing 4Ball  
 Optimize cue's FixedUpdate() a bit, running correct code for owner/non-owner, this may fix a rare bug where cue becomes un-grabbable  
   
-### Changes in version 1.13  
-Fix ball shadow render queue  
-Reduce size of some networked variables  
-Improved 8ball rules (pocketing opponents color is NOT ball-in-hand)  
-Fixed rare case causing ball in hand erroneously (Thx eijis-pan)  
-Removed sync of cue skin (commented it, add it back yourself if you use it)  
-Fixed size of Snooker D on 7ft and classic table  
-  
-### Changes in version 1.12  
-Fixed menu not showing in desktop view + associated crash  
-Fixed pickups remaining active after resetting  
-  
-### Changes in version 1.11  
-Guideline2 no longer visible outside of practice mode  
-Add 5s and 10s timer options  
-Fixed diamond positions on Classic table  
-Stop using US colors as default in 8ball  
-  
-### Major Changes in version 1.1  
-Implemented more rules from the APA standard  
-	- Soft break is a foul (4 balls must touch cushion)  
-	- Balls must touch cushion (or pocket) after colliding  
-	- Golden breaks  
-	- Scratch on break means ball in hand is limited to kitchen  
-	- Never choose color set if both colors are pocketed (even if 2blue, 1orange)  
-Internal table collision setup re-worked  
-	- Table width/height settings now properly represents the exact play area  
-	- This made me realize some initial ball spots were wrong - now all fixed  
-Collision visualizer improved  
-	- No longer has a weird delay when changing variables in the inspector  
-	- Has cricles accurately representing the actual collision shape of the corners  
-	- Fixed an issue where the cushion height was displayed slightly shorter than it should have been  
-Desktop mode updates  
-	- Fixed the functionality of the Q key - you can now click and drag balls around as intended  
-	- change the redo button from ctrl-y to ctrl-x (Y opens the chat box in VRC, which you can't even see when in desktop view)  
-Added a second faint guideline showing the cue direction, this should help beginners hit the ball straight  
-Added 3 new tables Pool 8ft, 9ft, and Snooker 10ft  
-Fixed some bugs with the LoD system that sometimes caused spectators to see the wrong game mode being played  
-Fixed bug where if a player took a shot and then left the world before the balls settled, the table would need to be reset  
-Added ability to place balls on top of the rail in practice mode, click while holding a ball to change placement mode (normal, on rail, in-air)  
-Added Snooker tie rule, in the case of a tie, the black is replaced, and a random player gets to shoot  
-Added Sliders to the table shader to allow HSV color change of the cloth  
-Removed compression from save/load, shots are no longer slightly different after loading  
