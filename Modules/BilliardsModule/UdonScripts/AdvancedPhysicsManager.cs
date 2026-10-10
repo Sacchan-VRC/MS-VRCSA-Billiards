@@ -2277,7 +2277,7 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
         vel = rb * V1;
         angvel = rb * W1;
 
-
+#if UNITY_EDITOR
         if (cushionRichDebug) // Choose to display some information about the cushion and Draw some lines (bool default = FALSE) [May cause stall in Unity Editor if there are Multiple collisions happening at once]
         {
 
@@ -2345,8 +2345,8 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
             {
                 Debug.Log("<size=16>False!</size>");
             }
-
         }
+#endif
 
     }
 
@@ -2360,8 +2360,9 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
         /// The CompressionPhase numerically simulates the compression part of the ball-cushion collision.
         /// This is where the ball pushes into the cushion, and forces gradually slow down the ball's velocity into the cushion until it stops or reverses.
         /// The method accumulates work done during this phase, which is later used in the RestitutionPhase to determine how much the ball should bounce back.
-        Debug.Log("N Does Exist here" + N);
-
+#if UNITY_EDITOR
+        if (cushionRichDebug) Debug.Log("N Does Exist here" + N);
+#endif
         totalWork = 0f; // Initialize total work: Represents cumulative energy dissipation as the ball compresses into the cushion.
         int steps = 0;
 
@@ -2385,7 +2386,9 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
             // Check for zero crossing with binary refinement:
             if (V.z > 0f && V_next.z <= 0f)     // If the ball's velocity into the cushion will cross zero, we perform binary refinement to accurately find the precise moment this happens. (Prevents overshooting and improves numerical precision.)
             {
-                Debug.LogWarning("Binary search refinement + true");
+#if UNITY_EDITOR
+                if (cushionRichDebug) Debug.LogWarning("Binary search refinement + true");
+#endif
                 // Binary search refinement
                 Vector3 V_refine = V;
                 Vector3 W_refine = W;
@@ -2786,7 +2789,7 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
         Debug.DrawRay(contactPoint2, toCushionFrame * Vector3.up * axisLength2, Color.green, 5f);     // Y
         Debug.DrawRay(contactPoint2, toCushionFrame * Vector3.forward * axisLength2, Color.blue, 5f); // Z
         Debug.DrawRay(contactPoint2, N * 0.1f, Color.cyan, 5f);
-
+#if UNITY_EDITOR
         if (cushionRichDebug) // Choose to display some information about the cushion and Draw some lines (bool default = FALSE) [May cause stall in Unity Editor if there are Multiple collisions happening at once]
         {
             // Decomposing between Normal and Tangent
@@ -2873,6 +2876,7 @@ public class AdvancedPhysicsManager : UdonSharpBehaviour
                 ");
             }
         }
+#endif
     }
 
     float ComputeTotalKE(ref Vector3 vel, float M, float R)
